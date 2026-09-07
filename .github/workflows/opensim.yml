@@ -1,0 +1,70 @@
+# Estimate muscle activation for the squat with OpenSim static optimisation.
+#
+# Runs here and not on the dev laptop because OpenSim ships no ARM64 build. The
+# result (tools/opensim/out/squat-activation.json) is uploaded as an artifact
+# and pushed to the `opensim/squat` branch for review; it is not written to
+# main automatically.
+name: opensim
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - tools/opensim/**
+      - src/lib/motion/**
+      - .github/workflows/opensim.yml
+
+permissions:
+  contents: write
+
+jobs:
+  squat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          python-version: "3.11"
+          activate-environment: opensim
+          channels: opensim-org,conda-forge
+          auto-activate-base: false
+
+      - name: Install OpenSim
+        run: |
+          conda install -y -c opensim-org -c conda-forge opensim numpy
+          python -c "import opensim; print('OpenSim', opensim.__version__)"
+
+      - name: Fetch the model
+        run: |
+          mkdir -p tools/opensim/vendor
+          curl -sSL -o tools/opensim/vendor/RajagopalLaiUhlrich2023.osim \
+            https://raw.githubusercontent.com/opensim-org/opensim-models/master/Models/Rajagopal/RajagopalLaiUhlrich2023.osim
+          ls -l tools/opensim/vendor
+
+      - name: Static optimisation
+        run: python tools/opensim/run_static_optimization.py src/lib/motion/bodyweight-squat.json tools/opensim/out
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: squat-activation
+          path: tools/opensim/out
+          if-no-files-found: warn
+
+      - name: Push result to the opensim/squat branch
+        if: success()
+        run: |
+          git config user.name "opensim-workflow"
+          git config user.email "noreply@github.com"
+          git checkout -B opensim/squat
+          mkdir -p src/lib/activation
+          cp tools/opensim/out/squat-activation.json src/lib/activation/bodyweight-squat.json
+          git add -f src/lib/activation/bodyweight-squat.json
+          git commit -m "OpenSim static optimisation result for the bodyweight squat" || echo "nothing new"
+          git push -f origin opensim/squat

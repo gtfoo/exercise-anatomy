@@ -47,3 +47,7 @@ next-env.d.ts
 # Motion-capture inputs are licensed for embedding, not redistribution (Mixamo); outputs are scratch
 /tools/mocap/in/
 /tools/mocap/out/
+
+# OpenSim inputs are fetched by the workflow; outputs are scratch
+/tools/opensim/vendor/
+/tools/opensim/out/

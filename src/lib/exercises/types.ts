@@ -14,10 +14,12 @@ export type MuscleActivation = {
   /** What this muscle is doing in this exercise — one or two sentences. */
   note: string;
   /**
-   * Present only when the curve is grounded in a measurement. Absent means the
-   * curve is qualitative (role-based) and the UI must not print a number for it.
+   * Present only when the curve is grounded in something outside this file:
+   * a measurement (%MVIC) or a model estimate. Absent means the curve is
+   * qualitative (role-based) and the UI must not print a number for it.
+   * "estimated-activation" is never presented as measured.
    */
-  source?: { citation: string; measure: "%MVIC"; conditions: string };
+  source?: { citation: string; measure: "%MVIC" | "estimated-activation"; conditions: string };
 };
 
 export type Phase = { name: string; t0: number; t1: number };

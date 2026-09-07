@@ -85,7 +85,11 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
           </div>
           <p className="mt-1 leading-relaxed text-zinc-700">{detail.note}</p>
           <p className="mt-2 text-xs text-zinc-500">
-            {detail.source ? `${detail.source.measure} · ${detail.source.citation}` : "Qualitative — not measured."}
+            {!detail.source
+              ? "Qualitative — not measured."
+              : detail.source.measure === "estimated-activation"
+                ? `Estimated, not measured — ${detail.source.citation}`
+                : `${detail.source.measure} · ${detail.source.citation}`}
           </p>
         </section>
       )}
