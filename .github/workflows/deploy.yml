@@ -1,0 +1,79 @@
+# Build the static export on a Node 22 runner and rsync `out/` to the droplet.
+#
+# Nothing builds on the box and nothing restarts: Caddy serves the directory.
+# Until the droplet agent has installed the deploy key and the secrets are set,
+# the deploy step reports "not configured" and exits green, so a push to main
+# never fails for a reason unrelated to the code.
+name: deploy
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - tools/blender/**
+      - tools/mocap/**
+      - tools/opensim/**
+      - .github/workflows/opensim.yml
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+env:
+  DROPLET_HOST: ${{ secrets.DROPLET_HOST }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+
+      - name: Verify the export in a way that cannot silently pass
+        run: |
+          test -f out/index.html
+          test -f out/models/figure.glb
+          ASSET=$(find out/_next/static -type f | head -1)
+          [ -n "$ASSET" ] || { echo "no static output - refusing to call this built"; exit 1; }
+          du -sh out
+
+      - name: Deploy
+        env:
+          DROPLET_PORT: ${{ secrets.DROPLET_PORT }}
+          DROPLET_USER: ${{ secrets.DROPLET_USER }}
+          DROPLET_APP_DIR: ${{ secrets.DROPLET_APP_DIR }}
+          DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+        run: |
+          if [ -z "$DROPLET_HOST" ] || [ -z "$DROPLET_SSH_KEY" ]; then
+            echo "deploy not configured yet (no DROPLET_HOST / DROPLET_SSH_KEY secret) - build verified, nothing shipped"
+            exit 0
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DROPLET_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "${DROPLET_PORT:-22}" "$DROPLET_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          # --delete keeps the box identical to the build; nothing under out/ is state.
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/deploy_key -p ${DROPLET_PORT:-22}" \
+            out/ "${DROPLET_USER:-deploy}@$DROPLET_HOST:$DROPLET_APP_DIR/out/"
+          echo "shipped $(find out -type f | wc -l) files to $DROPLET_HOST:$DROPLET_APP_DIR/out/"
+
+      - name: Verify over real DNS
+        if: env.DROPLET_HOST != ''
+        run: |
+          set -e
+          code() { curl -s -o /dev/null -w '%{http_code}' "https://exercise-anatomy.gtfoo.com$1"; }
+          echo "/ -> $(code /)"
+          echo "/models/figure.glb -> $(code /models/figure.glb)"
+          [ "$(code /)" = 200 ] && [ "$(code /models/figure.glb)" = 200 ]
