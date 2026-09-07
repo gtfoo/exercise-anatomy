@@ -32,8 +32,10 @@ import numpy as np
 import opensim as osim
 
 argv = sys.argv[1:]
-MOTION, OUT = argv[0], argv[1]
-MODEL = argv[argv.index("--model") + 1] if "--model" in argv else os.path.join(os.path.dirname(os.path.abspath(__file__)), "vendor", "RajagopalLaiUhlrich2023.osim")
+# Absolute paths throughout: OpenSim resolves files named in a setup XML relative
+# to that XML's own directory, which silently doubles a relative out dir.
+MOTION, OUT = os.path.abspath(argv[0]), os.path.abspath(argv[1])
+MODEL = os.path.abspath(argv[argv.index("--model") + 1] if "--model" in argv else os.path.join(os.path.dirname(os.path.abspath(__file__)), "vendor", "RajagopalLaiUhlrich2023.osim"))
 os.makedirs(OUT, exist_ok=True)
 N_OUT = 16  # curve points per muscle in the shipped JSON
 
