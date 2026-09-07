@@ -1,5 +1,7 @@
 import type { CurvePoint, Exercise } from "./types";
+import { withEstimatedActivation, type EstimatedActivation } from "./estimated";
 import motion from "@/lib/motion/bodyweight-squat.json";
+import estimated from "@/lib/activation/bodyweight-squat.json";
 
 // Curves are qualitative: shape and relative ordering by role, not measured
 // EMG. No muscle here carries a `source`, so the UI shows bands, never numbers.
@@ -17,14 +19,16 @@ const MINOR_ADDUCTOR: CurvePoint[] = [[0, 0.1], [0.3, 0.2], [0.5, 0.3], [0.7, 0.
 const TWO_JOINT_CALF: CurvePoint[] = [[0, 0.1], [0.3, 0.2], [0.5, 0.25], [0.7, 0.25], [1, 0.1]];
 const BRACE: CurvePoint[] = [[0, 0.1], [0.5, 0.3], [1, 0.1]];
 
-export const squat: Exercise = {
+// The hand-shaped baseline. Lower-limb muscles are then overridden by the
+// OpenSim estimate (tools/opensim, run in CI); trunk muscles stay as written.
+const baseline: Exercise = {
   slug: "bodyweight-squat",
   name: "Bodyweight squat",
-  durationMs: 3200,
+  durationMs: 3200, // the OpenSim run analyses the rep at this tempo; keep the two in step
   // One captured rep (tools/mocap). Remove this line to fall back to the designed joint-angle function.
   motion,
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser — not as measured EMG. Educational illustration, not training or medical advice.",
+    "Lower-limb activation is estimated by musculoskeletal simulation of the captured movement; trunk muscles are shown qualitatively by role. Nothing here is measured EMG. Educational illustration, not training or medical advice.",
   phases: [
     { name: "descent", t0: 0, t1: 0.42 },
     { name: "bottom", t0: 0.42, t1: 0.58 },
@@ -212,3 +216,6 @@ export const squat: Exercise = {
     },
   ],
 };
+
+// The JSON's curves are number[][] to TypeScript; the pipeline guarantees [t, level] pairs.
+export const squat: Exercise = withEstimatedActivation(baseline, estimated as unknown as EstimatedActivation);

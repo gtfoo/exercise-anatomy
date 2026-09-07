@@ -44,14 +44,21 @@ Production is a static export (`npm run build` → `out/`) served by Caddy at
 `exercise-anatomy.gtfoo.com`; pushes to `main` deploy it via
 `.github/workflows/deploy.yml`.
 
+## Where the numbers come from
+
+- **Movement:** one captured rep of a Mixamo *Air Squat*, reduced to four
+  sagittal angles per sample by `tools/mocap/` (credited in the footer; the raw
+  clip is not redistributed).
+- **Lower-limb activation:** OpenSim static optimisation on the
+  RajagopalLaiUhlrich2023 model, from that movement, run in GitHub Actions
+  (`tools/opensim/`). Labelled *estimated, not measured* — the ground reaction
+  is derived from the motion, not a force plate, and static optimisation
+  under-predicts co-contraction (hamstrings read low).
+- **Trunk activation:** qualitative by role; the model has no trunk muscles.
+
 ## Next
 
-1. **Motion capture for the squat.** The pipeline in `tools/mocap/` is built
-   and round-trip tested; it needs a Mixamo squat FBX in `tools/mocap/in/`
-   (a person downloads it — Adobe login). Output goes to `src/lib/motion/` and
-   is wired in with one line in `squat.ts`.
-2. **OpenSim for activation.** Static optimisation on the Rajagopal model,
-   fed by the same angle curves, run in GitHub Actions (no ARM64 build exists
-   for this laptop). Output replaces the qualitative curves with *estimated*
-   ones and a `source` line. Needs the repo on GitHub first.
-3. A second exercise, to find out what in `squat.ts` is really per-exercise.
+1. Content-hashed model filename, so the droplet can cache it as immutable.
+2. A second exercise, to find out what in `squat.ts` is really per-exercise.
+3. Cited EMG (%MVIC with conditions) where a paper exists — the third
+   provenance the UI already knows how to show.

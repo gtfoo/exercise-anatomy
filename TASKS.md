@@ -6,28 +6,33 @@ letter and a one-line task strands the *why*.
 
 ## Open
 
-- [ ] **Deploy to `exercise-anatomy.gtfoo.com` as a static site.** Allocation
-      requested from the droplet agent 2026-09-07 (hostname, static shape via
-      Caddy `file_server`, dev block, deploy key). Then: Actions secrets, the
-      deploy workflow (build on a Node 22 runner, rsync `out/`), and the §9
-      verification — a static asset and the model return 200 over real DNS.
-      `from: owner, 2026-09-07 · ~/Git/MAIL.md#allocation`
+- [ ] **Go live: waiting on the Caddy host block.** Allocation granted and
+      `out/` rsynced (37 files, 6.4 MB) on 2026-09-07; the droplet agent adds
+      the block once told `out/` exists, which the reply of the same day does.
+      Then the deploy workflow's real-DNS check turns green on its own. After
+      that: the owner may overwrite `DROPLET_HOST`/`DROPLET_PORT` from
+      `INFRA-PRIVATE.md` (precedent from rain-sg); the current values are the
+      public hostname and a probed port 22.
+      `from: droplet · MAIL-ARCHIVE.md#allocated`
 
-- [ ] **Fold the OpenSim estimate into `squat.ts`** once a CI run reports
-      small reserve peaks. The merge helper exists (`src/lib/exercises/
-      estimated.ts`); the workflow pushes `src/lib/activation/` to the
-      `opensim/squat` branch for review. Trunk muscles stay qualitative.
-      `from: owner, 2026-09-07 · tools/opensim/README.md`
+- [ ] **Content-hashed model filename**, then tell the droplet agent so
+      `/models/*` becomes `Cache-Control: immutable` for a year.
+      `from: droplet · MAIL-ARCHIVE.md#held-the-caddy-host-block`
 
-- [ ] **Per-joint blend width in the figure build.** The owner spotted the
-      fibula head and femoral condyle poking through the lateral gastrocnemius
-      at deep knee flexion: linear-blend skinning thins a two-joint muscle where
-      it wraps a bent joint while the bone stays rigid. The 8 cm blend that
-      cured the glute crease is too wide at the knee; make `BLEND_WIDTH` per
-      joint (hip wide, knee and ankle narrow) in `tools/blender/build_figure.py`
-      and rebuild.
+- [ ] **Owner to confirm the calf.** Per-joint blend widths rebuilt the figure
+      on 2026-09-07 after the fibula head showed through the lateral
+      gastrocnemius at deep flexion; the side view at the bottom looks clean to
+      me, but the owner spotted it and should be the one to close it.
       `from: owner, 2026-09-07 · screenshot at 39% of the rep`
 
 - [ ] **Case study on gtfoo.com** — `/products/exercise-anatomy`, three edits in
       the parent repo, once the site is live. The parent's own rules apply.
       `from: gtfoo AGENTS.md · case studies`
+
+## Done
+
+- [x] OpenSim estimate folded into `squat.ts` (2026-09-07), after six CI runs:
+      absolute paths; centre of pressure under the centre of mass; ground
+      reaction from inverse dynamics rather than BodyKinematics (which reports
+      free fall); rep analysed at the displayed 3.2 s tempo, which brought the
+      pelvis reserves from 173 N to 20 N.
