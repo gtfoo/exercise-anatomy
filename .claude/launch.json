@@ -1,0 +1,18 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web",
+      "runtimeExecutable": "wsl.exe",
+      "runtimeArgs": [
+        "-d",
+        "Ubuntu-24.04",
+        "--",
+        "bash",
+        "-c",
+        "cd /home/gtfoo/Git/exercise-anatomy && export PATH=/home/gtfoo/.nvm/versions/node/v22.23.2/bin:/usr/local/bin:/usr/bin:/bin && exec npm run dev -- -H 0.0.0.0 -p 3901"
+      ],
+      "port": 3901
+    }
+  ]
+}
