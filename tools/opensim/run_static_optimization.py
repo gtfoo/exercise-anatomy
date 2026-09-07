@@ -69,9 +69,14 @@ clip = json.load(open(MOTION))
 samples = clip["samples"]
 n = len(samples)
 rep = clip.get("rep")
-duration = (rep["end"] - rep["start"]) / clip["fps"] if rep else 1.5
+captured = (rep["end"] - rep["start"]) / clip["fps"] if rep else 1.5
+# Tempo matters: inertial load scales with 1/duration^2. The captured Mixamo rep
+# is 1.33 s, a 1.56 x bodyweight bounce that saturated the quads of a generic
+# model; the app plays the rep slower, and the estimate should describe the rep
+# as shown. Pass --duration <seconds> (the app's durationMs / 1000).
+duration = float(argv[argv.index("--duration") + 1]) if "--duration" in argv else captured
 dt = duration / n
-print("motion %s: %d samples over %.3f s (%s)" % (clip["source"], n, duration, clip.get("credit", "no credit")))
+print("motion %s: %d samples, captured over %.3f s, analysed over %.3f s (%s)" % (clip["source"], n, captured, duration, clip.get("credit", "no credit")))
 
 model = osim.Model(MODEL)
 state = model.initSystem()
@@ -324,9 +329,10 @@ json.dump(
         "method": "OpenSim %s StaticOptimization (activation exponent 2, muscle physiology on)" % osim.__version__,
         "model": "RajagopalLaiUhlrich2023.osim from opensim-org/opensim-models (Rajagopal 2016; Lai 2017; Uhlrich 2022), MIT licence",
         "motion": "%s (%s)" % (clip["source"], clip.get("credit", "")),
-        "conditions": "Generic unscaled model, %.0f kg. Ground reaction derived from the model centre-of-mass acceleration (no force plate), split equally between feet, centre of pressure under the centre of mass. Torso rigid to the pelvis, arms clamped to the model range. Reserve actuators at 1 N m; peaks: %s." % (mass, "; ".join("%s %.1f" % (l, v) for v, l in worst[:3])),
+        "conditions": "Generic unscaled model, %.0f kg, rep analysed at %.1f s (captured at %.2f s). Ground reaction from inverse dynamics of the motion itself (no force plate), split equally between feet, centre of pressure under the centre of mass. Torso rigid to the pelvis, arms clamped to the model range. Static optimisation under-predicts co-contraction. Reserve actuators at 1 N m; peaks: %s." % (mass, duration, captured, "; ".join("%s %.1f" % (l, v) for v, l in worst[:3])),
         "measure": "estimated-activation",
         "durationS": round(float(duration), 3),
+        "capturedS": round(float(captured), 3),
         "muscles": result,
     },
     open(os.path.join(OUT, "squat-activation.json"), "w"),

@@ -48,7 +48,8 @@ jobs:
           ls -l tools/opensim/vendor
 
       - name: Static optimisation
-        run: python tools/opensim/run_static_optimization.py src/lib/motion/bodyweight-squat.json tools/opensim/out
+        # --duration is the app's durationMs / 1000: the estimate describes the rep as shown.
+        run: python tools/opensim/run_static_optimization.py src/lib/motion/bodyweight-squat.json tools/opensim/out --duration 3.2
 
       - uses: actions/upload-artifact@v4
         if: always()
