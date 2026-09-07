@@ -10,9 +10,9 @@
         "--",
         "bash",
         "-c",
-        "cd /home/gtfoo/Git/exercise-anatomy && export PATH=/home/gtfoo/.nvm/versions/node/v22.23.2/bin:/usr/local/bin:/usr/bin:/bin && exec npm run dev -- -H 0.0.0.0 -p 3901"
+        "cd /home/gtfoo/Git/exercise-anatomy && export PATH=/home/gtfoo/.nvm/versions/node/v22.23.2/bin:/usr/local/bin:/usr/bin:/bin && exec npm run dev -- -H 0.0.0.0 -p 3960"
       ],
-      "port": 3901
+      "port": 3960
     }
   ]
 }

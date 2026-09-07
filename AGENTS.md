@@ -81,8 +81,11 @@ app is `out/` and a 4.7 MB model, served by Caddy with no process on the box.
 Do not add a feature that needs a server without reopening that decision with
 the droplet agent; it is what makes this the cheapest app in the fleet.
 
-Dev server on **3901** until the droplet agent allocates a dev block; then use
-that. Its `.claude/launch.json` is this repo's, not gtfoo's.
+Dev servers bind **3960-3969**, this app's block in `INFRA.md` (allocated
+2026-09-07; 3960 is the one in `.claude/launch.json`, which is this repo's,
+not gtfoo's). Nothing is served on a port: the site is `exercise-anatomy.gtfoo.com`,
+a Caddy `file_server` over `/home/deploy/exercise-anatomy/out`, shipped by
+`.github/workflows/deploy.yml` with rsync as `deploy`.
 
 ## Never `git add -A`
 

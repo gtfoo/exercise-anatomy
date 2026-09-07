@@ -32,13 +32,17 @@ in this repository is separate from the model.
 
 ## Run
 
-Node 22 (`.nvmrc`). Dev server on **3901** — the gtfoo dev block in `INFRA.md`,
-because this app has no allocation of its own yet.
+Node 22 (`.nvmrc`). Dev server on **3960** — this app's dev block in `INFRA.md`
+is 3960-3969.
 
 ```bash
 npm install
-npm run dev -- -p 3901
+npm run dev -- -p 3960
 ```
+
+Production is a static export (`npm run build` → `out/`) served by Caddy at
+`exercise-anatomy.gtfoo.com`; pushes to `main` deploy it via
+`.github/workflows/deploy.yml`.
 
 ## Next
 
