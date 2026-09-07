@@ -178,27 +178,60 @@ heel = np.array(heel)
 toe = np.array(toe)
 foot_z = abs(heel[0][2])  # feet are symmetric about the sagittal plane
 
-# Cyclic derivatives: the rep loops, so no edge effects.
-def cyc_gradient(x):
-    return (np.roll(x, -1, axis=0) - np.roll(x, 1, axis=0)) / (2 * dt)
-
-
-vel = cyc_gradient(com)
-acc = cyc_gradient(vel)
-g = np.array([0, -9.81, 0])
-F = mass * (acc - g)  # total ground reaction
-lo_x = np.minimum(heel[:, 0], toe[:, 0]) + 0.02
-hi_x = np.maximum(heel[:, 0], toe[:, 0]) - 0.02
-cop_x = np.clip(com[:, 0], lo_x, hi_x)
-clamped = int(np.sum((com[:, 0] < lo_x) | (com[:, 0] > hi_x)))
-print("ground reaction: vertical %.0f..%.0f N (body weight %.0f N), fore-aft %+.0f..%+.0f N" % (F[:, 1].min(), F[:, 1].max(), mass * 9.81, F[:, 0].min(), F[:, 0].max()))
-print("centre of mass x %+.3f..%+.3f m over a foot spanning %+.3f..%+.3f m; COP clamped on %d/%d frames" % (com[:, 0].min(), com[:, 0].max(), heel[:, 0].mean(), toe[:, 0].mean(), clamped, n))
-
 # ---------- files: three reps, analyse the middle ----------
 N = n * REPS
 times = np.arange(N) * dt
 t_start, t_end = float(times[n]), float(times[2 * n - 1])
 idx = lambda k: k % n
+
+mot_path = os.path.join(OUT, "squat.mot")
+with open(mot_path, "w") as fh:
+    fh.write("squat\nversion=1\nnRows=%d\nnColumns=%d\ninDegrees=yes\nendheader\n" % (N, 1 + len(coord_names)))
+    fh.write("time\t" + "\t".join(coord_names) + "\n")
+    for k in range(N):
+        v = rows[idx(k)]
+        vals = []
+        for cn in coord_names:
+            c = coords.get(cn)
+            x = v.get(cn, 0.0)
+            vals.append(x if c.getMotionType() == osim.Coordinate.Translational else math.degrees(x))
+        fh.write("%.6f\t" % times[k] + "\t".join("%.6f" % x for x in vals) + "\n")
+
+# Centre-of-mass acceleration from OpenSim's own spline of that motion file, so
+# the ground reaction we derive and the inertial terms the optimiser computes
+# come from the same curves. Central differences on the samples did not:
+# the disagreement showed up as ~150 N on the vertical pelvis reserve.
+kin = osim.AnalyzeTool()
+kin.setName("kin")
+kin.setModelFilename(MODEL)
+kin.setResultsDir(OUT)
+kin.setInitialTime(t_start)
+kin.setFinalTime(t_end)
+kin.setSolveForEquilibrium(False)
+kin.setCoordinatesFileName(mot_path)
+kin.setLowpassCutoffFrequency(-1.0)
+bk = osim.BodyKinematics()
+bk.setRecordCenterOfMass(True)
+bk.setExpressResultsInLocalFrame(False)
+bk.setStartTime(t_start)
+bk.setEndTime(t_end)
+kin.updAnalysisSet().cloneAndAppend(bk)
+kin_setup = os.path.join(OUT, "setup_kinematics.xml")
+kin.printToXML(kin_setup)
+osim.AnalyzeTool(kin_setup).run()
+acc_table = osim.TimeSeriesTable(os.path.join(OUT, "kin_BodyKinematics_acc_global.sto"))
+t_kin = np.array(acc_table.getIndependentColumn())
+acc_mid = np.column_stack([np.array(acc_table.getDependentColumn("center_of_mass_" + a).to_numpy()) for a in "XYZ"])
+acc = np.column_stack([np.interp(times[n : 2 * n], t_kin, acc_mid[:, i]) for i in range(3)])  # one rep, middle
+
+g = np.array([0, -9.81, 0])
+F = mass * (acc - g)  # total ground reaction, per frame of the rep
+lo_x = np.minimum(heel[:, 0], toe[:, 0]) + 0.02
+hi_x = np.maximum(heel[:, 0], toe[:, 0]) - 0.02
+cop_x = np.clip(com[:, 0], lo_x, hi_x)
+clamped = int(np.sum((com[:, 0] < lo_x) | (com[:, 0] > hi_x)))
+print("ground reaction: vertical %.0f..%.0f N (body weight %.0f N), fore-aft %+.0f..%+.0f N" % (F[:, 1].min(), F[:, 1].max(), mass * 9.81, F[:, 0].min(), F[:, 0].max()))
+print("centre of mass x %+.3f..%+.3f m over a foot spanning %+.3f..%+.3f m (ankle at 0); COP clamped on %d/%d frames" % (com[:, 0].min(), com[:, 0].max(), heel[:, 0].mean(), toe[:, 0].mean(), clamped, n))
 
 grf_path = os.path.join(OUT, "grf.sto")
 cols = []
@@ -225,19 +258,6 @@ with open(ext_path, "w") as fh:
             "    <point_identifier>%s_ground_force_p</point_identifier>\n    <torque_identifier>%s_ground_torque_</torque_identifier>\n   </ExternalForce>\n" % (side, side, side, side, side)
         )
     fh.write("  </objects>\n  <groups />\n  <datafile>%s</datafile>\n </ExternalLoads>\n</OpenSimDocument>\n" % grf_path)
-
-mot_path = os.path.join(OUT, "squat.mot")
-with open(mot_path, "w") as fh:
-    fh.write("squat\nversion=1\nnRows=%d\nnColumns=%d\ninDegrees=yes\nendheader\n" % (N, 1 + len(coord_names)))
-    fh.write("time\t" + "\t".join(coord_names) + "\n")
-    for k in range(N):
-        v = rows[idx(k)]
-        vals = []
-        for cn in coord_names:
-            c = coords.get(cn)
-            x = v.get(cn, 0.0)
-            vals.append(x if c.getMotionType() == osim.Coordinate.Translational else math.degrees(x))
-        fh.write("%.6f\t" % times[k] + "\t".join("%.6f" % x for x in vals) + "\n")
 
 # ---------- 5. reserve actuators + static optimisation ----------
 reserves = osim.ForceSet()
