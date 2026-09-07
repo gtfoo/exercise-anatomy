@@ -197,35 +197,30 @@ with open(mot_path, "w") as fh:
             vals.append(x if c.getMotionType() == osim.Coordinate.Translational else math.degrees(x))
         fh.write("%.6f\t" % times[k] + "\t".join("%.6f" % x for x in vals) + "\n")
 
-# Centre-of-mass acceleration from OpenSim's own spline of that motion file, so
-# the ground reaction we derive and the inertial terms the optimiser computes
-# come from the same curves. Central differences on the samples did not:
-# the disagreement showed up as ~150 N on the vertical pelvis reserve.
-kin = osim.AnalyzeTool()
-kin.setName("kin")
-kin.setModelFilename(MODEL)
-kin.setResultsDir(OUT)
-kin.setInitialTime(t_start)
-kin.setFinalTime(t_end)
-kin.setSolveForEquilibrium(False)
-kin.setCoordinatesFileName(mot_path)
-kin.setLowpassCutoffFrequency(-1.0)
-bk = osim.BodyKinematics()
-bk.setRecordCenterOfMass(True)
-bk.setExpressResultsInLocalFrame(False)
-bk.setStartTime(t_start)
-bk.setEndTime(t_end)
-kin.updAnalysisSet().cloneAndAppend(bk)
-kin_setup = os.path.join(OUT, "setup_kinematics.xml")
-kin.printToXML(kin_setup)
-osim.AnalyzeTool(kin_setup).run()
-acc_table = osim.TimeSeriesTable(os.path.join(OUT, "kin_BodyKinematics_acc_global.sto"))
-t_kin = np.array(acc_table.getIndependentColumn())
-acc_mid = np.column_stack([np.array(acc_table.getDependentColumn("center_of_mass_" + a).to_numpy()) for a in "XYZ"])
-acc = np.column_stack([np.interp(times[n : 2 * n], t_kin, acc_mid[:, i]) for i in range(3)])  # one rep, middle
-
-g = np.array([0, -9.81, 0])
-F = mass * (acc - g)  # total ground reaction, per frame of the rep
+# The net external force this motion requires, from OpenSim's own inverse
+# dynamics on the same motion file: with no external loads, the residual
+# generalised forces on the pelvis translations ARE the ground reaction, and
+# they come from the same spline the optimiser differentiates. (Central
+# differences on the samples left ~150 N on the vertical reserve; a
+# BodyKinematics pass reports free-fall accelerations, not the motion's.)
+idt = osim.InverseDynamicsTool()
+idt.setName("id")
+idt.setModelFileName(MODEL)
+idt.setCoordinatesFileName(mot_path)
+idt.setLowpassCutoffFrequency(-1.0)
+idt.setStartTime(t_start)
+idt.setEndTime(t_end)
+idt.setResultsDir(OUT)
+idt.setOutputGenForceFileName("id_generalized_forces.sto")
+id_setup = os.path.join(OUT, "setup_inverse_dynamics.xml")
+idt.printToXML(id_setup)
+osim.InverseDynamicsTool(id_setup).run()
+id_table = osim.TimeSeriesTable(os.path.join(OUT, "id_generalized_forces.sto"))
+t_id = np.array(id_table.getIndependentColumn())
+id_col = lambda name: np.interp(times[n : 2 * n], t_id, np.array(id_table.getDependentColumn(name).to_numpy()))
+F = np.column_stack([id_col("pelvis_tx_force"), id_col("pelvis_ty_force"), np.zeros(n)])  # total ground reaction, per frame of the rep
+tilt_req = id_col("pelvis_tilt_moment")
+print("inverse dynamics residual pitch moment (before any ground reaction): %+.0f..%+.0f N m" % (tilt_req.min(), tilt_req.max()))
 lo_x = np.minimum(heel[:, 0], toe[:, 0]) + 0.02
 hi_x = np.maximum(heel[:, 0], toe[:, 0]) - 0.02
 cop_x = np.clip(com[:, 0], lo_x, hi_x)
