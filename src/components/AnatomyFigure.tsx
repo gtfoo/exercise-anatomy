@@ -64,6 +64,8 @@ function worldQuat(obj: THREE.Object3D, out: THREE.Quaternion) {
 
 const tmpQ = new THREE.Quaternion();
 const tmpQ2 = new THREE.Quaternion();
+/** Half a turn about a bone's own length axis (Blender bones point along local Y): forearm pronation. */
+const PRONATE = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
 
 /** Rotate a bone about the WORLD X axis by `angle`, relative to its rest pose. Parent must already be posed. */
 function setWorldX(bone: THREE.Bone, restLocal: THREE.Quaternion, angle: number) {
@@ -190,8 +192,11 @@ export default function AnatomyFigure({ exercise }: { exercise: Exercise }) {
     const pose = exercise.motion ? poseAt(exercise.motion, t) : (designedPose[exercise.slug] ?? squatPose)(t);
     const elbow = pose.elbow ?? 0;
     const foot = pose.foot ?? 0;
-    // Hands wrap over the bar when hanging from it; otherwise they follow the forearm.
-    const grip = exercise.anchor === "hands" ? (100 * Math.PI) / 180 : 0;
+    // Hanging from a bar: the rest pose has the palms forward, which overhead
+    // faces them at the body (a chin-up). Pronating the forearm turns them away
+    // for an overhand grip; the fingers then curl over the bar toward the palm.
+    const hanging = exercise.anchor === "hands";
+    const grip = hanging ? (100 * Math.PI) / 180 : 0;
     const { bones, restQ } = rig;
 
     // Where the pelvis goes is decided by whatever is anchored; everything else
@@ -218,6 +223,7 @@ export default function AnatomyFigure({ exercise }: { exercise: Exercise }) {
       setWorldX(bones[`foot.${S}`], restQ[`foot.${S}`], foot - pose.shin);
       setWorldX(bones[`upper_arm.${S}`], restQ[`upper_arm.${S}`], -pose.armFwd - pose.trunk);
       setWorldX(bones[`forearm.${S}`], restQ[`forearm.${S}`], -elbow);
+      if (hanging) bones[`forearm.${S}`].quaternion.multiply(PRONATE);
       setWorldX(bones[`hand.${S}`], restQ[`hand.${S}`], grip);
     }
     setWorldX(bones.neck, restQ.neck, -pose.trunk * 0.8); // keep the gaze roughly level

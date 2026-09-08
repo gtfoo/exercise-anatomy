@@ -6,15 +6,6 @@ letter and a one-line task strands the *why*.
 
 ## Open
 
-- [ ] **Go live: waiting on the Caddy host block.** Allocation granted and
-      `out/` rsynced (37 files, 6.4 MB) on 2026-09-07; the droplet agent adds
-      the block once told `out/` exists, which the reply of the same day does.
-      Then the deploy workflow's real-DNS check turns green on its own. After
-      that: the owner may overwrite `DROPLET_HOST`/`DROPLET_PORT` from
-      `INFRA-PRIVATE.md` (precedent from rain-sg); the current values are the
-      public hostname and a probed port 22.
-      `from: droplet · MAIL-ARCHIVE.md#allocated`
-
 - [ ] **Content-hashed model filename**, then tell the droplet agent so
       `/models/*` becomes `Cache-Control: immutable` for a year.
       `from: droplet · MAIL-ARCHIVE.md#held-the-caddy-host-block`
@@ -37,6 +28,12 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Live at `https://exercise-anatomy.gtfoo.com`** (2026-09-08). Allocation,
+      key and directory on 2026-09-07; `out/` rsynced the same evening; the
+      Caddy block landed overnight and the hostname answered 200 by morning.
+      `DROPLET_HOST` is the public hostname and `DROPLET_PORT` a probed 22:
+      `INFRA-PRIVATE.md` turned out not to hold the box's public address at
+      all, so there was nothing more private to use.
 - [x] OpenSim estimate folded into `squat.ts` (2026-09-07), after six CI runs:
       absolute paths; centre of pressure under the centre of mass; ground
       reaction from inverse dynamics rather than BodyKinematics (which reports
