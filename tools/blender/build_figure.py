@@ -107,7 +107,7 @@ BLEND_WIDTH = 0.08  # metres of effective distance over which muscle weights ble
 # the bone. The torso bones are fat because ribs, abdomen and lats sit 10-15 cm
 # from the spine, while the upper-arm bones hang only 5-8 cm from the same
 # vertices; plain nearest-segment weighting handed the chest to the arms.
-ENVELOPE = {"pelvis": 0.13, "spine": 0.13, "neck": 0.06, "head": 0.10, "thigh": 0.07, "shin": 0.05, "foot": 0.04, "upper_arm": 0.045, "forearm": 0.04, "hand": 0.04}
+ENVELOPE = {"pelvis": 0.13, "spine": 0.13, "neck": 0.06, "head": 0.10, "thigh": 0.07, "shin": 0.05, "foot": 0.04, "upper_arm": 0.045, "forearm": 0.04, "hand": 0.035, "fingers": 0.025}
 
 # ---------- helpers ----------
 
@@ -215,7 +215,11 @@ for s in ("l", "r"):
     joints["elbow." + s] = centroid_where(humerus, lambda v: v[:, 2] < hz.min() + 0.03)
     rz = world_verts(radius)[:, 2]
     joints["wrist." + s] = centroid_where(radius, lambda v: v[:, 2] < rz.min() + 0.02)
-    joints["hand." + s] = joints["wrist." + s] + Vector((0, 0, -0.18))
+    # Knuckles: the distal ends of metacarpals 2-5. Fingertips: the distal phalanges of the same fingers.
+    mcs = np.concatenate([world_verts(O["%s metacarpal bone.%s" % (n, s)]) for n in ("Second", "Third", "Fourth", "Fifth")])
+    joints["mcp." + s] = Vector(mcs[mcs[:, 2] < mcs[:, 2].min() + 0.012].mean(axis=0))
+    tips = np.concatenate([world_verts(O["Distal phalanx of %s finger of hand.%s" % (n, s)]) for n in ("second", "third", "fourth", "fifth")])
+    joints["fingertip." + s] = Vector(tips.mean(axis=0))
 
 joints["pelvis"] = (joints["hip.l"] + joints["hip.r"]) / 2
 joints["l5"] = bbox_center(O["Vertebra L5"])
@@ -239,7 +243,8 @@ for s, S in (("l", "L"), ("r", "R")):
     BONES["foot." + S] = ("ankle." + s, "toe." + s, "shin." + S)
     BONES["upper_arm." + S] = ("shoulder." + s, "elbow." + s, "spine")
     BONES["forearm." + S] = ("elbow." + s, "wrist." + s, "upper_arm." + S)
-    BONES["hand." + S] = ("wrist." + s, "hand." + s, "forearm." + S)
+    BONES["hand." + S] = ("wrist." + s, "mcp." + s, "forearm." + S)
+    BONES["fingers." + S] = ("mcp." + s, "fingertip." + s, "hand." + S)  # fingers 2-5 as one flap, so a hand can close on a bar
 
 # ---------- 2. pick and merge meshes ----------
 
@@ -367,7 +372,7 @@ def eff_dist(P):
     z = P[:, 2]
     for i, n in enumerate(seg_names):
         base = n.split(".")[0]
-        if base in ("upper_arm", "forearm", "hand"):
+        if base in ("upper_arm", "forearm", "hand", "fingers"):
             d[:, i] += ramp(0.15 - x)  # inside the torso: chest, lats, abdomen belong to the trunk
             if base == "upper_arm":
                 d[:, i] += ramp(z - (SHOULDER_Z + 0.02))  # top of the shoulder is trapezius territory
@@ -382,11 +387,16 @@ def eff_dist(P):
     return d
 
 
-# Bones whose centroid sits on a joint line and which the envelope rule would
-# hand to the wrong segment. The patella is equidistant from femur and tibia and
-# fell to the femur; at deep flexion that put it on top of the knee instead of
-# in front of the condyles, where following the tibia leaves it.
-RIGID_OVERRIDE = {"patella": "shin"}
+# Skeleton parts pinned to a bone by name, where the envelope rule would choose
+# wrong. The patella is equidistant from femur and tibia and fell to the femur;
+# at deep flexion that put it on top of the knee instead of in front of the
+# condyles, where following the tibia leaves it. The finger phalanges follow the
+# fingers bone so a hand can close; the thumb stays with the hand.
+RIGID_OVERRIDE = [
+    (re.compile(r"^patella", re.I), "shin"),
+    (re.compile(r"phalanx of (second|third|fourth|fifth) finger of hand", re.I), "fingers"),
+    (re.compile(r"phalanx of first finger of hand", re.I), "hand"),
+]
 
 
 def assign_weights(obj, ranges, rigid, names=None):
@@ -398,12 +408,13 @@ def assign_weights(obj, ranges, rigid, names=None):
         for k, (start, count) in enumerate(ranges):
             c = P[start : start + count].mean(axis=0, keepdims=True)
             bone = int(np.argmin(eff_dist(c)[0]))
-            name = (names[k] if names else "").lower()
-            for prefix, seg in RIGID_OVERRIDE.items():
-                if name.startswith(prefix):
+            name = names[k] if names else ""
+            for rx, seg in RIGID_OVERRIDE:
+                if rx.search(name):
                     side = "L" if name.endswith(".l") else "R" if name.endswith(".r") else None
                     if side:
                         bone = seg_names.index("%s.%s" % (seg, side))
+                    break
             order[start : start + count, 0] = bone
         w1 = np.ones(n)
     else:

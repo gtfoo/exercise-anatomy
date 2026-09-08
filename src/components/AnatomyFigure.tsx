@@ -31,6 +31,8 @@ export const MODEL_URL = "/models/figure.glb";
 const gltfName = (n: string) => n.replace(/\s/g, "_").replace(/[\[\].:/]/g, "");
 
 const BONE_NAMES = ["pelvis", "spine", "neck", "head", "thigh.L", "shin.L", "foot.L", "thigh.R", "shin.R", "foot.R", "upper_arm.L", "forearm.L", "hand.L", "upper_arm.R", "forearm.R", "hand.R"];
+/** Present in newer builds only; driven when found. */
+const OPTIONAL_BONES = ["fingers.L", "fingers.R"];
 
 const X = new THREE.Vector3(1, 0, 0);
 const rx = (v: THREE.Vector3, a: number) => v.clone().applyAxisAngle(X, a);
@@ -92,7 +94,7 @@ function ownerName(mesh: THREE.Object3D): string {
 function getRig(scene: THREE.Group): Rig | null {
   if (scene.userData.rig !== undefined) return scene.userData.rig as Rig | null;
   const bones: Record<string, THREE.Bone> = {};
-  const wanted = new Map(BONE_NAMES.map((n) => [gltfName(n), n]));
+  const wanted = new Map([...BONE_NAMES, ...OPTIONAL_BONES].map((n) => [gltfName(n), n]));
   scene.traverse((o) => {
     const key = wanted.get(o.name);
     if (key && (o as THREE.Bone).isBone) bones[key] = o as THREE.Bone;
@@ -104,7 +106,7 @@ function getRig(scene: THREE.Group): Rig | null {
   } else {
     scene.updateMatrixWorld(true);
     const restQ: Record<string, THREE.Quaternion> = {};
-    for (const n of BONE_NAMES) restQ[n] = bones[n].quaternion.clone();
+    for (const n of Object.keys(bones)) restQ[n] = bones[n].quaternion.clone();
     const wp = (b: THREE.Bone) => b.getWorldPosition(new THREE.Vector3());
     rig = {
       bones,
@@ -194,9 +196,13 @@ export default function AnatomyFigure({ exercise }: { exercise: Exercise }) {
     const foot = pose.foot ?? 0;
     // Hanging from a bar: the rest pose has the palms forward, which overhead
     // faces them at the body (a chin-up). Pronating the forearm turns them away
-    // for an overhand grip; the fingers then curl over the bar toward the palm.
+    // for an overhand grip. The bar then sits in the palm: the wrist is a little
+    // behind and below the bar, the hand flexes over it, and the fingers (one
+    // flap, in builds that have the bone) close around the far side.
     const hanging = exercise.anchor === "hands";
-    const grip = hanging ? (100 * Math.PI) / 180 : 0;
+    const DEG = Math.PI / 180;
+    const wristFlex = hanging ? 45 * DEG : 0;
+    const fingerCurl = hanging ? 105 * DEG : 0;
     const { bones, restQ } = rig;
 
     // Where the pelvis goes is decided by whatever is anchored; everything else
@@ -205,7 +211,7 @@ export default function AnatomyFigure({ exercise }: { exercise: Exercise }) {
     let pelvisNew: THREE.Vector3;
     if (exercise.anchor === "hands") {
       // Wrists stay on the bar: shoulder = wrist - upper arm - forearm, each rotated to its world angle.
-      const wristOnBar = new THREE.Vector3(rig.wrist.x, exercise.barHeight ?? 2.3, 0);
+      const wristOnBar = new THREE.Vector3(rig.wrist.x, (exercise.barHeight ?? 2.3) - 0.015, -0.03);
       const upper = rx(rig.elbow.clone().sub(rig.shoulder), -pose.armFwd);
       const fore = rx(rig.wrist.clone().sub(rig.elbow), -(pose.armFwd + elbow));
       const shoulderNew = wristOnBar.sub(upper).sub(fore);
@@ -224,7 +230,9 @@ export default function AnatomyFigure({ exercise }: { exercise: Exercise }) {
       setWorldX(bones[`upper_arm.${S}`], restQ[`upper_arm.${S}`], -pose.armFwd - pose.trunk);
       setWorldX(bones[`forearm.${S}`], restQ[`forearm.${S}`], -elbow);
       if (hanging) bones[`forearm.${S}`].quaternion.multiply(PRONATE);
-      setWorldX(bones[`hand.${S}`], restQ[`hand.${S}`], grip);
+      setWorldX(bones[`hand.${S}`], restQ[`hand.${S}`], wristFlex);
+      const fingers = bones[`fingers.${S}`];
+      if (fingers) setWorldX(fingers, restQ[`fingers.${S}`], fingerCurl);
     }
     setWorldX(bones.neck, restQ.neck, -pose.trunk * 0.8); // keep the gaze roughly level
   });
