@@ -75,5 +75,6 @@ jobs:
           set -e
           code() { curl -s -o /dev/null -w '%{http_code}' "https://exercise-anatomy.gtfoo.com$1"; }
           echo "/ -> $(code /)"
+          echo "/pull-up/ -> $(code /pull-up/)"
           echo "/models/figure.glb -> $(code /models/figure.glb)"
-          [ "$(code /)" = 200 ] && [ "$(code /models/figure.glb)" = 200 ]
+          [ "$(code /)" = 200 ] && [ "$(code /pull-up/)" = 200 ] && [ "$(code /models/figure.glb)" = 200 ]
