@@ -1,7 +1,8 @@
 /**
  * A body pose as WORLD-space sagittal angles, in radians, +Z forward, Y up.
  * Positive means the segment's top tips forward — except `armFwd`, which is
- * the upper arm's swing forward from hanging straight down.
+ * the upper arm's swing forward from hanging straight down (π is overhead),
+ * and `elbow`, which is flexion relative to the upper arm.
  *
  * World angles rather than joint angles so a measured pose (motion capture)
  * and a designed one (a joint-angle function) are the same shape.
@@ -11,6 +12,10 @@ export type Pose = {
   thigh: number;
   trunk: number;
   armFwd: number;
+  /** Elbow flexion, 0 = straight. Optional: the squat never bends it. */
+  elbow?: number;
+  /** World angle of the foot; absent means flat on the floor. */
+  foot?: number;
 };
 
 /** Sampled motion for one rep: `samples[i]` is the pose at t = i / samples.length. Wraps. */
@@ -23,6 +28,8 @@ export type MotionClip = {
 };
 
 const lerp = (a: number, b: number, f: number) => a + (b - a) * f;
+const lerpOpt = (a: number | undefined, b: number | undefined, f: number) =>
+  a === undefined && b === undefined ? undefined : lerp(a ?? 0, b ?? 0, f);
 
 export function poseAt(clip: MotionClip, t: number): Pose {
   const n = clip.samples.length;
@@ -36,5 +43,7 @@ export function poseAt(clip: MotionClip, t: number): Pose {
     thigh: lerp(a.thigh, b.thigh, f),
     trunk: lerp(a.trunk, b.trunk, f),
     armFwd: lerp(a.armFwd, b.armFwd, f),
+    elbow: lerpOpt(a.elbow, b.elbow, f),
+    foot: lerpOpt(a.foot, b.foot, f),
   };
 }

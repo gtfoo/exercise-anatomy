@@ -35,6 +35,12 @@ export type Exercise = {
   muscles: readonly MuscleActivation[];
   /** Captured motion for one rep. Absent means the designed joint-angle function is used. */
   motion?: MotionClip;
+  /** What the body is fixed to. Feet planted on the floor (default), or hands on a bar. */
+  anchor?: "feet" | "hands";
+  /** Bar height in metres when anchored by the hands. */
+  barHeight?: number;
+  /** Where to look from; the default frames a standing figure. */
+  camera?: { position: [number, number, number]; target: [number, number, number] };
   /** Shown under the title. Says what is and is not being claimed. */
   disclaimer: string;
 };

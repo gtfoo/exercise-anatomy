@@ -6,6 +6,7 @@ import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import type { Exercise } from "@/lib/exercises/types";
 import { levelAt } from "@/lib/exercises/types";
+import { designedPose } from "@/lib/kinematics";
 import { squatPose } from "@/lib/kinematics/squat";
 import { poseAt } from "@/lib/kinematics/types";
 import { useViewer } from "@/lib/store";
@@ -14,14 +15,15 @@ import { BONE, COLD, HOT, HIGHLIGHT } from "@/lib/palette";
 /**
  * The rigged écorché built by tools/blender/build_figure.py from Z-Anatomy.
  *
- * Y-up, faces +Z, metres. Every muscle the exercise names is its own skinned
+ * Y-up, faces +Z, metres. Every muscle any exercise names is its own skinned
  * mesh (node name = muscle id); everything else is `context-muscles` and
  * `skeleton`. Bones: pelvis > spine > neck > head, pelvis > thigh.L > shin.L >
  * foot.L (and .R), spine > upper_arm.L > forearm.L > hand.L (and .R).
  *
- * There is no animation clip. The same joint-angle function that drove the
- * procedural figure rotates these bones about the world X axis each frame, and
- * the pelvis is placed wherever the planted left leg puts it.
+ * There is no animation clip. A pose — world-space sagittal angles, captured
+ * or designed — rotates these bones about the world X axis each frame, and
+ * the pelvis is placed wherever the anchored limbs put it: planted feet for a
+ * squat, hands on a bar for a pull-up.
  */
 export const MODEL_URL = "/models/figure.glb";
 
@@ -41,11 +43,14 @@ type Rig = {
   bones: Record<string, THREE.Bone>; // keyed by the Blender names above
   restQ: Record<string, THREE.Quaternion>;
   restPelvisPos: THREE.Vector3;
-  /** Rest-pose world positions of the left leg joints, for planting the feet. */
+  /** Rest-pose world positions of the left-side joints, for anchoring. */
   ankle: THREE.Vector3;
   knee: THREE.Vector3;
   hip: THREE.Vector3;
   pelvis: THREE.Vector3;
+  shoulder: THREE.Vector3;
+  elbow: THREE.Vector3;
+  wrist: THREE.Vector3;
 };
 
 type Live = { materials: Record<string, THREE.MeshStandardMaterial>; rig: Rig | null };
@@ -70,14 +75,15 @@ function setWorldX(bone: THREE.Bone, restLocal: THREE.Quaternion, angle: number)
   bone.quaternion.copy(pw).invert().multiply(qx).multiply(pw).multiply(restLocal);
 }
 
-/** Which app id a mesh belongs to: walk up to the exporter's node name, minus numeric suffixes. */
-function ownerId(mesh: THREE.Object3D, ids: Set<string>): string | null {
-  for (let o: THREE.Object3D | null = mesh; o; o = o.parent) {
-    let n = o.name;
-    while (/[._]?\d+$/.test(n)) n = n.replace(/[._]?\d+$/, "");
-    if (ids.has(n) || n === "context-muscles" || n === "skeleton") return n;
+/** The exporter's node name a mesh belongs to, minus numeric suffixes: a muscle id, "context-muscles" or "skeleton". */
+function ownerName(mesh: THREE.Object3D): string {
+  let top: THREE.Object3D = mesh;
+  for (let o: THREE.Object3D | null = mesh; o && !(o as THREE.Bone).isBone && o.type !== "Scene"; o = o.parent) {
+    if (o.name && !/^(Armature|Scene)$/.test(o.name)) top = o;
   }
-  return null;
+  let n = top.name;
+  while (/[._]?\d+$/.test(n)) n = n.replace(/[._]?\d+$/, "");
+  return n;
 }
 
 /** Rest pose is captured once per loaded scene, so re-running the effect never re-reads a posed skeleton as rest. */
@@ -106,6 +112,9 @@ function getRig(scene: THREE.Group): Rig | null {
       knee: wp(bones["shin.L"]),
       hip: wp(bones["thigh.L"]),
       pelvis: wp(bones.pelvis),
+      shoulder: wp(bones["upper_arm.L"]),
+      elbow: wp(bones["forearm.L"]),
+      wrist: wp(bones["hand.L"]),
     };
   }
   scene.userData.rig = rig;
@@ -128,13 +137,22 @@ export default function AnatomyFigure({ exercise }: { exercise: Exercise }) {
     scene.traverse((o) => {
       const mesh = o as THREE.SkinnedMesh;
       if (!mesh.isSkinnedMesh) return;
-      const id = ownerId(mesh, ids);
-      mesh.userData.muscleId = id;
+      const owner = ownerName(mesh);
       mesh.frustumCulled = false; // rest-pose bounds do not follow the skin
-      if (id && materials[id]) mesh.material = materials[id];
-      // Pointer picking transforms every vertex of a skinned mesh in JS. Only the
-      // 21 targets are clickable; the 300k-vertex context and skeleton are not.
-      if (!id || !ids.has(id)) mesh.raycast = () => {};
+      if (owner === "skeleton") {
+        mesh.userData.muscleId = null;
+        mesh.material = materials.skeleton;
+      } else if (ids.has(owner)) {
+        mesh.userData.muscleId = owner;
+        mesh.material = materials[owner];
+      } else {
+        // A muscle another exercise names, or the merged context: resting, not clickable.
+        mesh.userData.muscleId = null;
+        mesh.material = materials["context-muscles"];
+      }
+      // Pointer picking transforms every vertex of a skinned mesh in JS. Only this
+      // exercise's muscles are clickable; the 300k-vertex context and skeleton are not.
+      if (!mesh.userData.muscleId) mesh.raycast = () => {};
     });
 
     live.current = { materials, rig: getRig(scene) };
@@ -169,21 +187,38 @@ export default function AnatomyFigure({ exercise }: { exercise: Exercise }) {
 
     // --- pose ---
     if (!rig) return;
-    const pose = exercise.motion ? poseAt(exercise.motion, t) : squatPose(t);
+    const pose = exercise.motion ? poseAt(exercise.motion, t) : (designedPose[exercise.slug] ?? squatPose)(t);
+    const elbow = pose.elbow ?? 0;
+    const foot = pose.foot ?? 0;
+    // Hands wrap over the bar when hanging from it; otherwise they follow the forearm.
+    const grip = exercise.anchor === "hands" ? (100 * Math.PI) / 180 : 0;
     const { bones, restQ } = rig;
 
-    // Pelvis goes where the planted left leg puts it, then everything else is FK
-    // from there. setWorldX takes the rotation RELATIVE to the parent's, so each
-    // bone gets (its world angle) minus (its parent's world angle).
-    const hipNew = rig.ankle.clone().add(rx(rig.knee.clone().sub(rig.ankle), pose.shin)).add(rx(rig.hip.clone().sub(rig.knee), pose.thigh));
-    const pelvisNew = hipNew.sub(rx(rig.hip.clone().sub(rig.pelvis), pose.trunk));
+    // Where the pelvis goes is decided by whatever is anchored; everything else
+    // is FK from there. setWorldX takes the rotation RELATIVE to the parent's, so
+    // each bone gets (its world angle) minus (its parent's world angle).
+    let pelvisNew: THREE.Vector3;
+    if (exercise.anchor === "hands") {
+      // Wrists stay on the bar: shoulder = wrist - upper arm - forearm, each rotated to its world angle.
+      const wristOnBar = new THREE.Vector3(rig.wrist.x, exercise.barHeight ?? 2.3, 0);
+      const upper = rx(rig.elbow.clone().sub(rig.shoulder), -pose.armFwd);
+      const fore = rx(rig.wrist.clone().sub(rig.elbow), -(pose.armFwd + elbow));
+      const shoulderNew = wristOnBar.sub(upper).sub(fore);
+      pelvisNew = shoulderNew.sub(rx(rig.shoulder.clone().sub(rig.pelvis), pose.trunk));
+    } else {
+      // Feet stay planted: hip = ankle + shin + thigh, each rotated to its world angle.
+      const hipNew = rig.ankle.clone().add(rx(rig.knee.clone().sub(rig.ankle), pose.shin)).add(rx(rig.hip.clone().sub(rig.knee), pose.thigh));
+      pelvisNew = hipNew.sub(rx(rig.hip.clone().sub(rig.pelvis), pose.trunk));
+    }
     bones.pelvis.position.copy(rig.restPelvisPos).add(pelvisNew.sub(rig.pelvis));
     setWorldX(bones.pelvis, restQ.pelvis, pose.trunk);
     for (const S of ["L", "R"] as const) {
       setWorldX(bones[`thigh.${S}`], restQ[`thigh.${S}`], pose.thigh - pose.trunk);
       setWorldX(bones[`shin.${S}`], restQ[`shin.${S}`], pose.shin - pose.thigh);
-      setWorldX(bones[`foot.${S}`], restQ[`foot.${S}`], -pose.shin); // feet stay flat
+      setWorldX(bones[`foot.${S}`], restQ[`foot.${S}`], foot - pose.shin);
       setWorldX(bones[`upper_arm.${S}`], restQ[`upper_arm.${S}`], -pose.armFwd - pose.trunk);
+      setWorldX(bones[`forearm.${S}`], restQ[`forearm.${S}`], -elbow);
+      setWorldX(bones[`hand.${S}`], restQ[`hand.${S}`], grip);
     }
     setWorldX(bones.neck, restQ.neck, -pose.trunk * 0.8); // keep the gaze roughly level
   });
@@ -193,7 +228,7 @@ export default function AnatomyFigure({ exercise }: { exercise: Exercise }) {
       object={scene}
       onPointerOver={(e: { object: THREE.Object3D; stopPropagation: () => void }) => {
         const id = e.object.userData.muscleId as string | null;
-        if (!id || !ids.has(id)) return;
+        if (!id) return;
         e.stopPropagation();
         setHovered(id);
         document.body.style.cursor = "pointer";
@@ -204,7 +239,7 @@ export default function AnatomyFigure({ exercise }: { exercise: Exercise }) {
       }}
       onClick={(e: { object: THREE.Object3D; stopPropagation: () => void }) => {
         const id = e.object.userData.muscleId as string | null;
-        if (!id || !ids.has(id)) return;
+        if (!id) return;
         e.stopPropagation();
         setSelected(id);
       }}

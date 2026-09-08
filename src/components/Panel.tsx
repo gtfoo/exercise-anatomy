@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
+import Link from "next/link";
 import type { Exercise, MuscleActivation } from "@/lib/exercises/types";
 import { ROLE_LABEL, levelAt, phaseAt } from "@/lib/exercises/types";
+import { exercises, routeFor } from "@/lib/exercises";
 import { rampCss } from "@/lib/palette";
 import { useViewer } from "@/lib/store";
 
@@ -44,6 +46,19 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
   return (
     <aside className="flex w-80 shrink-0 flex-col gap-5 overflow-y-auto border-l border-zinc-200 bg-white p-5 text-zinc-800">
       <header>
+        <nav className="mb-2 flex flex-wrap gap-x-3 text-xs uppercase tracking-wide" aria-label="Exercises">
+          {exercises.map((e) =>
+            e.slug === exercise.slug ? (
+              <span key={e.slug} className="font-medium text-zinc-900" aria-current="page">
+                {e.name}
+              </span>
+            ) : (
+              <Link key={e.slug} href={routeFor(e)} className="text-zinc-400 hover:text-zinc-700">
+                {e.name}
+              </Link>
+            ),
+          )}
+        </nav>
         <h1 className="text-lg font-semibold tracking-tight text-zinc-900">{exercise.name}</h1>
         <p className="mt-1 text-xs leading-relaxed text-zinc-500">{exercise.disclaimer}</p>
       </header>

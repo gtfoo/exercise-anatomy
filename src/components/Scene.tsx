@@ -47,11 +47,31 @@ function FloorShadow() {
   );
 }
 
+/** A pull-up bar on two posts, at the height the exercise hangs from. */
+function Bar({ height }: { height: number }) {
+  const steel = useMemo(() => new THREE.MeshStandardMaterial({ color: "#5a5652", roughness: 0.45, metalness: 0.6 }), []);
+  return (
+    <group>
+      <mesh material={steel} position={[0, height, 0]} rotation-z={Math.PI / 2}>
+        <cylinderGeometry args={[0.017, 0.017, 1.5, 24]} />
+      </mesh>
+      {[-0.7, 0.7].map((x) => (
+        <mesh key={x} material={steel} position={[x, height / 2, 0]}>
+          <cylinderGeometry args={[0.022, 0.022, height, 16]} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
 export default function Scene({ exercise }: { exercise: Exercise }) {
+  // Near-side view: the sagittal chain reads best from here. Exercises can override.
+  const position = exercise.camera?.position ?? [3.0, 1.25, 1.1];
+  const target = exercise.camera?.target ?? [0, 0.85, 0];
   return (
     <Canvas
       dpr={[1, 1.5]}
-      camera={{ position: [3.0, 1.25, 1.1], fov: 40 }} // near-side view: the sagittal chain reads best from here
+      camera={{ position, fov: 40 }}
       onPointerMissed={() => useViewer.getState().setSelected(null)}
     >
       <color attach="background" args={[STUDIO]} />
@@ -64,15 +84,9 @@ export default function Scene({ exercise }: { exercise: Exercise }) {
         <AnatomyFigure exercise={exercise} />
       </Suspense>
       <Ticker durationMs={exercise.durationMs} />
-      <FloorShadow />
+      {exercise.anchor === "hands" ? <Bar height={exercise.barHeight ?? 2.3} /> : <FloorShadow />}
 
-      <OrbitControls
-        target={[0, 0.85, 0]}
-        minDistance={1.2}
-        maxDistance={7}
-        maxPolarAngle={Math.PI / 2 - 0.02}
-        enablePan={false}
-      />
+      <OrbitControls target={target} minDistance={1.2} maxDistance={7} maxPolarAngle={Math.PI / 2 - 0.02} enablePan={false} />
     </Canvas>
   );
 }

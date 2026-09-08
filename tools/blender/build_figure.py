@@ -59,6 +59,28 @@ TARGETS = {
     "rectus-abdominis": ["Rectus abdominis muscle"],
     "external-obliques": ["re:^External (abdominal )?oblique"],
     "transversus-abdominis": ["Transversus abdominis muscle"],
+    # Pull-up
+    "latissimus-dorsi": ["Latissimus dorsi muscle"],
+    "teres-major": ["Teres major muscle"],
+    "teres-minor": ["Teres minor muscle"],
+    "infraspinatus": ["Infraspinatus muscle"],
+    "biceps-brachii": ["Long head of biceps brachii", "Short head of biceps brachii"],
+    "brachialis": ["Brachialis muscle"],
+    "brachioradialis": ["Brachioradialis muscle"],
+    "posterior-deltoid": ["Scapular spinal part of deltoid muscle"],
+    "lower-trapezius": ["Ascending part of trapezius muscle"],
+    "middle-trapezius": ["Transverse part of trapezius muscle"],
+    "rhomboids": ["Rhomboid major muscle", "Rhomboid minor muscle"],
+    "pectoralis-major": ["Sternocostal head of pectoralis major muscle", "Clavicular head of pectoralis major muscle"],
+    "triceps-long-head": ["Long head of triceps brachii"],
+    "forearm-flexors": [
+        "Flexor digitorum profundus",
+        "Humero-ulnar head of flexor digitorum superficialis",
+        "Radial head of flexor digitorum superficialis",
+        "Flexor carpi radialis",
+        "Humeral head of flexor carpi ulnaris",
+        "Ulnar head of flexor carpi ulnaris",
+    ],
 }
 
 # Not muscle bellies, or bellies nobody can see from outside (inner intercostal
@@ -253,6 +275,7 @@ for mid, names in targets.items():
 ctx, ctx_ranges = merge("context-muscles", [O[n] for n in context_names])
 skel, skel_ranges = merge("skeleton", [O[n] for n in skeleton_names])
 pending += [(ctx, ctx_ranges, BUDGET_CONTEXT, False), (skel, skel_ranges, BUDGET_SKELETON, True)]
+pending_names = {skel.name: skeleton_names}
 built += [ctx, skel]
 
 # Everything from the atlas goes; only our meshes remain. Frees memory too.
@@ -312,6 +335,8 @@ heads = np.array([np.array(joints[BONES[n][0]]) for n in seg_names])
 tails = np.array([np.array(joints[BONES[n][1]]) for n in seg_names])
 radii = np.array([ENVELOPE[n.split(".")[0]] for n in seg_names])
 HIP_Z = joints["hip.l"].z
+KNEE_Z = joints["knee.l"].z
+ANKLE_Z = joints["ankle.l"].z
 SHOULDER_Z = joints["shoulder.l"].z
 FAR = 1e3
 
@@ -357,22 +382,45 @@ def eff_dist(P):
     return d
 
 
-def assign_weights(obj, ranges, rigid):
+# Bones whose centroid sits on a joint line and which the envelope rule would
+# hand to the wrong segment. The patella is equidistant from femur and tibia and
+# fell to the femur; at deep flexion that put it on top of the knee instead of
+# in front of the condyles, where following the tibia leaves it.
+RIGID_OVERRIDE = {"patella": "shin"}
+
+
+def assign_weights(obj, ranges, rigid, names=None):
     P = world_verts(obj)
     n = len(P)
     if rigid:
         # One bone per source object, chosen by its centroid: a rib or a hip bone never tears.
         order = np.zeros((n, 2), dtype=int)
-        for start, count in ranges:
+        for k, (start, count) in enumerate(ranges):
             c = P[start : start + count].mean(axis=0, keepdims=True)
-            order[start : start + count, 0] = int(np.argmin(eff_dist(c)[0]))
+            bone = int(np.argmin(eff_dist(c)[0]))
+            name = (names[k] if names else "").lower()
+            for prefix, seg in RIGID_OVERRIDE.items():
+                if name.startswith(prefix):
+                    side = "L" if name.endswith(".l") else "R" if name.endswith(".r") else None
+                    if side:
+                        bone = seg_names.index("%s.%s" % (seg, side))
+            order[start : start + count, 0] = bone
         w1 = np.ones(n)
     else:
         d = eff_dist(P)
         order = np.argsort(d, axis=1)[:, :2]
         d1 = d[np.arange(n), order[:, 0]]
         d2 = d[np.arange(n), order[:, 1]]
-        s = np.clip((d2 - d1) / BLEND_WIDTH, 0, 1)  # 0 at equal distance, 1 beyond the blend width
+        # Blend width per joint. Wide at the hip, where a narrow blend put a fold
+        # across the glutes; narrow at the knee and ankle, where a wide one let
+        # linear-blend skinning thin the two-joint calf and quad muscles enough
+        # for the condyles and fibula head to poke through at deep flexion.
+        z = P[:, 2]
+        bw = np.full(n, BLEND_WIDTH * 0.75)
+        bw[np.abs(z - KNEE_Z) < 0.12] = BLEND_WIDTH * 0.5
+        bw[np.abs(z - ANKLE_Z) < 0.10] = BLEND_WIDTH * 0.5
+        bw[np.abs(z - HIP_Z) < 0.15] = BLEND_WIDTH
+        s = np.clip((d2 - d1) / bw, 0, 1)  # 0 at equal distance, 1 beyond the blend width
         w1 = 0.5 + 0.5 * (s * s * (3 - 2 * s))  # smoothstep: no kink where the blend starts or ends
     w2 = 1 - w1
     groups = {n: obj.vertex_groups.new(name=n) for n in seg_names}
@@ -416,7 +464,7 @@ def smooth_weights(obj, repeat=8, factor=0.5):
 
 for obj, ranges, budget, rigid in pending:
     n0 = len(obj.data.vertices)
-    assign_weights(obj, ranges, rigid)
+    assign_weights(obj, ranges, rigid, pending_names.get(obj.name))
     n1 = decimate(obj, budget)
     smoothed = False if rigid else smooth_weights(obj)
     print("  %-24s %7d -> %6d verts, weighted%s" % (obj.name, n0, n1, " (rigid per bone)" if rigid else (", smoothed" if smoothed else "")))
