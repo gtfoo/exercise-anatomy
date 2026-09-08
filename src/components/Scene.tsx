@@ -66,8 +66,15 @@ function Bar({ height }: { height: number }) {
 
 export default function Scene({ exercise }: { exercise: Exercise }) {
   // Near-side view: the sagittal chain reads best from here. Exercises can override.
-  const position = exercise.camera?.position ?? [3.0, 1.25, 1.1];
+  // A narrow (portrait) viewport gets the camera closer, or the figure is a
+  // sliver in the top half of a phone screen. Read once: this file is
+  // client-only and the Canvas takes its camera at mount.
   const target = exercise.camera?.target ?? [0, 0.85, 0];
+  const base = exercise.camera?.position ?? [3.0, 1.25, 1.1];
+  const narrow = typeof window !== "undefined" && window.innerWidth < 768;
+  const position: [number, number, number] = narrow
+    ? [target[0] + (base[0] - target[0]) * 0.8, target[1] + (base[1] - target[1]) * 0.8, target[2] + (base[2] - target[2]) * 0.8]
+    : base;
   return (
     <Canvas
       dpr={[1, 1.5]}

@@ -44,7 +44,7 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
   }, [exercise]);
 
   return (
-    <aside className="flex w-80 shrink-0 flex-col gap-5 overflow-y-auto border-l border-zinc-200 bg-white p-5 text-zinc-800">
+    <aside className="flex min-h-0 w-full flex-1 flex-col gap-4 overflow-y-auto border-t border-zinc-200 bg-white p-4 text-zinc-800 md:w-80 md:flex-none md:gap-5 md:border-t-0 md:border-l md:p-5">
       <header>
         <nav className="mb-2 flex flex-wrap gap-x-3 text-xs uppercase tracking-wide" aria-label="Exercises">
           {exercises.map((e) =>
@@ -60,7 +60,7 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
           )}
         </nav>
         <h1 className="text-lg font-semibold tracking-tight text-zinc-900">{exercise.name}</h1>
-        <p className="mt-1 text-xs leading-relaxed text-zinc-500">{exercise.disclaimer}</p>
+        <p className="mt-1 line-clamp-3 text-xs leading-relaxed text-zinc-500 md:line-clamp-none">{exercise.disclaimer}</p>
       </header>
 
       <section className="flex flex-col gap-2">
