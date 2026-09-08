@@ -64,6 +64,16 @@ function Bar({ height }: { height: number }) {
   );
 }
 
+/** A translucent surface: the figure is drawn through it, which is what a swimmer at the surface looks like. */
+function Water({ level }: { level: number }) {
+  return (
+    <mesh rotation-x={-Math.PI / 2} position={[0, level, 0]}>
+      <planeGeometry args={[10, 10]} />
+      <meshStandardMaterial color="#8fc1de" transparent opacity={0.42} roughness={0.2} metalness={0.1} depthWrite={false} side={THREE.DoubleSide} />
+    </mesh>
+  );
+}
+
 export default function Scene({ exercise }: { exercise: Exercise }) {
   // Near-side view: the sagittal chain reads best from here. Exercises can override.
   // A narrow (portrait) viewport gets the camera closer, or the figure is a
@@ -91,7 +101,8 @@ export default function Scene({ exercise }: { exercise: Exercise }) {
         <AnatomyFigure exercise={exercise} />
       </Suspense>
       <Ticker durationMs={exercise.durationMs} />
-      {exercise.anchor === "hands" ? <Bar height={exercise.barHeight ?? 2.3} /> : <FloorShadow />}
+      {exercise.anchor === "hands" && <Bar height={exercise.barHeight ?? 2.3} />}
+      {exercise.environment === "water" ? <Water level={exercise.waterLevel ?? 0.95} /> : exercise.anchor !== "hands" && <FloorShadow />}
 
       <OrbitControls target={target} minDistance={1.2} maxDistance={7} maxPolarAngle={Math.PI / 2 - 0.02} enablePan={false} />
     </Canvas>

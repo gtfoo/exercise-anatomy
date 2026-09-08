@@ -24,7 +24,7 @@ export type MuscleActivation = {
 
 export type Phase = { name: string; t0: number; t1: number };
 
-import type { MotionClip } from "@/lib/kinematics/types";
+import type { MotionClip, MotionClip3D } from "@/lib/kinematics/types";
 
 export type Exercise = {
   slug: string;
@@ -33,12 +33,19 @@ export type Exercise = {
   durationMs: number;
   phases: readonly Phase[];
   muscles: readonly MuscleActivation[];
-  /** Captured motion for one rep. Absent means the designed joint-angle function is used. */
+  /** Captured motion for one rep as four sagittal angles. Absent means the designed joint-angle function is used. */
   motion?: MotionClip;
-  /** What the body is fixed to. Feet planted on the floor (default), or hands on a bar. */
-  anchor?: "feet" | "hands";
+  /** Full 3D motion for one cycle. When present it drives the figure; `motion` still feeds the activation estimate. */
+  motion3d?: MotionClip3D;
+  /** What the body is fixed to: feet on the floor (default), hands on a bar, or nothing (root follows the clip). */
+  anchor?: "feet" | "hands" | "free";
   /** Bar height in metres when anchored by the hands. */
   barHeight?: number;
+  /** Added to the root when free: where to put a body the clip does not place (a swimmer at the surface). */
+  rootOffset?: [number, number, number];
+  /** Floor by default; water draws a surface at `waterLevel` and no floor shadow. */
+  environment?: "floor" | "water";
+  waterLevel?: number;
   /** Where to look from; the default frames a standing figure. */
   camera?: { position: [number, number, number]; target: [number, number, number] };
   /** Shown under the title. Says what is and is not being claimed. */

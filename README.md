@@ -1,8 +1,8 @@
 # Exercise anatomy
 
 Which muscles work, and when, through a movement — shown on a rigged écorché
-you can orbit and scrub. Two exercises: the bodyweight squat (`/`) and the
-pull-up (`/pull-up`).
+you can orbit and scrub. Three exercises: the bodyweight squat (`/`), the
+pull-up (`/pull-up`) and freestyle swimming (`/freestyle`).
 
 ## Adding an exercise
 
@@ -22,10 +22,11 @@ pull-up (`/pull-up`).
   the exercise names is its own skinned mesh; the rest of the muscular system
   and the skeleton are two more. No hand work in Blender: the pipeline is
   re-runnable.
-- **The movement** is a joint-angle function, `src/lib/kinematics/squat.ts`,
-  not an animation clip. `AnatomyFigure.tsx` rotates the model's bones from it
-  every frame and places the pelvis where the planted feet put it. Changing the
-  squat means changing four numbers.
+- **The movement** is either a captured clip retargeted onto the rig as
+  per-bone rotations (`tools/mocap/extract_pose3d.py`; squat and freestyle) or
+  a designed joint-angle function (pull-up). `AnatomyFigure.tsx` applies it
+  every frame and then places the body by its anchor — feet on the floor,
+  hands on a bar, or free in the water — by evaluating the posed skeleton.
 - **The activation** is `src/lib/exercises/squat.ts`: each muscle gets a role —
   prime mover, synergist, stabiliser — and a relative curve shaped to that
   role. **It is qualitative.** No muscle carries a `source`, and the UI prints a

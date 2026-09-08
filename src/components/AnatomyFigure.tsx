@@ -8,7 +8,7 @@ import type { Exercise } from "@/lib/exercises/types";
 import { levelAt } from "@/lib/exercises/types";
 import { designedPose } from "@/lib/kinematics";
 import { squatPose } from "@/lib/kinematics/squat";
-import { poseAt } from "@/lib/kinematics/types";
+import { poseAt, poseAt3D } from "@/lib/kinematics/types";
 import { useViewer } from "@/lib/store";
 import { BONE, COLD, HOT, HIGHLIGHT } from "@/lib/palette";
 
@@ -43,7 +43,8 @@ const highlight = new THREE.Color(HIGHLIGHT);
 
 type Rig = {
   bones: Record<string, THREE.Bone>; // keyed by the Blender names above
-  restQ: Record<string, THREE.Quaternion>;
+  restQ: Record<string, THREE.Quaternion>; // rest LOCAL orientation
+  restW: Record<string, THREE.Quaternion>; // rest WORLD orientation
   restPelvisPos: THREE.Vector3;
   /** Rest-pose world positions of the left-side joints, for anchoring. */
   ankle: THREE.Vector3;
@@ -69,15 +70,42 @@ const tmpQ2 = new THREE.Quaternion();
 /** Half a turn about a bone's own length axis (Blender bones point along local Y): forearm pronation. */
 const PRONATE = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
 
-/** Rotate a bone about the WORLD X axis by `angle`, relative to its rest pose. Parent must already be posed. */
-function setWorldX(bone: THREE.Bone, restLocal: THREE.Quaternion, angle: number) {
+/**
+ * Rotate a bone by `q` (world axes) ON TOP OF whatever its parent already has:
+ * the world orientation becomes q * (parent world) * (rest local). This is the
+ * relative form the sagittal angles use, where each angle is measured against
+ * the parent segment. Parent must already be posed.
+ */
+function setWorld(bone: THREE.Bone, restLocal: THREE.Quaternion, q: THREE.Quaternion) {
   const parent = bone.parent;
   if (!parent) return;
   const pw = worldQuat(parent, tmpQ);
-  const qx = tmpQ2.setFromAxisAngle(X, angle);
-  // local = pw^-1 * qx * pw * rest
-  bone.quaternion.copy(pw).invert().multiply(qx).multiply(pw).multiply(restLocal);
+  // local = pw^-1 * q * pw * rest
+  bone.quaternion.copy(pw).invert().multiply(q).multiply(pw).multiply(restLocal);
 }
+
+/**
+ * Give a bone the ABSOLUTE world orientation q * (its rest world orientation),
+ * whatever the parent is doing. This is what a retargeted clip carries: each
+ * bone's rotation from rest, measured in world axes. Parent must already be posed.
+ */
+function setWorldAbsolute(bone: THREE.Bone, restWorld: THREE.Quaternion, q: THREE.Quaternion) {
+  const parent = bone.parent;
+  if (!parent) return;
+  const pw = worldQuat(parent, tmpQ);
+  // local = pw^-1 * q * restWorld
+  bone.quaternion.copy(pw).invert().multiply(q).multiply(restWorld);
+}
+
+/** Rotate a bone about the WORLD X axis by `angle`, relative to its rest pose. Parent must already be posed. */
+function setWorldX(bone: THREE.Bone, restLocal: THREE.Quaternion, angle: number) {
+  setWorld(bone, restLocal, tmpQ2.setFromAxisAngle(X, angle));
+}
+
+/** Parent-first order for applying a 3D pose. */
+const POSE3D_ORDER = ["pelvis", "spine", "neck", "head", "thigh.L", "shin.L", "foot.L", "thigh.R", "shin.R", "foot.R", "upper_arm.L", "forearm.L", "hand.L", "upper_arm.R", "forearm.R", "hand.R"];
+const tmpQ3 = new THREE.Quaternion();
+const tmpV = new THREE.Vector3();
 
 /** The exporter's node name a mesh belongs to, minus numeric suffixes: a muscle id, "context-muscles" or "skeleton". */
 function ownerName(mesh: THREE.Object3D): string {
@@ -106,11 +134,16 @@ function getRig(scene: THREE.Group): Rig | null {
   } else {
     scene.updateMatrixWorld(true);
     const restQ: Record<string, THREE.Quaternion> = {};
-    for (const n of Object.keys(bones)) restQ[n] = bones[n].quaternion.clone();
+    const restW: Record<string, THREE.Quaternion> = {};
+    for (const n of Object.keys(bones)) {
+      restQ[n] = bones[n].quaternion.clone();
+      restW[n] = bones[n].getWorldQuaternion(new THREE.Quaternion());
+    }
     const wp = (b: THREE.Bone) => b.getWorldPosition(new THREE.Vector3());
     rig = {
       bones,
       restQ,
+      restW,
       restPelvisPos: bones.pelvis.position.clone(),
       ankle: wp(bones["foot.L"]),
       knee: wp(bones["shin.L"]),
@@ -191,6 +224,38 @@ export default function AnatomyFigure({ exercise }: { exercise: Exercise }) {
 
     // --- pose ---
     if (!rig) return;
+    const { bones: allBones, restQ: allRest } = rig;
+    const hanging3d = exercise.anchor === "hands";
+
+    if (exercise.motion3d) {
+      // Full 3D: every bone gets its captured world rotation; the root is then
+      // placed by the anchor, found by evaluating the posed skeleton rather than
+      // by any per-plane arithmetic.
+      const p = poseAt3D(exercise.motion3d, t);
+      allBones.pelvis.position.copy(rig.restPelvisPos);
+      for (const n of POSE3D_ORDER) {
+        const b = allBones[n];
+        if (!b) continue;
+        const q = p.q[n];
+        setWorldAbsolute(b, rig.restW[n], q ? tmpQ3.set(q[0], q[1], q[2], q[3]) : tmpQ3.identity());
+      }
+      for (const S of ["L", "R"] as const) {
+        const fingers = allBones[`fingers.${S}`];
+        if (fingers) setWorldX(fingers, allRest[`fingers.${S}`], hanging3d ? (105 * Math.PI) / 180 : 0);
+      }
+      if (exercise.anchor === "free") {
+        const o = exercise.rootOffset ?? [0, 0, 0];
+        allBones.pelvis.position.add(tmpV.set(p.root[0] + o[0], p.root[1] + o[1], p.root[2] + o[2]));
+      } else {
+        // Planted foot or bar-held wrist: shift the whole body so that reference point lands where it must.
+        const ref = hanging3d ? allBones["hand.L"] : allBones["foot.L"];
+        const target = hanging3d ? tmpV.set(rig.wrist.x, (exercise.barHeight ?? 2.3) - 0.015, -0.03) : tmpV.copy(rig.ankle);
+        const cur = ref.getWorldPosition(new THREE.Vector3());
+        allBones.pelvis.position.add(target.sub(cur));
+      }
+      return;
+    }
+
     const pose = exercise.motion ? poseAt(exercise.motion, t) : (designedPose[exercise.slug] ?? squatPose)(t);
     const elbow = pose.elbow ?? 0;
     const foot = pose.foot ?? 0;

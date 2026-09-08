@@ -1,9 +1,23 @@
-# Motion capture → joint angles
+# Motion capture → the figure
 
-Turns a captured clip into the four world-space sagittal angles the app
-animates (`shin`, `thigh`, `trunk`, `armFwd`; see `src/lib/kinematics/types.ts`).
-No retargeting: the clip's own skeleton is read and the angles are measured
-from joint positions, so the app never sees a foreign rig.
+Two extractors, both working from the clip's joint positions so no foreign
+skeleton ever reaches the app:
+
+- `extract_pose3d.py` — **the general one.** One cycle of any motion as
+  per-bone world rotations for the rig plus root motion (`MotionClip3D`).
+  Handles roll, alternating limbs, arms out of the sagittal plane; finds the
+  cycle by autocorrelation of the left wrist's forward travel (`--cycle
+  START:END` to override, `all` for a single rep). Needs `rig-joints.json`,
+  copied from `tools/blender/out/joints.json` after a figure rebuild. Limb
+  twist (pronation) is not recovered. Drives the figure when an exercise has
+  `motion3d`.
+- `extract_angles.py` — the four world-space sagittal angles (`shin`, `thigh`,
+  `trunk`, `armFwd`). Still the input to the activation estimate, which is
+  planar.
+
+Sources so far: Mixamo *Air Squat* (both extractors) and CMU subject 126 trial
+12, freestyle (3D only; captured on land with the subject miming the stroke).
+CMU terms: free for any use, credit "CMU Graphics Lab Motion Capture Database".
 
 ## Inputs (not in git)
 

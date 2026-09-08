@@ -1,6 +1,8 @@
 import type { CurvePoint, Exercise } from "./types";
+import type { MotionClip3D } from "@/lib/kinematics/types";
 import { withEstimatedActivation, type EstimatedActivation } from "./estimated";
 import motion from "@/lib/motion/bodyweight-squat.json";
+import motion3d from "@/lib/motion/bodyweight-squat-3d.json";
 import estimated from "@/lib/activation/bodyweight-squat.json";
 
 // Curves are qualitative: shape and relative ordering by role, not measured
@@ -25,8 +27,11 @@ const baseline: Exercise = {
   slug: "bodyweight-squat",
   name: "Bodyweight squat",
   durationMs: 3200, // the OpenSim run analyses the rep at this tempo; keep the two in step
-  // One captured rep (tools/mocap). Remove this line to fall back to the designed joint-angle function.
+  // One captured rep (tools/mocap). `motion` (four sagittal angles) feeds the
+  // activation estimate; `motion3d` (per-bone rotations from the same clip)
+  // drives the figure. Remove both to fall back to the designed joint-angle function.
   motion,
+  motion3d: motion3d as unknown as MotionClip3D, // JSON arrays are number[] to TypeScript; the extractor guarantees the shapes
   disclaimer:
     "Lower-limb activation is estimated by musculoskeletal simulation of the captured movement; trunk muscles are shown qualitatively by role. Nothing here is measured EMG. Educational illustration, not training or medical advice.",
   phases: [

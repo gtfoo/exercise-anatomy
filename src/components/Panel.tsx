@@ -152,7 +152,7 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
           Z-Anatomy
         </a>{" "}
         — The libre 3D atlas of anatomy — CC-BY-SA 4.0. The adapted model is shared under the same licence.
-        {exercise.motion?.credit && <> Movement captured from {exercise.motion.credit}.</>}
+        {(exercise.motion3d?.credit ?? exercise.motion?.credit) && <> Movement captured from {exercise.motion3d?.credit ?? exercise.motion?.credit}.</>}
       </footer>
     </aside>
   );
