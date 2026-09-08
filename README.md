@@ -1,7 +1,19 @@
 # Exercise anatomy
 
 Which muscles work, and when, through a movement — shown on a rigged écorché
-you can orbit and scrub. One exercise so far: the bodyweight squat.
+you can orbit and scrub. Two exercises: the bodyweight squat (`/`) and the
+pull-up (`/pull-up`).
+
+## Adding an exercise
+
+1. If it uses muscles the figure does not yet name, add them to `TARGETS` in
+   `tools/blender/build_figure.py` (`find_muscles.py` gives the atlas names)
+   and rebuild. Muscles one exercise names render as resting in the others.
+2. A designed joint-angle function in `src/lib/kinematics/` registered by slug
+   in `index.ts` — or a captured clip via `tools/mocap/`.
+3. The exercise file in `src/lib/exercises/`: phases, muscles with roles and
+   notes, the anchor (`feet` or `hands`), a camera. Add it to `index.ts` for
+   the switcher, and a one-line page under `src/app/<slug>/`.
 
 ## How it works
 
@@ -54,11 +66,14 @@ Production is a static export (`npm run build` → `out/`) served by Caddy at
   (`tools/opensim/`). Labelled *estimated, not measured* — the ground reaction
   is derived from the motion, not a force plate, and static optimisation
   under-predicts co-contraction (hamstrings read low).
-- **Trunk activation:** qualitative by role; the model has no trunk muscles.
+- **Trunk activation, and the whole pull-up:** qualitative by role; the model
+  has no trunk, arm or shoulder muscles.
 
 ## Next
 
 1. Content-hashed model filename, so the droplet can cache it as immutable.
-2. A second exercise, to find out what in `squat.ts` is really per-exercise.
+2. A captured pull-up clip, if Mixamo has a usable one — the hands-anchored
+   kinematics take a clip the same way the squat does, once the extractor
+   also reads the elbow.
 3. Cited EMG (%MVIC with conditions) where a paper exists — the third
    provenance the UI already knows how to show.

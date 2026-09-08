@@ -32,9 +32,16 @@ Opening the 307 MB atlas takes a few minutes; the rest is under a minute.
 ## What `build_figure.py` decides
 
 - **Which meshes.** `TARGETS` maps each app muscle id to Z-Anatomy object names
-  (both sides merged into one mesh named by the id). Every other real muscle
-  becomes `context-muscles`; the skeleton becomes `skeleton`. Bursae, sheaths,
-  fasciae and the `.j/.i/.g/.ol/.or/.el/.er` label objects are dropped.
+  (both sides merged into one mesh named by the id) — the union of every
+  exercise's muscles, since the app renders any named muscle an exercise does
+  not use as resting. `find_muscles.py` looks names up. Every other real
+  muscle becomes `context-muscles`; the skeleton becomes `skeleton`. Bursae,
+  sheaths, fasciae and the `.j/.i/.g/.ol/.or/.el/.er` label objects are
+  dropped.
+- **Rigid overrides.** `RIGID_OVERRIDE` pins skeleton parts whose centroid sits
+  on a joint line to the right bone by name; the patella was equidistant from
+  femur and tibia, fell to the femur, and at deep flexion sat on top of the
+  knee.
 - **Joints come from the bones.** Femoral head, condyles, talus, humeral head
   and so on are centroids of the actual bone meshes, so the armature fits the
   model instead of the model being fitted to a guessed armature.

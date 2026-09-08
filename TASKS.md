@@ -19,11 +19,17 @@ letter and a one-line task strands the *why*.
       `/models/*` becomes `Cache-Control: immutable` for a year.
       `from: droplet · MAIL-ARCHIVE.md#held-the-caddy-host-block`
 
-- [ ] **Owner to confirm the calf.** Per-joint blend widths rebuilt the figure
-      on 2026-09-07 after the fibula head showed through the lateral
-      gastrocnemius at deep flexion; the side view at the bottom looks clean to
-      me, but the owner spotted it and should be the one to close it.
-      `from: owner, 2026-09-07 · screenshot at 39% of the rep`
+- [ ] **Owner to confirm the calf and the kneecaps.** Per-joint blend widths
+      (2026-09-07) for the fibula head showing through the lateral
+      gastrocnemius; the patella pinned to the tibia (2026-09-08) after it
+      followed the femur onto the top of the knee. Both look clean to me at the
+      bottom of the squat; the owner spotted both and should close them.
+      `from: owner, 2026-09-07/08 · screenshots at 39% and 52% of the rep`
+
+- [ ] **Extractor: read the elbow.** `tools/mocap/extract_angles.py` measures
+      four angles; a captured pull-up needs elbow flexion too (and the foot).
+      `Pose` already carries both.
+      `from: exercise-anatomy, 2026-09-08 · pull-up kinematics are designed, not captured`
 
 - [ ] **Case study on gtfoo.com** — `/products/exercise-anatomy`, three edits in
       the parent repo, once the site is live. The parent's own rules apply.
