@@ -269,6 +269,9 @@ export default function AnatomyFigure({ exercise }: { exercise: Exercise }) {
     const wristFlex = hanging ? 45 * DEG : 0;
     const fingerCurl = hanging ? 105 * DEG : 0;
     const { bones, restQ } = rig;
+    // The loaded model is shared across pages, so bones this player never
+    // touches (spine, head) would otherwise keep the last 3D clip's rotation.
+    for (const n in restQ) bones[n]?.quaternion.copy(restQ[n]);
 
     // Where the pelvis goes is decided by whatever is anchored; everything else
     // is FK from there. setWorldX takes the rotation RELATIVE to the parent's, so
