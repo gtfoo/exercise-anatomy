@@ -17,10 +17,23 @@ letter and a one-line task strands the *why*.
       bottom of the squat; the owner spotted both and should close them.
       `from: owner, 2026-09-07/08 · screenshots at 39% and 52% of the rep`
 
-- [ ] **Extractor: read the elbow.** `tools/mocap/extract_angles.py` measures
-      four angles; a captured pull-up needs elbow flexion too (and the foot).
-      `Pose` already carries both.
-      `from: exercise-anatomy, 2026-09-08 · pull-up kinematics are designed, not captured`
+- [ ] **A model that can squat below 120° and pull itself up.** MyoFullBody's
+      knee stops at 120° and its ankle at 30° of dorsiflexion, so the bottom
+      of the squat is the model's deepest, not the figure's, and the knee
+      reserve there is ~70 N m; its generic arms cannot make the pull-up's
+      shoulder torque (reserves ~110 N m), so every arm muscle reads maximal.
+      Options: widen the ranges in a patched MJCF (the muscle paths may not
+      survive it), or scale strength to a stronger subject and say so.
+      `from: exercise-anatomy, 2026-09-09 · tools/myo/README.md`
+
+- [ ] **Limb twist and foot pitch in the 3D retargeter.** `extract_pose3d.py`
+      recovers each segment's direction, not its roll; forearm pronation and
+      hand orientation are lost, and a captured pull-up would show the wrong
+      grip. It also pitches the squat's foot ~20° toes-down (the toe tip is
+      1.3 cm under the floor at every frame); the estimator holds the feet flat
+      instead, the viewer does not. Source orientations relative to a matched
+      rest pose would fix both.
+      `from: exercise-anatomy, 2026-09-08/09 · tools/mocap/README.md, tools/myo/README.md`
 
 - [ ] **Case study on gtfoo.com** — `/products/exercise-anatomy`, three edits in
       the parent repo, once the site is live. The parent's own rules apply.
@@ -28,6 +41,17 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Whole-body activation with MyoFullBody** (2026-09-09): `tools/myo`
+      runs in WSL (MuJoCo has aarch64 wheels), IK from the figure's own rig
+      pose, the floor or bar reaction solved through the anchor Jacobians,
+      per-frame bounded least squares over 416 activations. The squat and the
+      pull-up now show it; the squat's trunk is estimated for the first time.
+      Freestyle stays qualitative (no water model). What the model cannot do
+      is a task above. `from: owner, 2026-09-08 · "let's go with MuscleMimic → MyoFullBody"`
+- [x] **Freestyle swimming** (2026-09-08): a general 3D pose player (per-bone
+      world rotations from any clip, anchors solved on the posed skeleton,
+      free root motion) and CMU subject 126 trial 12 retargeted onto it.
+      Mixamo had no swimming clip; the CMU capture is on land, mimed.
 - [x] **Live at `https://exercise-anatomy.gtfoo.com`** (2026-09-08). Allocation,
       key and directory on 2026-09-07; `out/` rsynced the same evening; the
       Caddy block landed overnight and the hostname answered 200 by morning.

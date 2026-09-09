@@ -62,13 +62,16 @@ Production is a static export (`npm run build` → `out/`) served by Caddy at
 - **Movement:** one captured rep of a Mixamo *Air Squat*, reduced to four
   sagittal angles per sample by `tools/mocap/` (credited in the footer; the raw
   clip is not redistributed).
-- **Lower-limb activation:** OpenSim static optimisation on the
-  RajagopalLaiUhlrich2023 model, from that movement, run in GitHub Actions
-  (`tools/opensim/`). Labelled *estimated, not measured* — the ground reaction
-  is derived from the motion, not a force plate, and static optimisation
-  under-predicts co-contraction (hamstrings read low).
-- **Trunk activation, and the whole pull-up:** qualitative by role; the model
-  has no trunk, arm or shoulder muscles.
+- **Activation:** static optimisation on MyoFullBody (MuJoCo; 416 muscles
+  over the whole body, Apache-2.0) from the movement shown, run locally
+  (`tools/myo/`). Labelled *estimated, not measured* — the floor or bar
+  reaction is derived from the motion, not a force plate; static optimisation
+  under-predicts co-contraction; the generic model's knee stops at 120° and
+  its arms are at their limit through a pull-up, and the reserve torques that
+  say so are printed in each muscle's conditions. An OpenSim lower-limb
+  estimate (`tools/opensim/`, GitHub Actions) is kept as a cross-check.
+- **Muscles no model has** (transversus, trapezius, rhomboids) and the whole
+  freestyle stroke (no water model): qualitative by role.
 
 ## Next
 

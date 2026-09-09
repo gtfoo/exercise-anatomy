@@ -36,11 +36,14 @@ Every muscle curve is one of:
 - **qualitative** — a role (prime mover / synergist / stabiliser) and a curve
   shaped to it by hand. No `source`. The panel prints "Qualitative — not
   measured" and never a number.
-- **estimated** — OpenSim static optimisation on a published model, from the
-  captured motion. `source.measure` is `estimated-activation`; the panel prints
-  "Estimated, not measured" with the citation. Trunk muscles cannot be
-  estimated (the model actuates the lumbar joint with torques) and stay
-  qualitative.
+- **estimated** — static optimisation on a published musculoskeletal model,
+  from the motion shown: MyoFullBody in MuJoCo (`tools/myo`, whole body, 416
+  muscles) for display, OpenSim (`tools/opensim`, lower limb only) as the
+  cross-check on the squat. `source.measure` is `estimated-activation`; the
+  panel prints "Estimated, not measured" with the citation, and `conditions`
+  carries the reserve torques, which say how far the model was from able to
+  do the movement. Muscles no model has (transversus, trapezius, rhomboids)
+  stay qualitative.
 - **measured** — `%MVIC` from a cited EMG study *with the conditions it was
   measured under*. None yet. Do not add a percentage without both.
 
@@ -59,14 +62,17 @@ provenance; the words under it are what tell the reader.
   only the derived joint angles (`src/lib/motion/`) are shipped, credited in the
   footer. Never commit an FBX.
 - The OpenSim model is MIT; cite Rajagopal 2016, Lai 2017 and Uhlrich 2022.
+  MyoFullBody is Apache-2.0 from `amathislab/musclemimic_models` (MyoSuite
+  parts); the estimate's `model` string names it and the panel shows that.
 
 ## Pipelines are scripts, and two of them cannot run here
 
 `tools/blender/` builds the figure from the atlas; `tools/mocap/` turns a clip
-into angles; `tools/opensim/` estimates activation. All are re-runnable and
-documented in their own READMEs. This laptop is ARM64: Blender runs from the
-Windows ARM64 build in `C:\Users\gtfoo\tools\blender\`, and OpenSim has no
-ARM64 build at all, so it runs in GitHub Actions (`.github/workflows/
+into angles; `tools/myo/` estimates whole-body activation (MuJoCo, runs in
+WSL); `tools/opensim/` is the older lower-limb estimate. All are re-runnable
+and documented in their own READMEs. This laptop is ARM64: Blender runs from
+the Windows ARM64 build in `C:\Users\gtfoo\tools\blender\`, and OpenSim has
+no ARM64 build at all, so it runs in GitHub Actions (`.github/workflows/
 opensim.yml`) and pushes results to the `opensim/squat` branch for review.
 
 Two traps that cost real time: three.js strips `.` from glTF node names

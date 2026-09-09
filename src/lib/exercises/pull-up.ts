@@ -1,11 +1,13 @@
 import type { CurvePoint, Exercise } from "./types";
+import { withEstimatedActivation, type EstimatedActivation } from "./estimated";
+import estimated from "@/lib/activation/pull-up-myofullbody.json";
 
-// Qualitative throughout, and it stays that way for a reason the disclaimer
-// states: the musculoskeletal model that estimates the squat actuates the
-// arms and shoulders with torques, not muscles, so there is nothing to
-// estimate here. Curves are shaped to role and to the pull (0-0.5) / lower
-// (0.5-1) halves of the rep: concentric work peaks mid-pull, the lowering half
-// carries a lower, steadier eccentric load.
+// The hand-shaped baseline, then every muscle MyoFullBody has an actuator for
+// is overridden by the estimate (tools/myo, run locally on the designed
+// kinematics). Trapezius and rhomboids stay as written: the model has no
+// scapular muscles. Baseline curves are shaped to role and to the pull (0-0.5)
+// / lower (0.5-1) halves of the rep: concentric work peaks mid-pull, the
+// lowering half carries a lower, steadier eccentric load.
 
 const PRIME: CurvePoint[] = [[0, 0.2], [0.15, 0.6], [0.3, 0.95], [0.45, 1], [0.55, 0.85], [0.7, 0.6], [0.85, 0.45], [1, 0.2]];
 const HELPER: CurvePoint[] = [[0, 0.15], [0.2, 0.45], [0.4, 0.65], [0.5, 0.6], [0.7, 0.4], [1, 0.15]];
@@ -13,15 +15,15 @@ const SCAPULAR: CurvePoint[] = [[0, 0.2], [0.1, 0.5], [0.3, 0.7], [0.5, 0.75], [
 const STEADY: CurvePoint[] = [[0, 0.3], [0.5, 0.4], [1, 0.3]];
 const GRIP: CurvePoint[] = [[0, 0.5], [0.3, 0.7], [0.5, 0.7], [0.8, 0.6], [1, 0.5]];
 
-export const pullUp: Exercise = {
+const baseline: Exercise = {
   slug: "pull-up",
   name: "Pull-up",
-  durationMs: 3600,
+  durationMs: 3600, // the estimate analyses the rep at this tempo; keep the two in step
   anchor: "hands",
   barHeight: 2.3,
   camera: { position: [3.4, 2.0, 1.6], target: [0, 1.55, 0] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The musculoskeletal model used to estimate the squat has no arm or shoulder muscles, so nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "Activation is estimated by whole-body musculoskeletal simulation of a designed, not captured, movement; the generic model is at the limit of its arm and shoulder strength through the pull, which is why several muscles read as maximal. Trapezius and rhomboids, which the model lacks, are shown qualitatively by role. Nothing here is measured EMG. Educational illustration, not training or medical advice.",
   phases: [
     { name: "pull", t0: 0, t1: 0.45 },
     { name: "top", t0: 0.45, t1: 0.55 },
@@ -167,3 +169,5 @@ export const pullUp: Exercise = {
     },
   ],
 };
+
+export const pullUp = withEstimatedActivation(baseline, estimated as unknown as EstimatedActivation);
