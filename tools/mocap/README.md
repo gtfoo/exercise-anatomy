@@ -8,9 +8,22 @@ skeleton ever reaches the app:
   Handles roll, alternating limbs, arms out of the sagittal plane; finds the
   cycle by autocorrelation of the left wrist's forward travel (`--cycle
   START:END` to override, `all` for a single rep). Needs `rig-joints.json`,
-  copied from `tools/blender/out/joints.json` after a figure rebuild. Limb
-  twist (pronation) is not recovered. Drives the figure when an exercise has
-  `motion3d`.
+  copied from `tools/blender/out/joints.json` after a figure rebuild. Drives
+  the figure when an exercise has `motion3d`.
+
+  Default method is **orientation**: each rig bone follows its source bone's
+  full world rotation (a delta from the clip's bind pose), through one
+  constant alignment per bone computed from both rest poses, so pronation,
+  head tilt and foot pitch survive. The alignment's roll reference is the
+  hip line for legs and pelvis, the shoulder line for trunk and head, and the
+  palm normal (fingers × thumb) for the arms; the figure rests with its palms
+  forward, both clips so far rest in a palms-down T-pose, and the script
+  prints what it found. `--method direction` is the older joint-position
+  approach, for a BVH with no bind pose; it loses twist.
+
+  Blender's own parser objects to `--cycle` on the command line (it collides
+  with `--cycles-*`), so pass it after the `--` and, if it still trips, rely
+  on the auto-detected cycle, which the script prints.
 - `extract_angles.py` — the four world-space sagittal angles (`shin`, `thigh`,
   `trunk`, `armFwd`). Still the input to the activation estimate, which is
   planar.

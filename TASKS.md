@@ -26,14 +26,11 @@ letter and a one-line task strands the *why*.
       survive it), or scale strength to a stronger subject and say so.
       `from: exercise-anatomy, 2026-09-09 · tools/myo/README.md`
 
-- [ ] **Limb twist and foot pitch in the 3D retargeter.** `extract_pose3d.py`
-      recovers each segment's direction, not its roll; forearm pronation and
-      hand orientation are lost, and a captured pull-up would show the wrong
-      grip. It also pitches the squat's foot ~20° toes-down (the toe tip is
-      1.3 cm under the floor at every frame); the estimator holds the feet flat
-      instead, the viewer does not. Source orientations relative to a matched
-      rest pose would fix both.
-      `from: exercise-anatomy, 2026-09-08/09 · tools/mocap/README.md, tools/myo/README.md`
+- [ ] **Try the Mixamo-skeleton re-rig on one exercise** (option B of the
+      2026-09-09 assessment): auto-rig a body proxy, transfer weights to the
+      muscles, play clips natively. Compare effort and look against the
+      orientation retargeter before choosing the hundred-exercise path.
+      `from: owner, 2026-09-09 · "let's go with option A first, then try B"`
 
 - [ ] **Case study on gtfoo.com** — `/products/exercise-anatomy`, three edits in
       the parent repo, once the site is live. The parent's own rules apply.
@@ -41,6 +38,12 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Orientation retargeting** (2026-09-09, option A): `extract_pose3d.py`
+      now transfers each source bone's full rotation through a per-bone rest
+      alignment (palm normal for the arms), so the swimmer's head, forearm
+      pronation and the squat's foot pitch are captured rather than guessed.
+      Both clips re-extracted; the squat estimate re-run on the new clip.
+      `from: owner, 2026-09-09 · "the pull up movements are really weird now / the head joint is really off"`
 - [x] **Whole-body activation with MyoFullBody** (2026-09-09): `tools/myo`
       runs in WSL (MuJoCo has aarch64 wheels), IK from the figure's own rig
       pose, the floor or bar reaction solved through the anchor Jacobians,

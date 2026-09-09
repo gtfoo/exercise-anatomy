@@ -1,19 +1,27 @@
 """Retarget one cycle of a captured clip onto the figure's rig as per-bone 3D rotations.
 
     blender --background --python extract_pose3d.py -- <clip.fbx|.bvh> <out.json> \
-        [--rig rig-joints.json] [--cycle auto|all|START:END] [--samples 64] [--credit "..."]
+        [--rig rig-joints.json] [--cycle auto|all|START:END] [--samples 64] [--credit "..."] \
+        [--method orientation|direction]
 
 Unlike extract_angles.py (four sagittal angles), this handles any motion: body
-roll, alternating limbs, arms out of the sagittal plane. It works from JOINT
-POSITIONS, so it does not care what skeleton the clip uses:
+roll, alternating limbs, arms out of the sagittal plane. Each rig bone maps to
+a source bone (its segment: two source joints), and per frame the output is the
+rig bone's world rotation relative to its rest pose. Two ways to get it:
 
-- each rig bone maps to a source segment (two source joints);
-- per frame, the bone's world rotation relative to its rest pose is the rotation
-  that takes its rest direction to the source segment's current direction. The
-  pelvis and spine also align a secondary axis (hip-to-hip, shoulder-to-shoulder),
-  which is what carries body roll. Limb twist (pronation) is not recovered;
-- the root (pelvis) translation follows the source hips, scaled by leg length.
+- **orientation** (default): the source bone's full world rotation, as a delta
+  from its rest pose, applied to the rig bone through a constant per-bone
+  alignment computed once from both rest poses (segment direction plus a roll
+  reference: the hip line for the legs and pelvis, the shoulder line for the
+  trunk and head, the palm normal for the arms). Roll, pronation, head tilt
+  and foot pitch all come through. Needs a clip whose armature has a real
+  rest pose (an FBX bind pose; Mixamo and the CMU conversions do).
+- **direction**: the rotation that takes the rig's rest segment direction to
+  the source segment's current direction, with a secondary axis only for the
+  pelvis and spine. Works from joint positions alone, so it suits BVH with no
+  bind pose, but it loses limb twist and guesses the head.
 
+The root (pelvis) translation follows the source hips, scaled by leg length.
 Frames are expressed Y-up, +Z forward, the clip rotated so its left hip is at
 +X at rest, matching the figure. Output: {samples: [{root: [x,y,z], q: {bone:
 [x,y,z,w]}}]} over one cycle, plus the cycle bounds found.
@@ -37,6 +45,7 @@ RIG = opt("--rig", os.path.join(os.path.dirname(os.path.abspath(__file__)), "rig
 CYCLE = opt("--cycle", "auto")
 N = int(opt("--samples", "64"))
 CREDIT = opt("--credit", None)
+METHOD = opt("--method", "orientation")
 
 # Logical source joints -> candidate bone names (lower-cased, prefix-stripped). Mixamo, DAZ/CMU, BVH.
 NAMES = {
@@ -53,9 +62,26 @@ NAMES = {
     "l_elbow": ["leftforearm", "lforearm", "l_forearm", "left_forearm"],
     "l_wrist": ["lefthand", "lhand", "l_hand", "left_hand"],
     "l_hand_end": ["lefthandmiddle1", "lmid1", "lefthandindex1", "lindex1", "leftfingerbase"],
+    "l_thumb": ["lefthandthumb1", "lthumb1", "l_thumb1", "left_thumb1", "lthumb"],
 }
 for k in [k for k in NAMES if k.startswith("l_")]:
-    NAMES["r_" + k[2:]] = [n.replace("left", "right").replace("lthigh", "rthigh").replace("lshin", "rshin").replace("lfoot", "rfoot").replace("ltoe", "rtoe").replace("lshldr", "rshldr").replace("lforearm", "rforearm").replace("lhand", "rhand").replace("lmid1", "rmid1").replace("lindex1", "rindex1").replace("l_", "r_") for n in NAMES[k]]
+    NAMES["r_" + k[2:]] = [n.replace("left", "right").replace("lthigh", "rthigh").replace("lshin", "rshin").replace("lfoot", "rfoot").replace("ltoe", "rtoe").replace("lshldr", "rshldr").replace("lforearm", "rforearm").replace("lhand", "rhand").replace("lmid1", "rmid1").replace("lindex1", "rindex1").replace("lthumb", "rthumb").replace("l_", "r_") for n in NAMES[k]]
+
+# Rig bone -> the source BONE whose world orientation it follows (orientation method).
+SOURCE_BONE = {"pelvis": "hips", "spine": "spine", "neck": "neck", "head": "head"}
+for side, S in (("l", "L"), ("r", "R")):
+    SOURCE_BONE.update({"thigh." + S: side + "_hip", "shin." + S: side + "_knee", "foot." + S: side + "_ankle", "upper_arm." + S: side + "_shoulder", "forearm." + S: side + "_elbow", "hand." + S: side + "_wrist"})
+# Roll reference per rig bone, used once to align the two rest poses: a pair of
+# joints whose difference is the axis, or "palm.l"/"palm.r" for the palm normal.
+ROLL_REF = {"pelvis": ("l_hip", "r_hip"), "spine": ("l_shoulder", "r_shoulder"), "neck": ("l_shoulder", "r_shoulder"), "head": ("l_shoulder", "r_shoulder")}
+RIG_ROLL_REF = {"pelvis": ("hip.l", "hip.r"), "spine": ("shoulder.l", "shoulder.r"), "neck": ("shoulder.l", "shoulder.r"), "head": ("shoulder.l", "shoulder.r")}
+for side, S in (("l", "L"), ("r", "R")):
+    for b in ("thigh", "shin", "foot"):
+        ROLL_REF[b + "." + S] = ("l_hip", "r_hip")
+        RIG_ROLL_REF[b + "." + S] = ("hip.l", "hip.r")
+    for b in ("upper_arm", "forearm", "hand"):
+        ROLL_REF[b + "." + S] = "palm." + side
+        RIG_ROLL_REF[b + "." + S] = "palm." + side
 
 # Rig bone -> (source head joint, source tail joint, secondary axis or None). Secondary: pair of source joints whose difference is the axis.
 SEGMENTS = {
@@ -254,6 +280,61 @@ leg_rig = np.linalg.norm(rig["hip.l"] - rig["ankle.l"])
 scale = leg_rig / leg_src
 print("leg length: clip %.3f, rig %.3f -> root scale %.3f" % (leg_src, leg_rig, scale))
 
+# ---------- orientation method: align the two rest poses once ----------
+A_APP = ALIGN @ np.array(TO_YUP)  # Blender world -> app frame (Y-up, left hip at +X)
+
+
+def rot3(m):
+    r = m.to_3x3()
+    r.normalize()
+    return np.array(r)
+
+
+def src_rot_rest(key):
+    return A_APP @ rot3(arm.matrix_world @ src[key].matrix_local)
+
+
+def src_rot_cur(key):
+    return A_APP @ rot3(arm.matrix_world @ arm.pose.bones[src[key].name].matrix)
+
+
+def palm_normal_src(side):
+    """Outward palm normal of the source's rest hand: fingers x thumb (thumb x fingers on the right)."""
+    w = rest_pos(side + "_wrist")
+    f = pos_any(side + "_hand_end", rest_pos) - w
+    if side + "_thumb" not in src:
+        print("WARNING: no thumb bone for the %s hand; assuming the rest pose has its palm down" % side)
+        return np.array([0.0, -1.0, 0.0])
+    th = rest_pos(side + "_thumb") - w
+    n = np.cross(f, th) if side == "l" else np.cross(th, f)
+    return unit(ALIGN @ n)
+
+
+def ref_axis_src(ref):
+    return palm_normal_src(ref[-1]) if isinstance(ref, str) else ALIGN @ (rest_pos(ref[0]) - rest_pos(ref[1]))
+
+
+def ref_axis_rig(ref):
+    return np.array([0.0, 0.0, 1.0]) if isinstance(ref, str) else rig[ref[0]] - rig[ref[1]]  # the figure rests with its palms forward
+
+
+align_c, rest_rot = {}, {}
+if METHOD == "orientation":
+    for bone in SEGMENTS:
+        d_src, _ = src_rest[bone]
+        d_rig, _ = rig_seg(bone)
+        fs, fr = frame_from(d_src, ref_axis_src(ROLL_REF[bone])), frame_from(d_rig, ref_axis_rig(RIG_ROLL_REF[bone]))
+        if fs is None or fr is None:
+            print("WARNING: %s: roll reference degenerate, aligning direction only" % bone)
+            x, y, z, w = quat_between(d_rig, d_src)
+            align_c[bone] = np.array(Quaternion((w, x, y, z)).to_matrix())
+        else:
+            align_c[bone] = fs @ fr.T
+        rest_rot[bone] = src_rot_rest(SOURCE_BONE[bone])
+    for side in ("l", "r"):
+        d = unit(src_rest["upper_arm." + side.upper()][0])
+        print("rest pose, %s arm: direction %s, palm normal %s" % (side, np.round(d, 2), np.round(palm_normal_src(side), 2)))
+
 # ---------- sample every frame ----------
 rows = []
 for f in frames:
@@ -261,6 +342,12 @@ for f in frames:
     hips = ALIGN @ cur_pos("hips")
     q = {}
     for bone, (h, t, s) in SEGMENTS.items():
+        if METHOD == "orientation":
+            # The source bone's world rotation since its rest, applied to the rig
+            # bone through the constant alignment of the two rest poses.
+            delta = src_rot_cur(SOURCE_BONE[bone]) @ rest_rot[bone].T
+            q[bone] = mat_to_quat(delta @ align_c[bone])
+            continue
         ph, pt = pos_any(h, cur_pos), pos_any(t, cur_pos)
         d_cur = ALIGN @ (pt - ph)
         s_cur = ALIGN @ (cur_pos(s[0]) - cur_pos(s[1])) if s else None
