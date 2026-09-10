@@ -68,6 +68,35 @@ Opening the 307 MB atlas takes a few minutes; the rest is under a minute.
   bottom-of-squat PNG check uses the same angles so the two agree.
 - **Vertex budgets** (`BUDGET_*`) are where file size is traded for detail.
 
+## The Mixamo-skeleton build (option B, lab)
+
+`build_mixamo_rig.py` rebinds the finished figure to a Mixamo skeleton so
+Mixamo clips play natively, with no retargeting in the app:
+
+```bash
+blender --background --python check_tpose.py -- out                          # can the figure be T-posed? (renders)
+blender --background --python mixamo_rest.py -- "../mocap/in/Air Squat.fbx" out/mixamo-rest.json   # reference only
+blender --background --python build_mixamo_rig.py -- out "../mocap/in/Air Squat.fbx"
+tools/blender/optimise.sh tools/blender/out/figure-mixamo.glb public/models/figure-mixamo.glb
+```
+
+It poses the figure into an exact palms-down T-pose through its own weights
+and bakes that into every mesh; builds an armature with Mixamo's 65 bone
+names, hierarchy and rest orientations (copied from the FBX, mismatch 0.000°)
+at OUR joints; remaps the vertex groups (one spine split over
+Spine/Spine1/Spine2 by height, fingers to the middle finger); copies the
+clip's rotations bone for bone and the hips' translation scaled by leg
+length; exports `out/figure-mixamo.glb` with the animation embedded, plus
+front and side renders of the first and deepest frames. The app plays it in
+`NativeFigure.tsx` on `/lab/native-squat/`. The FBX itself never leaves
+`tools/mocap/in`; the embedded motion is what Mixamo's terms allow.
+
+Caveats: the armature object must end up named `Armature` (the app treats
+that name as a non-owner when it names a mesh's muscle); the FBX's own
+action must be removed before export or it ships as a second clip; the
+T-pose stretches the deltoids and pectorals a little for good, which is the
+price of the bind pose.
+
 ## Traps
 
 - three.js's GLTFLoader strips `.` from node names, so `thigh.L` arrives as

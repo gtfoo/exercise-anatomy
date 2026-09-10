@@ -39,10 +39,13 @@ letter and a one-line task strands the *why*.
       survive it), or scale strength to a stronger subject and say so.
       `from: exercise-anatomy, 2026-09-09 · tools/myo/README.md`
 
-- [ ] **Try the Mixamo-skeleton re-rig on one exercise** (option B of the
-      2026-09-09 assessment): auto-rig a body proxy, transfer weights to the
-      muscles, play clips natively. Compare effort and look against the
-      orientation retargeter before choosing the hundred-exercise path.
+- [ ] **Owner to compare `/` with `/lab/native-squat/` and pick the
+      hundred-exercise path.** Option B is built (below). If B wins: one
+      rigged figure plus one small clip file per exercise (three.js plays a
+      clip from another GLB when the bone names match), `build_mixamo_rig.py`
+      split into a one-off rig build and a per-clip converter, and CMU
+      clips converted onto the Mixamo rig with the orientation retargeter.
+      If A wins: nothing to do; the lab page and the second model come out.
       `from: owner, 2026-09-09 · "let's go with option A first, then try B"`
 
 - [ ] **Case study on gtfoo.com** — `/products/exercise-anatomy`, three edits in
@@ -51,6 +54,14 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Option B trial: the Mixamo-skeleton rig** (2026-09-10). No Adobe
+      upload needed: the figure T-poses cleanly through its own weights
+      (`check_tpose.py`), so `build_mixamo_rig.py` bakes that pose, builds a
+      Mixamo-named armature with Mixamo's exact rest orientations at our
+      joints, remaps the weights and copies the clip bone for bone. Plays on
+      `/lab/native-squat/` (5.6 MB second model) with the same muscle curves
+      as `/`: arms, palms and head all right with no retargeting code.
+      `from: owner, 2026-09-09 · "then try B"`
 - [x] **Orientation retargeting** (2026-09-09, option A): `extract_pose3d.py`
       now transfers each source bone's full rotation through a per-bone rest
       alignment (palm normal for the arms), so the swimmer's head, forearm

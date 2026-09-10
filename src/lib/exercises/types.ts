@@ -37,6 +37,12 @@ export type Exercise = {
   motion?: MotionClip;
   /** Full 3D motion for one cycle. When present it drives the figure; `motion` still feeds the activation estimate. */
   motion3d?: MotionClip3D;
+  /**
+   * A figure with the clip already embedded (the Mixamo-skeleton build from
+   * tools/blender/build_mixamo_rig.py). When present the viewer plays that
+   * animation with a mixer, scrubbed by t, and ignores `motion`/`motion3d`.
+   */
+  native?: { url: string; clip?: string };
   /** What the body is fixed to: feet on the floor (default), hands on a bar, or nothing (root follows the clip). */
   anchor?: "feet" | "hands" | "free";
   /** Bar height in metres when anchored by the hands. */

@@ -8,6 +8,7 @@ import type { Exercise } from "@/lib/exercises/types";
 import { STUDIO } from "@/lib/palette";
 import { useViewer } from "@/lib/store";
 import AnatomyFigure from "./AnatomyFigure";
+import NativeFigure from "./NativeFigure";
 
 function Ticker({ durationMs }: { durationMs: number }) {
   useFrame((_, delta) => {
@@ -97,9 +98,7 @@ export default function Scene({ exercise }: { exercise: Exercise }) {
       <directionalLight position={[3, 5, 2.5]} intensity={1.6} />
       <directionalLight position={[-3, 2, -2]} intensity={0.5} />
 
-      <Suspense fallback={null}>
-        <AnatomyFigure exercise={exercise} />
-      </Suspense>
+      <Suspense fallback={null}>{exercise.native ? <NativeFigure exercise={exercise} /> : <AnatomyFigure exercise={exercise} />}</Suspense>
       <Ticker durationMs={exercise.durationMs} />
       {exercise.anchor === "hands" && <Bar height={exercise.barHeight ?? 2.3} />}
       {exercise.environment === "water" ? <Water level={exercise.waterLevel ?? 0.95} /> : exercise.anchor !== "hands" && <FloorShadow />}
