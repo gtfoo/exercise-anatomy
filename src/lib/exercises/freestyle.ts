@@ -22,8 +22,10 @@ export const freestyle: Exercise = {
   name: "Freestyle swimming",
   durationMs: 2230, // the captured cycle at its real tempo
   anchor: "free",
-  // The clip's root sits at the figure's standing pelvis height; lifted so the back breaks the surface.
-  rootOffset: [0, 0.08, 0],
+  // Root motion starts at the figure's standing pelvis height; lifted so the
+  // back breaks the surface (the same placement as before the extractor made
+  // root motion relative to the cycle start rather than the take start).
+  rootOffset: [0, 0.216, 0],
   environment: "water",
   waterLevel: 0.92,
   camera: { position: [2.6, 2.2, 2.4], target: [0, 0.95, 0] },

@@ -21,16 +21,37 @@ skeleton ever reaches the app:
   prints what it found. `--method direction` is the older joint-position
   approach, for a BVH with no bind pose; it loses twist.
 
-  Blender's own parser objects to `--cycle` on the command line (it collides
-  with `--cycles-*`), so pass it after the `--` and, if it still trips, rely
-  on the auto-detected cycle, which the script prints.
+  The frame range flag is `--range START:END` (Blender's own parser grabs
+  `--cycle` as an abbreviation of its `--cycles-*` flags, even after `--`).
+  Root motion is relative to the cycle's first frame, so a cut from the
+  middle of a long take starts at the figure's rest height.
+
+- `probe_clip.py` — a coarse timeline of a take (hips height, wrist heights
+  above the hips, knee angle) every N frames, with `--from/--to` to zoom in,
+  for choosing the range by eye. The CMU takes are long and mixed (subject 1
+  trial 12 is climb, pull up, dangle, sit, lower), so this is how the cuts
+  below were found.
+
+Cuts in use (CMU FBX from Hugging Face `gbionics/cmu-fbx`, 30 fps):
+
+| exercise | take | frames | anchor |
+|---|---|---|---|
+| pull-up | 01_12 | 117:213 | hands, bar 2.3 |
+| jumping jacks | 13_29 | 402:434 | free |
+| forward lunge | 144_17 | 168:252 | free |
+| freestyle | 126_12 | 297:364 | free, root offset y 0.216 |
+
+Also on disk: 88_02 (acrobatics) holds handstand push-ups, not floor ones;
+13_29 frames 1041-1121 is a deep bodyweight squat, unused since the Mixamo
+squat is the estimator's input.
 - `extract_angles.py` — the four world-space sagittal angles (`shin`, `thigh`,
   `trunk`, `armFwd`). Still the input to the activation estimate, which is
   planar.
 
-Sources so far: Mixamo *Air Squat* (both extractors) and CMU subject 126 trial
-12, freestyle (3D only; captured on land with the subject miming the stroke).
-CMU terms: free for any use, credit "CMU Graphics Lab Motion Capture Database".
+Sources so far: Mixamo *Air Squat* (both extractors) and CMU subjects 126
+(freestyle, mimed on land), 1 (pull-up on playground equipment), 13 (jumping
+jacks) and 144 (lunges), all 3D only. CMU terms: free for any use, credit
+"CMU Graphics Lab Motion Capture Database".
 
 ## Inputs (not in git)
 

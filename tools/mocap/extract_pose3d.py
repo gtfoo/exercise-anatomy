@@ -1,7 +1,7 @@
 """Retarget one cycle of a captured clip onto the figure's rig as per-bone 3D rotations.
 
     blender --background --python extract_pose3d.py -- <clip.fbx|.bvh> <out.json> \
-        [--rig rig-joints.json] [--cycle auto|all|START:END] [--samples 64] [--credit "..."] \
+        [--rig rig-joints.json] [--range auto|all|START:END] [--samples 64] [--credit "..."] \
         [--method orientation|direction]
 
 Unlike extract_angles.py (four sagittal angles), this handles any motion: body
@@ -42,7 +42,8 @@ if len(argv) < 2:
 SRC, OUT = argv[0], argv[1]
 opt = lambda flag, default: argv[argv.index(flag) + 1] if flag in argv else default
 RIG = opt("--rig", os.path.join(os.path.dirname(os.path.abspath(__file__)), "rig-joints.json"))
-CYCLE = opt("--cycle", "auto")
+# --range, not --cycle: Blender's own parser grabs "--cycle" as an abbreviation of its --cycles-* flags, even after "--".
+CYCLE = opt("--range", opt("--cycle", "auto"))
 N = int(opt("--samples", "64"))
 CREDIT = opt("--credit", None)
 METHOD = opt("--method", "orientation")
@@ -358,8 +359,6 @@ for f in frames:
     lw = ALIGN @ cur_pos("l_wrist")
     rows.append({"frame": f, "hips": hips, "q": q, "lw_rel": lw - hips})
 
-hips0 = rows[0]["hips"]
-
 # ---------- one cycle ----------
 def autocorr_period(x, lo, hi):
     x = x - x.mean()
@@ -389,6 +388,11 @@ else:
         print("cycle: period %d frames (%.2f s, autocorrelation %.2f), frames %d..%d" % (period, period / fps, strength, frames[start], frames[end]))
 
 seg = rows[start : end + 1]
+# Root motion is relative to the CYCLE's first frame, so a cycle cut from the
+# middle of a long take starts with the pelvis at the figure's rest height. (It
+# was relative to the take's first frame until 2026-09-10, which floated a
+# jumping jack cut after a crouch 12 cm off the floor.)
+hips0 = seg[0]["hips"]
 
 
 def slerp(a, b, t):

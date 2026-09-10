@@ -39,14 +39,24 @@ letter and a one-line task strands the *why*.
       survive it), or scale strength to a stronger subject and say so.
       `from: exercise-anatomy, 2026-09-09 · tools/myo/README.md`
 
-- [ ] **A captured pull-up.** Mixamo has none (owner, 2026-09-10); the page
-      runs the designed kinematics converted onto the rig. Candidates to
-      check for a real clip: Rokoko's free library, ActorCore's free motions
-      (commercial use allowed), MocapFlow's fitness set, the CMU database
-      (free for any use), SFU mocap; Bandai Namco's set is CC BY-NC-ND, so
-      a retargeted copy is out. Any FBX/BVH goes through `extract_pose3d.py`
-      then `convert_clip.py --anchor hands`.
-      `from: owner, 2026-09-10 · "mixamo doesnt have pull up / are there other sources"`
+- [ ] **Free-source clips: what was found** (the pull-up, lunge and jumping
+      jacks below are now live; the rest is what remains for later).
+      Mixamo has no pull-up; the page runs the designed kinematics. Browsed
+      2026-09-10 (owner: free for now, list the paid): **CMU** (free for any
+      use, FBX on Hugging Face `gbionics/cmu-fbx`) has 01_12 "playground -
+      climb, pull up, dangle" (546 KB), 13_29 / 14_06 "jumping jacks, side
+      twists, squats, stretches", 88_02 "handstands, vertical pushups",
+      144_17 "Lunges", 79_02 "swimming". **ActorCore** free set (32 clips):
+      nothing gym; paid items $1.50-4.50 each (Push Ups on Yoga Mat $4.50,
+      Lift Dumbbells $2.25, Spin Bike, Treadmill, Stretch $4.50, Warrior on
+      Yoga Mat $4.50, packs $49-149); no pull-up or squat found. **MocapFlow**
+      needs a Google sign-in and credits; catalogue is AI-from-video
+      (Bodybuilding, Gymnastics); no pull-up found; licence allows
+      commercial use and modification. **SFU**: research only, no commercial;
+      jumping, jump rope, no gym work. **Rokoko**: library lives inside the
+      desktop app, not browsable on the web. **Bandai Namco**: CC BY-NC-ND,
+      out. Any FBX/BVH goes through `extract_pose3d.py` then `convert_clip.py`.
+      `from: owner, 2026-09-10 · "browse those sites and check ... free models for now"`
 
 - [ ] **Case study on gtfoo.com** — `/products/exercise-anatomy`, three edits in
       the parent repo, once the site is live. The parent's own rules apply.
@@ -54,6 +64,14 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Captured pull-up, forward lunge and jumping jacks** (2026-09-10),
+      all from CMU takes cut with the new `probe_clip.py` and converted onto
+      the rig: 01_12 frames 117-213 (pull-up on a low playground bar, knees
+      bent, said on the page), 144_17 frames 168-252, 13_29 frames 402-434.
+      Both new exercises are qualitative. The extractor's root motion is now
+      relative to the cycle start, which moved the swimmer's offset from
+      0.08 to 0.216 to keep it at the surface.
+      `from: owner, 2026-09-10 · "proceed with the downloads"`
 - [x] **Option B chosen and applied to every page** (2026-09-10): the owner
       found A and B "similar" and asked for B on the pull-up and swim. One
       rigged figure (`figure-mixamo.glb`) plus a 50-70 KB clip file per

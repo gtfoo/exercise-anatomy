@@ -1,15 +1,19 @@
 import type { CurvePoint, Exercise } from "./types";
-// Qualitative. The MyoFullBody estimate (src/lib/activation/pull-up-myofullbody.json)
-// had every arm and shoulder muscle at maximum through the whole pull, the
-// generic model being too weak for an 84 kg pull-up; it was shown for a day
-// and pulled. See TASKS.md before wiring it back in.
+import type { MotionClip3D } from "@/lib/kinematics/types";
+import motion3d from "@/lib/motion/pull-up-3d.json";
 
-// The hand-shaped baseline, then every muscle MyoFullBody has an actuator for
-// is overridden by the estimate (tools/myo, run locally on the designed
-// kinematics). Trapezius and rhomboids stay as written: the model has no
-// scapular muscles. Baseline curves are shaped to role and to the pull (0-0.5)
-// / lower (0.5-1) halves of the rep: concentric work peaks mid-pull, the
-// lowering half carries a lower, steadier eccentric load.
+// One captured pull-up: CMU subject 1 trial 12, on playground equipment, cut
+// from a hang through the top and back to a hang (the subject's knees stay
+// bent, the bar being low). The designed kinematics in src/lib/kinematics/
+// pull-up.ts remain as the fallback and as the estimator's input.
+//
+// Qualitative curves. The MyoFullBody estimate (src/lib/activation/
+// pull-up-myofullbody.json) had every arm and shoulder muscle at maximum
+// through the whole pull, the generic model being too weak for an 84 kg
+// pull-up; it was shown for a day and pulled. See TASKS.md before wiring it
+// back in. Curves are shaped to role and to the pull (0-0.42) / lower
+// (0.48-1) parts of the rep: concentric work peaks mid-pull, the lowering
+// half carries a lower, steadier eccentric load.
 
 const PRIME: CurvePoint[] = [[0, 0.2], [0.15, 0.6], [0.3, 0.95], [0.45, 1], [0.55, 0.85], [0.7, 0.6], [0.85, 0.45], [1, 0.2]];
 const HELPER: CurvePoint[] = [[0, 0.15], [0.2, 0.45], [0.4, 0.65], [0.5, 0.6], [0.7, 0.4], [1, 0.15]];
@@ -20,19 +24,19 @@ const GRIP: CurvePoint[] = [[0, 0.5], [0.3, 0.7], [0.5, 0.7], [0.8, 0.6], [1, 0.
 const baseline: Exercise = {
   slug: "pull-up",
   name: "Pull-up",
-  durationMs: 3600, // the estimate analyses the rep at this tempo; keep the two in step
+  durationMs: 3200, // the captured cycle at its real tempo
   anchor: "hands",
   barHeight: 2.3,
-  // The designed kinematics (src/lib/kinematics/pull-up.ts, mirrored by tools/myo/designed_clip.py),
-  // converted onto the rigged figure's skeleton with the wrists placed on the bar.
+  // The captured clip, converted onto the rigged figure's skeleton with the wrists placed on the bar.
+  motion3d: motion3d as unknown as MotionClip3D,
   native: { clip: "/models/clips/pull-up.glb" },
   camera: { position: [3.4, 2.0, 1.6], target: [0, 1.55, 0] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The musculoskeletal model used to estimate the squat has no arm or shoulder muscles, so nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The musculoskeletal model used to estimate the squat has no arm or shoulder muscles, so nothing here is estimated or measured. The movement was captured on a low playground bar, so the knees stay bent. Educational illustration, not training or medical advice.",
   phases: [
-    { name: "pull", t0: 0, t1: 0.45 },
-    { name: "top", t0: 0.45, t1: 0.55 },
-    { name: "lower", t0: 0.55, t1: 1 },
+    { name: "pull", t0: 0, t1: 0.38 },
+    { name: "top", t0: 0.38, t1: 0.48 },
+    { name: "lower", t0: 0.48, t1: 1 },
   ],
   muscles: [
     // Back
