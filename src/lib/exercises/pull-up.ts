@@ -23,6 +23,9 @@ const baseline: Exercise = {
   durationMs: 3600, // the estimate analyses the rep at this tempo; keep the two in step
   anchor: "hands",
   barHeight: 2.3,
+  // The designed kinematics (src/lib/kinematics/pull-up.ts, mirrored by tools/myo/designed_clip.py),
+  // converted onto the rigged figure's skeleton with the wrists placed on the bar.
+  native: { clip: "/models/clips/pull-up.glb" },
   camera: { position: [3.4, 2.0, 1.6], target: [0, 1.55, 0] },
   disclaimer:
     "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The musculoskeletal model used to estimate the squat has no arm or shoulder muscles, so nothing here is estimated or measured. Educational illustration, not training or medical advice.",

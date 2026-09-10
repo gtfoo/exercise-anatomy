@@ -9,30 +9,36 @@ import { useViewer } from "@/lib/store";
 import { bindMaterials, paintMaterials, type FigureMaterials } from "./figureMaterials";
 
 /**
- * A figure whose clip is embedded in the model: the Mixamo-skeleton build,
- * where the écorché is bound in Mixamo's T-pose to an armature with Mixamo's
- * bone orientations, so a Mixamo clip's rotations play untouched. No
- * retargeting in the app: a mixer scrubs the clip to the transport's t.
+ * The écorché bound to a Mixamo skeleton (tools/blender/build_mixamo_rig.py),
+ * playing a clip converted onto that skeleton (tools/blender/convert_clip.py).
+ * The clip file holds only bones and one animation; its tracks are named by
+ * bone, and the mixer binds them onto the figure's bones by name. No
+ * retargeting happens here: a mixer scrubs the clip to the transport's t.
  */
+export const FIGURE_URL = "/models/figure-mixamo.glb";
+
 type Live = { materials: FigureMaterials; mixer: THREE.AnimationMixer; action: THREE.AnimationAction; duration: number };
 
 export default function NativeFigure({ exercise }: { exercise: Exercise }) {
-  const url = exercise.native!.url;
-  const { scene, animations } = useGLTF(url);
+  const figureUrl = exercise.native?.figure ?? FIGURE_URL;
+  const clipUrl = exercise.native!.clip;
+  const { scene } = useGLTF(figureUrl);
+  const { animations } = useGLTF(clipUrl);
   const ids = useMemo(() => new Set(exercise.muscles.map((m) => m.id)), [exercise]);
   const live = useRef<Live | null>(null);
 
   useEffect(() => {
     const materials = bindMaterials(scene, ids);
-    const wanted = exercise.native?.clip;
-    const clip = (wanted && animations.find((a) => a.name === wanted)) ?? animations[0];
+    const clip = animations[0];
     if (!clip) {
-      console.warn(`${url} has no animation clip`);
+      console.warn(`${clipUrl} has no animation clip`);
       live.current = null;
       return () => {
         for (const m of Object.values(materials)) m.dispose();
       };
     }
+    // The figure is shared across pages; whatever the previous clip left on
+    // its bones is overwritten by this clip's first update.
     const mixer = new THREE.AnimationMixer(scene);
     const action = mixer.clipAction(clip);
     action.setLoop(THREE.LoopRepeat, Infinity);
@@ -45,7 +51,7 @@ export default function NativeFigure({ exercise }: { exercise: Exercise }) {
       for (const m of Object.values(materials)) m.dispose();
       live.current = null;
     };
-  }, [scene, animations, ids, url, exercise.native?.clip]);
+  }, [scene, animations, ids, clipUrl]);
 
   const setHovered = useViewer((s) => s.setHovered);
   const setSelected = useViewer((s) => s.setSelected);
@@ -83,3 +89,5 @@ export default function NativeFigure({ exercise }: { exercise: Exercise }) {
     />
   );
 }
+
+useGLTF.preload(FIGURE_URL);

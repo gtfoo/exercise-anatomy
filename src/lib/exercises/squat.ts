@@ -39,6 +39,8 @@ const baseline: Exercise = {
   // drives the figure. Remove both to fall back to the designed joint-angle function.
   motion,
   motion3d: motion3d as unknown as MotionClip3D, // JSON arrays are number[] to TypeScript; the extractor guarantees the shapes
+  // What is displayed: the same Mixamo clip, converted onto the rigged figure's own skeleton (tools/blender/convert_clip.py).
+  native: { clip: "/models/clips/bodyweight-squat.glb" },
   disclaimer:
     "Lower-limb activation is estimated by musculoskeletal simulation of the captured movement; trunk muscles are shown qualitatively by role. Nothing here is measured EMG. Educational illustration, not training or medical advice.",
   phases: [

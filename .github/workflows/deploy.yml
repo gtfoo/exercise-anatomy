@@ -43,7 +43,8 @@ jobs:
       - name: Verify the export in a way that cannot silently pass
         run: |
           test -f out/index.html
-          test -f out/models/figure.glb
+          test -f out/models/figure-mixamo.glb
+          test -f out/models/clips/bodyweight-squat.glb
           ASSET=$(find out/_next/static -type f | head -1)
           [ -n "$ASSET" ] || { echo "no static output - refusing to call this built"; exit 1; }
           du -sh out
@@ -77,5 +78,6 @@ jobs:
           echo "/ -> $(code /)"
           echo "/pull-up/ -> $(code /pull-up/)"
           echo "/freestyle/ -> $(code /freestyle/)"
-          echo "/models/figure.glb -> $(code /models/figure.glb)"
-          [ "$(code /)" = 200 ] && [ "$(code /pull-up/)" = 200 ] && [ "$(code /freestyle/)" = 200 ] && [ "$(code /models/figure.glb)" = 200 ]
+          echo "/models/figure-mixamo.glb -> $(code /models/figure-mixamo.glb)"
+          echo "/models/clips/pull-up.glb -> $(code /models/clips/pull-up.glb)"
+          [ "$(code /)" = 200 ] && [ "$(code /pull-up/)" = 200 ] && [ "$(code /freestyle/)" = 200 ] && [ "$(code /models/figure-mixamo.glb)" = 200 ] && [ "$(code /models/clips/pull-up.glb)" = 200 ]

@@ -28,6 +28,8 @@ export const freestyle: Exercise = {
   waterLevel: 0.92,
   camera: { position: [2.6, 2.2, 2.4], target: [0, 0.95, 0] },
   motion3d: motion3d as unknown as MotionClip3D,
+  // The same CMU retarget, converted onto the rigged figure's skeleton with the root offset baked in.
+  native: { clip: "/models/clips/freestyle.glb" },
   disclaimer:
     "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement was captured on land, not in water, and no hydrodynamic forces are modelled, so nothing here is estimated or measured. Educational illustration, not coaching or medical advice.",
   phases: [

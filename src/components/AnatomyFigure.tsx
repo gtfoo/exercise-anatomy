@@ -329,4 +329,5 @@ export default function AnatomyFigure({ exercise }: { exercise: Exercise }) {
   );
 }
 
-useGLTF.preload(MODEL_URL);
+// No module-level preload: this figure is the fallback for an exercise without
+// a converted clip, and every page would otherwise fetch a second 5 MB model.

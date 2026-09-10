@@ -70,9 +70,14 @@ provenance; the words under it are what tell the reader.
 
 ## Pipelines are scripts, and two of them cannot run here
 
-`tools/blender/` builds the figure from the atlas; `tools/mocap/` turns a clip
-into angles; `tools/myo/` estimates whole-body activation (MuJoCo, runs in
-WSL); `tools/opensim/` is the older lower-limb estimate. All are re-runnable
+`tools/blender/` builds the figure from the atlas, rebinds it to a Mixamo
+skeleton (`build_mixamo_rig.py`, once) and converts every clip onto that
+skeleton (`convert_clip.py`, one small GLB per exercise in
+`public/models/clips/`); the site plays those with a mixer and no
+retargeting. `tools/mocap/` turns a captured clip into angles or a
+`MotionClip3D` for our rig, which `convert_clip.py` accepts; `tools/myo/`
+estimates whole-body activation (MuJoCo, runs in WSL); `tools/opensim/` is
+the lower-limb estimate the squat displays. All are re-runnable
 and documented in their own READMEs. This laptop is ARM64: Blender runs from
 the Windows ARM64 build in `C:\Users\gtfoo\tools\blender\`, and OpenSim has
 no ARM64 build at all, so it runs in GitHub Actions (`.github/workflows/

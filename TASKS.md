@@ -39,14 +39,14 @@ letter and a one-line task strands the *why*.
       survive it), or scale strength to a stronger subject and say so.
       `from: exercise-anatomy, 2026-09-09 · tools/myo/README.md`
 
-- [ ] **Owner to compare `/` with `/lab/native-squat/` and pick the
-      hundred-exercise path.** Option B is built (below). If B wins: one
-      rigged figure plus one small clip file per exercise (three.js plays a
-      clip from another GLB when the bone names match), `build_mixamo_rig.py`
-      split into a one-off rig build and a per-clip converter, and CMU
-      clips converted onto the Mixamo rig with the orientation retargeter.
-      If A wins: nothing to do; the lab page and the second model come out.
-      `from: owner, 2026-09-09 · "let's go with option A first, then try B"`
+- [ ] **A captured pull-up.** Mixamo has none (owner, 2026-09-10); the page
+      runs the designed kinematics converted onto the rig. Candidates to
+      check for a real clip: Rokoko's free library, ActorCore's free motions
+      (commercial use allowed), MocapFlow's fitness set, the CMU database
+      (free for any use), SFU mocap; Bandai Namco's set is CC BY-NC-ND, so
+      a retargeted copy is out. Any FBX/BVH goes through `extract_pose3d.py`
+      then `convert_clip.py --anchor hands`.
+      `from: owner, 2026-09-10 · "mixamo doesnt have pull up / are there other sources"`
 
 - [ ] **Case study on gtfoo.com** — `/products/exercise-anatomy`, three edits in
       the parent repo, once the site is live. The parent's own rules apply.
@@ -54,6 +54,15 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Option B chosen and applied to every page** (2026-09-10): the owner
+      found A and B "similar" and asked for B on the pull-up and swim. One
+      rigged figure (`figure-mixamo.glb`) plus a 50-70 KB clip file per
+      exercise from `convert_clip.py`: the squat from its FBX, the pull-up
+      from the designed kinematics (pronation and finger curl now in
+      `designed_clip.py`), the swim from the CMU retarget. The lab page and
+      the old model came out; `AnatomyFigure.tsx` stays as the fallback for
+      an exercise without a converted clip.
+      `from: owner, 2026-09-10 · "both look similar, can you apply to pull up and swimming?"`
 - [x] **Option B trial: the Mixamo-skeleton rig** (2026-09-10). No Adobe
       upload needed: the figure T-poses cleanly through its own weights
       (`check_tpose.py`), so `build_mixamo_rig.py` bakes that pose, builds a

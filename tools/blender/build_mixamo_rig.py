@@ -1,24 +1,24 @@
-"""Option B trial: rebind the écorché to a Mixamo skeleton so Mixamo clips play natively.
+"""Rebind the écorché to a Mixamo skeleton: the one rigged figure every clip plays on.
 
     blender --background --python build_mixamo_rig.py -- out "../mocap/in/Air Squat.fbx" [norender]
 
 Steps:
 1. import out/figure.glb (our rig, anatomical rest) and pose it into an exact
    palms-down T-pose through its own weights, then bake that pose into every mesh;
-2. import the Mixamo FBX and build a new armature with Mixamo's bone names,
-   hierarchy and REST ORIENTATIONS, placed at OUR joints (proportions differ,
-   rotations do not), so a Mixamo clip's local rotations apply unchanged;
+2. import a Mixamo FBX (any; only its skeleton is read) and build a new
+   armature with Mixamo's bone names, hierarchy and REST ORIENTATIONS, placed
+   at OUR joints (proportions differ, rotations do not), so a Mixamo clip's
+   local rotations apply unchanged;
 3. remap the vertex groups (our 18 bones -> Mixamo names; the single spine
    split over Spine/Spine1/Spine2 by height; fingers -> the middle finger);
-4. copy the clip's rotations bone-for-bone and the hips' translation scaled
-   by leg length, keyed on the new armature;
-5. export out/figure-mixamo.glb with the animation, and render the deepest
-   frame front and side for a look.
+4. write out/mixamo-rig.json (bone heads, tails, rolls; the per-bone rest
+   alignment; joints) for convert_clip.py, and export out/figure-mixamo.glb
+   with NO animation. Clips are separate files, one per exercise.
 
-The raw FBX never leaves tools/mocap/in; the GLB embeds the derived motion,
-which is what Mixamo's terms allow.
+Run once per figure rebuild. The raw FBX never leaves tools/mocap/in.
 """
 
+import json
 import math
 import os
 import sys
@@ -81,6 +81,7 @@ def tail_w(pb):
 
 # Blender Z-up after the glTF import: forward is -Y. Rest palms face forward (-Y); Mixamo's T-pose palms face down (-Z).
 TWIST = Quaternion((1, 0, 0), math.radians(90))  # about world X: -Y -> -Z, for both arms
+CB = {b.name: Quaternion() for b in ours.data.bones}  # world rotation from our rest to the bind pose, per bone
 for side, sign in (("L", 1), ("R", -1)):
     target = Vector((sign, 0, 0))
     for bone, twist in (("upper_arm", False), ("forearm", True), ("hand", True), ("fingers", True)):
@@ -91,7 +92,8 @@ for side, sign in (("L", 1), ("R", -1)):
         # From the REST direction: set_world_rotation composes on top of the rest orientation, not the current one.
         d = ((ours.matrix_world @ pb.bone.tail_local) - (ours.matrix_world @ pb.bone.head_local)).normalized()
         q = d.rotation_difference(target)  # shortest arc: the arm swings up about the forward axis, palm stays forward
-        set_world_rotation(pb, (TWIST @ q) if twist else q)
+        CB[name] = (TWIST @ q) if twist else q
+        set_world_rotation(pb, CB[name])
 for side in ("L", "R"):
     pb = ours.pose.bones["hand." + side]
     print("T-pose %s: shoulder %s elbow %s wrist %s" % (side, [round(v, 3) for v in head_w(ours.pose.bones["upper_arm." + side])], [round(v, 3) for v in head_w(ours.pose.bones["forearm." + side])], [round(v, 3) for v in head_w(pb)]))
@@ -252,57 +254,32 @@ for o in meshes:
     mod.object = new
 print("weights remapped")
 
-# ---------- 4. the clip, bone for bone ----------
-for pb in new.pose.bones:
-    pb.rotation_mode = "QUATERNION"
-for pb in mx.pose.bones:
-    pb.rotation_mode = "QUATERNION"
-new.animation_data_create()
-act = bpy.data.actions.new("Air Squat")
-new.animation_data.action = act
-try:
-    # Blender 4.4+ slotted actions: bind the armature to a slot so the keys land.
-    if hasattr(act, "slots"):
-        slot = act.slots.new("OBJECT", new.name)
-        new.animation_data.action_slot = slot
-except Exception as e:
-    print("slot binding skipped:", e)
+# ---------- 4. the rig description for convert_clip.py, and the figure ----------
 mx_scale = mx.matrix_world.to_scale().x
-hip_scale = leg_scale * mx_scale
-lowest, lowest_f = 1e9, mx_frames[0]
-for f in mx_frames:
-    scene.frame_set(f)
-    for pb in new.pose.bones:
-        src = mx.pose.bones[pb.name]
-        pb.rotation_quaternion = src.rotation_quaternion.copy()
-        pb.keyframe_insert("rotation_quaternion", frame=f)
-        if pb.name == "mixamorig:Hips":
-            pb.location = src.location * hip_scale
-            pb.keyframe_insert("location", frame=f)
-    hz = (new.matrix_world @ new.pose.bones["mixamorig:Hips"].head).z
-    if hz < lowest:
-        lowest, lowest_f = hz, f
-scene.frame_start, scene.frame_end = mx_frames[0], mx_frames[-1]
-print("clip copied: frames %d-%d, deepest at %d (hips %.3f m)" % (mx_frames[0], mx_frames[-1], lowest_f, lowest))
-
-# ---------- 5. export ----------
-mx_action = mx.animation_data.action if mx.animation_data else None
 bpy.data.objects.remove(mx, do_unlink=True)
 bpy.data.objects.remove(ours, do_unlink=True)
-if mx_action is not None:
-    bpy.data.actions.remove(mx_action)  # or the exporter ships the FBX's own clip as a second animation
+for a in list(bpy.data.actions):
+    bpy.data.actions.remove(a)  # the FBX's clip must not ride along
 new.name = "Armature"  # the app treats "Armature" (and "Scene") as non-owner nodes when it names a mesh's muscle
+bpy.context.view_layer.objects.active = new
+bpy.ops.object.mode_set(mode="EDIT")
+rig_out = {"bones": {}, "cb": {}, "joints": {k: [round(c, 5) for c in v] for k, v in J.items()}, "leg_scale": leg_scale, "mx_scale": mx_scale}
+for eb in new_data.edit_bones:
+    rig_out["bones"][eb.name] = {"head": [round(c, 5) for c in eb.head], "tail": [round(c, 5) for c in eb.tail], "roll": round(eb.roll, 6), "parent": eb.parent.name if eb.parent else None}
+bpy.ops.object.mode_set(mode="OBJECT")
+# The world rotation that took each of OUR bones from its rest to the bind
+# pose: identity except the arms. A clip written for our rig (a MotionClip3D,
+# world deltas from our rest) maps onto a Mixamo bone as delta * cb^-1.
+for our_bone, q in CB.items():
+    rig_out["cb"][our_bone] = [round(q.w, 6), round(q.x, 6), round(q.y, 6), round(q.z, 6)]
+json.dump(rig_out, open(os.path.join(OUT, "mixamo-rig.json"), "w"), indent=1)
+print("wrote", os.path.join(OUT, "mixamo-rig.json"))
+
 for o in bpy.data.objects:
     o.select_set(o in meshes or o == new)
 glb = os.path.join(OUT, "figure-mixamo.glb")
-scene.frame_set(mx_frames[0])
-kwargs = dict(filepath=glb, export_format="GLB", use_selection=True, export_apply=False, export_animations=True, export_skins=True, export_yup=True, export_rest_position_armature=True)
-try:
-    bpy.ops.export_scene.gltf(**kwargs)
-except TypeError as e:
-    print("export arg not accepted, retrying without the rest-position flag:", e)
-    kwargs.pop("export_rest_position_armature")
-    bpy.ops.export_scene.gltf(**kwargs)
+kwargs = dict(filepath=glb, export_format="GLB", use_selection=True, export_apply=False, export_animations=False, export_skins=True, export_yup=True)
+bpy.ops.export_scene.gltf(**kwargs)
 print("exported", glb, os.path.getsize(glb) // 1024, "KB")
 
 if NORENDER:
@@ -317,11 +294,10 @@ cam.data.type = "ORTHO"
 cam.data.ortho_scale = 2.1
 scene.collection.objects.link(cam)
 scene.camera = cam
-for frame, tag in ((mx_frames[0], "start"), (lowest_f, "deep")):
-    scene.frame_set(frame)
-    for name, pos, rot in (("front", (0, -6, 0.95), (90, 0, 0)), ("side", (6, 0, 0.95), (90, 0, 90))):
-        cam.location = pos
-        cam.rotation_euler = tuple(math.radians(a) for a in rot)
-        scene.render.filepath = os.path.join(OUT, "check-mixamo-%s-%s.png" % (tag, name))
-        bpy.ops.render.render(write_still=True)
-        print("wrote", scene.render.filepath)
+for name, pos, rot in (("front", (0, -6, 0.95), (90, 0, 0)), ("side", (6, 0, 0.95), (90, 0, 90))):
+    cam.location = pos
+    cam.rotation_euler = tuple(math.radians(a) for a in rot)
+    scene.render.filepath = os.path.join(OUT, "check-mixamo-rest-%s.png" % name)
+    bpy.ops.render.render(write_still=True)
+    print("wrote", scene.render.filepath)
+
