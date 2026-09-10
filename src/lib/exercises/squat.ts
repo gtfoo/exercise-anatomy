@@ -3,7 +3,11 @@ import type { MotionClip3D } from "@/lib/kinematics/types";
 import { withEstimatedActivation, type EstimatedActivation } from "./estimated";
 import motion from "@/lib/motion/bodyweight-squat.json";
 import motion3d from "@/lib/motion/bodyweight-squat-3d.json";
-import estimated from "@/lib/activation/squat-myofullbody.json";
+// The OpenSim lower-limb estimate. The MyoFullBody whole-body run
+// (src/lib/activation/squat-myofullbody.json) was shown for a day and pulled:
+// it saturated tibialis anterior, the rotator cuff and the elbow flexors in a
+// bodyweight squat and jittered frame to frame. See TASKS.md before using it.
+import estimated from "@/lib/activation/bodyweight-squat.json";
 
 // Curves are qualitative: shape and relative ordering by role, not measured
 // EMG. No muscle here carries a `source`, so the UI shows bands, never numbers.
@@ -36,7 +40,7 @@ const baseline: Exercise = {
   motion,
   motion3d: motion3d as unknown as MotionClip3D, // JSON arrays are number[] to TypeScript; the extractor guarantees the shapes
   disclaimer:
-    "Activation is estimated by whole-body musculoskeletal simulation of the captured movement, on a generic model whose knee stops at 120°; transversus abdominis, which the model lacks, is shown qualitatively by role. Nothing here is measured EMG. Educational illustration, not training or medical advice.",
+    "Lower-limb activation is estimated by musculoskeletal simulation of the captured movement; trunk muscles are shown qualitatively by role. Nothing here is measured EMG. Educational illustration, not training or medical advice.",
   phases: [
     { name: "descent", t0: 0, t1: 0.42 },
     { name: "bottom", t0: 0.42, t1: 0.58 },

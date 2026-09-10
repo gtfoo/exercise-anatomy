@@ -37,13 +37,16 @@ Every muscle curve is one of:
   shaped to it by hand. No `source`. The panel prints "Qualitative — not
   measured" and never a number.
 - **estimated** — static optimisation on a published musculoskeletal model,
-  from the motion shown: MyoFullBody in MuJoCo (`tools/myo`, whole body, 416
-  muscles) for display, OpenSim (`tools/opensim`, lower limb only) as the
-  cross-check on the squat. `source.measure` is `estimated-activation`; the
-  panel prints "Estimated, not measured" with the citation, and `conditions`
-  carries the reserve torques, which say how far the model was from able to
-  do the movement. Muscles no model has (transversus, trapezius, rhomboids)
-  stay qualitative.
+  from the motion shown: OpenSim (`tools/opensim`, lower limb only) is what
+  the squat displays. MyoFullBody in MuJoCo (`tools/myo`, whole body, 416
+  muscles) runs but is NOT displayed: its first results saturated muscles
+  that cannot be maximal in a bodyweight squat and jittered, and the owner
+  saw it at once (2026-09-10). It stays a tool until its curves are credible;
+  `TASKS.md` says what that needs. `source.measure` is `estimated-activation`;
+  the panel prints "Estimated, not measured" with the citation, and
+  `conditions` carries the reserve torques, which say how far the model was
+  from able to do the movement. Muscles no displayed model has (the whole
+  trunk, arms and shoulders today) stay qualitative.
 - **measured** — `%MVIC` from a cited EMG study *with the conditions it was
   measured under*. None yet. Do not add a percentage without both.
 

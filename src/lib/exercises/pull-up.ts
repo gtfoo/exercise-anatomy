@@ -1,6 +1,8 @@
 import type { CurvePoint, Exercise } from "./types";
-import { withEstimatedActivation, type EstimatedActivation } from "./estimated";
-import estimated from "@/lib/activation/pull-up-myofullbody.json";
+// Qualitative. The MyoFullBody estimate (src/lib/activation/pull-up-myofullbody.json)
+// had every arm and shoulder muscle at maximum through the whole pull, the
+// generic model being too weak for an 84 kg pull-up; it was shown for a day
+// and pulled. See TASKS.md before wiring it back in.
 
 // The hand-shaped baseline, then every muscle MyoFullBody has an actuator for
 // is overridden by the estimate (tools/myo, run locally on the designed
@@ -23,7 +25,7 @@ const baseline: Exercise = {
   barHeight: 2.3,
   camera: { position: [3.4, 2.0, 1.6], target: [0, 1.55, 0] },
   disclaimer:
-    "Activation is estimated by whole-body musculoskeletal simulation of a designed, not captured, movement; the generic model is at the limit of its arm and shoulder strength through the pull, which is why several muscles read as maximal. Trapezius and rhomboids, which the model lacks, are shown qualitatively by role. Nothing here is measured EMG. Educational illustration, not training or medical advice.",
+    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The musculoskeletal model used to estimate the squat has no arm or shoulder muscles, so nothing here is estimated or measured. Educational illustration, not training or medical advice.",
   phases: [
     { name: "pull", t0: 0, t1: 0.45 },
     { name: "top", t0: 0.45, t1: 0.55 },
@@ -170,4 +172,4 @@ const baseline: Exercise = {
   ],
 };
 
-export const pullUp = withEstimatedActivation(baseline, estimated as unknown as EstimatedActivation);
+export const pullUp: Exercise = baseline;

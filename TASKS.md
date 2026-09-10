@@ -6,6 +6,19 @@ letter and a one-line task strands the *why*.
 
 ## Open
 
+- [ ] **Make the MyoFullBody estimate credible before showing it again.** It
+      was displayed for a day (2026-09-09) and pulled when the owner saw
+      muscles "lighting up at random". Known causes: per-frame independent
+      least squares (no temporal smoothness, so curves jitter); the generic
+      model at its strength limit (arm muscles at 1.0 through the pull-up,
+      tibialis anterior at 1.0 in the squat with the centre of mass over the
+      heels); the IK matching segment directions only. To try, in order:
+      solve all frames together with a smoothness term; weight reserves so
+      the optimiser prefers a reserve over a saturated muscle; scale the
+      model's strength to the task, or say plainly it cannot do it; compare
+      each curve against the OpenSim lower-limb result before trusting it.
+      `from: owner, 2026-09-10 · "the muscles are just lighting up at random period"`
+
 - [ ] **Content-hashed model filename**, then tell the droplet agent so
       `/models/*` becomes `Cache-Control: immutable` for a year.
       `from: droplet · MAIL-ARCHIVE.md#held-the-caddy-host-block`
