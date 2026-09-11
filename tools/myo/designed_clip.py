@@ -127,12 +127,18 @@ def pull_up_sample(t):
 # planted foot; the pelvis follows the back leg. Bottom at t = 0.55: front
 # thigh horizontal, front shin vertical, back knee a hand above the floor.
 LUNGE = {
-    "back_thigh": [(0, 0), (0.12, 0), (0.30, 6), (0.55, 16), (0.80, 6), (0.90, 0), (1, 0)],
-    "back_knee": [(0, 0), (0.12, 0), (0.24, 8), (0.30, 32), (0.55, 88), (0.80, 32), (0.90, 4), (1, 0)],
-    "back_foot": [(0, 0), (0.12, 0), (0.30, 25), (0.55, 55), (0.80, 25), (0.90, 3), (1, 0)],
-    "front_z": [(0, 0), (0.10, 0), (0.30, 1.0), (0.82, 1.0), (0.95, 0), (1, 0)],  # fraction of the step
-    "front_lift": [(0, 0), (0.10, 0), (0.20, 1.0), (0.30, 0), (0.82, 0), (0.88, 1.0), (0.95, 0), (1, 0)],
-    "trunk": [(0, 0), (0.30, 2), (0.55, 6), (0.80, 2), (1, 0)],
+    # The back leg leans forward (heel rising) while the front foot is in the
+    # air, so the hips travel with the step and the front knee lands bent
+    # rather than reaching at full stretch. Same on the way back.
+    # The descent begins as the front foot lands, and the foot leaves before
+    # the drive is complete: standing tall on a foot 0.98 m ahead would need
+    # a straight front leg, which is not how a lunge is done.
+    "back_thigh": [(0, 0), (0.10, 0), (0.30, 28), (0.36, 24), (0.55, 16), (0.72, 22), (0.82, 26), (0.95, 0), (1, 0)],
+    "back_knee": [(0, 0), (0.10, 0), (0.30, 14), (0.36, 44), (0.55, 88), (0.72, 48), (0.82, 14), (0.95, 0), (1, 0)],
+    "back_foot": [(0, 0), (0.10, 0), (0.30, 38), (0.36, 44), (0.55, 55), (0.72, 44), (0.82, 36), (0.95, 0), (1, 0)],
+    "front_z": [(0, 0), (0.10, 0), (0.24, 0.5), (0.34, 1.0), (0.72, 1.0), (0.84, 0.5), (0.95, 0), (1, 0)],  # fraction of the step
+    "front_lift": [(0, 0), (0.10, 0), (0.22, 1.0), (0.34, 0), (0.72, 0), (0.82, 1.0), (0.95, 0), (1, 0)],
+    "trunk": [(0, 0), (0.30, 3), (0.55, 6), (0.80, 3), (1, 0)],
 }
 LUNGE_LIFT = 0.10
 
@@ -181,7 +187,7 @@ def lunge_sample(t):
 # top, and the arms are solved by IK as the shoulders drop. Elbows bend
 # straight back (a close-grip push-up; the atlas has no anterior deltoid).
 PUSHUP_TOP_SHOULDER = None  # set below from the arm length
-PUSHUP_BOTTOM_SHOULDER = 0.34  # shoulder height at the bottom, metres
+PUSHUP_BOTTOM_SHOULDER = 0.20  # shoulder height at the bottom, metres: the chest a few centimetres off the floor
 
 
 def pushup_sample(t):
@@ -234,4 +240,15 @@ json.dump(clip, open(out, "w"))
 roots = np.array([s["root"] for s in samples])
 print("wrote", out, N, "samples; root y %.2f..%.2f z %.2f..%.2f" % (roots[:, 1].min(), roots[:, 1].max(), roots[:, 2].min(), roots[:, 2].max()))
 if slug == "lunge":
-    print("lunge step %.2f m" % LUNGE_STEP)
+    # The front knee must stay bent while the foot is in the air (t 0.12-0.30 and 0.82-0.95).
+    bends = []
+    for i in range(N):
+        t = i / N
+        if 0.12 <= t <= 0.34 or 0.80 <= t <= 0.95:
+            hip_r, *_ = lunge_back_leg(t)
+            hip_l = hip_r + (rig["hip.l"] - rig["hip.r"])
+            target = rig["ankle.l"] + np.array([0.0, LUNGE_LIFT * keyed(LUNGE["front_lift"], t), LUNGE_STEP * keyed(LUNGE["front_z"], t)])
+            th, sh, _ = two_link(hip_l, target, L_THIGH, L_SHIN, bend_forward=True)
+            bends.append((t, math.degrees(sh - th)))
+    print("lunge step %.2f m; front knee bend while the foot is in the air: %.0f..%.0f deg" % (LUNGE_STEP, min(b for _, b in bends), max(b for _, b in bends)))
+    print("  " + "  ".join("%.2f:%.0f" % tb for tb in bends[::2]))
