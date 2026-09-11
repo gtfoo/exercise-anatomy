@@ -65,7 +65,7 @@ def head(name):
 
 
 print("clip %s: frames %d-%d @ %.0f fps (%.1f s)" % (os.path.basename(SRC), f0, f1, fps, (f1 - f0) / fps))
-print("%6s %6s | %7s %7s %7s | %6s | %s" % ("frame", "s", "hips_z", "lw-hips", "rw-hips", "knee", "lowest"))
+print("%6s %6s | %7s %7s %7s | %6s | %7s %7s | %s" % ("frame", "s", "hips_z", "lw-hips", "rw-hips", "knee", "hips_x", "hips_fw", "lowest"))
 lowest = 1e9
 for f in range(FROM or int(f0), (TO or int(f1)) + 1, EVERY):
     scene.frame_set(f)
@@ -75,4 +75,5 @@ for f in range(FROM or int(f0), (TO or int(f1)) + 1, EVERY):
     v1, v2 = (a - b).normalized(), (c - b).normalized()
     knee = 180 - math.degrees(math.acos(max(-1, min(1, v1.dot(v2)))))
     lowest = min(lowest, h.z)
-    print("%6d %6.2f | %7.3f %7.3f %7.3f | %6.0f | %.3f" % (f, (f - f0) / fps, h.z, lw.z - h.z, rw.z - h.z, knee, lowest))
+    # hips_fw: forward travel (Blender -Y is the figure's forward)
+    print("%6d %6.2f | %7.3f %7.3f %7.3f | %6.0f | %7.3f %7.3f | %.3f" % (f, (f - f0) / fps, h.z, lw.z - h.z, rw.z - h.z, knee, h.x, -h.y, lowest))

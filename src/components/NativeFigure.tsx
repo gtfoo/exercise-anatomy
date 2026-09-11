@@ -38,9 +38,32 @@ type Live = { materials: FigureMaterials; mixer: THREE.AnimationMixer; action: T
  * Returns the function that removes it again.
  */
 function attachProps(scene: THREE.Group, props: Exercise["props"]): () => void {
-  if (props !== "dumbbells") return () => {};
+  if (!props) return () => {};
   const steel = new THREE.MeshStandardMaterial({ color: "#4a4744", roughness: 0.5, metalness: 0.6 });
   const added: THREE.Object3D[] = [];
+  if (props === "kettlebell") {
+    // One bell held in both hands: parented to the left hand, offset toward the
+    // right one, the handle across the palms and the bell hanging below them.
+    const hand = scene.getObjectByName("mixamorigLeftHand");
+    if (hand) {
+      const g = new THREE.Group();
+      g.position.set(-0.05, 0.07, 0.03);
+      const handle = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.014, 12, 32, Math.PI), steel);
+      handle.rotation.set(0, 0, 0); // arc in the local XY plane, open toward -Y (the wrist), bell side at +Y... rotated below
+      handle.rotation.x = Math.PI / 2;
+      handle.rotation.z = Math.PI;
+      handle.position.z = 0.0;
+      const bell = new THREE.Mesh(new THREE.SphereGeometry(0.085, 24, 16), steel);
+      bell.position.set(0, 0, 0.13);
+      g.add(handle, bell);
+      hand.add(g);
+      added.push(g);
+    }
+    return () => {
+      for (const g of added) g.removeFromParent();
+      steel.dispose();
+    };
+  }
   for (const side of ["Left", "Right"]) {
     const hand = scene.getObjectByName(`mixamorig${side}Hand`);
     if (!hand) continue;

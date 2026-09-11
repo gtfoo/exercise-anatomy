@@ -1,14 +1,19 @@
 {
+  "/models/clips/bicycle-crunch.glb": "931342b335",
   "/models/clips/bodyweight-squat.glb": "6e31099039",
   "/models/clips/breaststroke.glb": "29c859fd96",
   "/models/clips/clamshell.glb": "3a920a34fb",
   "/models/clips/freestyle.glb": "88d6210028",
   "/models/clips/jumping-jacks.glb": "39853a7903",
+  "/models/clips/kettlebell-swing.glb": "71c6ce1768",
   "/models/clips/l-sit.glb": "187a2638b6",
   "/models/clips/lateral-raise.glb": "827da1b182",
   "/models/clips/lunge.glb": "6be0fab785",
   "/models/clips/pull-up.glb": "69ea2afc68",
   "/models/clips/push-up.glb": "4c571333c0",
+  "/models/clips/sprint.glb": "16566e6f45",
+  "/models/clips/stairs.glb": "3701eac2ff",
   "/models/clips/stand.glb": "a5f1e2601c",
+  "/models/clips/wall-climb.glb": "8acbc15774",
   "/models/figure-mixamo.glb": "92650340c9"
 }

@@ -42,6 +42,12 @@ Cuts in use (CMU FBX from Hugging Face `gbionics/cmu-fbx`, 30 fps):
 | push-up | (designed) | | no free floor push-up exists |
 | freestyle | 126_12 | 297:364 | free, root offset y 0.216 |
 
+Mixamo clips (owner's downloads, converted straight from the FBX with
+`convert_clip.py --fbx`): Air Squat, Swimming breaststroke (61:121, root
+vertical), Kettlebell Swing, Sprint, Bicycle Crunch (all root vertical),
+Climbing Up Wall and Walking Up The Stairs (full root motion; the viewer
+draws a wall or a staircase to match).
+
 Also on disk: 88_02 (acrobatics) holds handstand push-ups, not floor ones;
 13_29 frames 1041-1121 is a deep bodyweight squat, unused since the Mixamo
 squat is the estimator's input.

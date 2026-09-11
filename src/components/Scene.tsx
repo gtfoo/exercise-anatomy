@@ -87,6 +87,28 @@ function ParallelBars({ height, spacing }: { height: number; spacing: number }) 
   );
 }
 
+/** A wall face in front of the figure, for a climb, and a staircase rising away from it, drawn to the clip's rise and run. */
+function Scenery({ scenery }: { scenery: NonNullable<Exercise["scenery"]> }) {
+  const plaster = useMemo(() => new THREE.MeshStandardMaterial({ color: "#d9d4cc", roughness: 0.95 }), []);
+  if (scenery.kind === "wall") {
+    return (
+      <mesh material={plaster} position={[0, scenery.height / 2, scenery.front + 0.15]}>
+        <boxGeometry args={[3, scenery.height, 0.3]} />
+      </mesh>
+    );
+  }
+  const { rise, run, count, first } = scenery;
+  return (
+    <group>
+      {Array.from({ length: count }, (_, i) => (
+        <mesh key={i} material={plaster} position={[0, (rise * (i + 1)) / 2, first + run * i + run / 2]}>
+          <boxGeometry args={[1.6, rise * (i + 1), run]} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
 /** A translucent surface: the figure is drawn through it, which is what a swimmer at the surface looks like. */
 function Water({ level }: { level: number }) {
   return (
@@ -124,6 +146,7 @@ export default function Scene({ exercise }: { exercise: Exercise }) {
       <Ticker durationMs={exercise.durationMs} />
       {exercise.anchor === "hands" && <Bar height={exercise.barHeight ?? 2.3} />}
       {exercise.anchor === "bars" && <ParallelBars height={exercise.barHeight ?? 1.0} spacing={exercise.barSpacing ?? 0.27} />}
+      {exercise.scenery && <Scenery scenery={exercise.scenery} />}
       {exercise.environment === "water" ? <Water level={exercise.waterLevel ?? 0.95} /> : exercise.anchor !== "hands" && <FloorShadow />}
 
       <OrbitControls target={target} minDistance={1.2} maxDistance={7} maxPolarAngle={Math.PI / 2 - 0.02} enablePan={false} />

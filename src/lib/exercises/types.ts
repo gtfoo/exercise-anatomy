@@ -55,7 +55,9 @@ export type Exercise = {
   /** Half the distance between parallel bars, metres: where the hands rest. */
   barSpacing?: number;
   /** Hand-held equipment the viewer attaches to the hand bones. */
-  props?: "dumbbells";
+  props?: "dumbbells" | "kettlebell";
+  /** Fixed scenery besides the floor: a wall to climb (top edge at `wallHeight`, face at `wallFront`), or a staircase. */
+  scenery?: { kind: "wall"; height: number; front: number } | { kind: "stairs"; rise: number; run: number; count: number; first: number };
   /** Who captured the movement, when the clip came straight from a source file rather than through `motion`/`motion3d`. */
   credit?: string;
   /** A resting figure and a plain muscle list: no transport, no roles, no provenance line. */

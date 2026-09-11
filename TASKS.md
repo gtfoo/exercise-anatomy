@@ -78,6 +78,11 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Five more Mixamo clips** (2026-09-11): kettlebell swing (bell
+      parented to the hands), sprint (in place), bicycle crunch, wall climb
+      (a wall face drawn; the clip climbs in place), climbing stairs (travel
+      kept, staircase drawn to the measured 0.22 m rise and 0.227 m run).
+      `from: owner, 2026-09-11 · "i've added a few more from mixamo, go check and add"`
 - [x] **Home page is the resting atlas; breaststroke added** (2026-09-11).
       `/` shows the figure standing (a one-frame "stand" clip) and lists all
       39 named muscles with no transport; the squat lives at
