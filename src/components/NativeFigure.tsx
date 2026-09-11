@@ -7,6 +7,17 @@ import * as THREE from "three";
 import type { Exercise } from "@/lib/exercises/types";
 import { useViewer } from "@/lib/store";
 import { bindMaterials, paintMaterials, type FigureMaterials } from "./figureMaterials";
+import hashes from "@/lib/model-hashes.json";
+
+/**
+ * The droplet serves /models/* with a one-day cache and the filenames never
+ * change, so every URL carries a content hash (scripts/hash-models.mjs, run
+ * before dev and build): a re-converted clip is a new URL, not a stale hit.
+ */
+export function versioned(path: string): string {
+  const h = (hashes as Record<string, string>)[path];
+  return h ? `${path}?v=${h}` : path;
+}
 
 /**
  * The écorché bound to a Mixamo skeleton (tools/blender/build_mixamo_rig.py),
@@ -20,8 +31,8 @@ export const FIGURE_URL = "/models/figure-mixamo.glb";
 type Live = { materials: FigureMaterials; mixer: THREE.AnimationMixer; action: THREE.AnimationAction; duration: number };
 
 export default function NativeFigure({ exercise }: { exercise: Exercise }) {
-  const figureUrl = exercise.native?.figure ?? FIGURE_URL;
-  const clipUrl = exercise.native!.clip;
+  const figureUrl = versioned(exercise.native?.figure ?? FIGURE_URL);
+  const clipUrl = versioned(exercise.native!.clip);
   const { scene } = useGLTF(figureUrl);
   const { animations } = useGLTF(clipUrl);
   const ids = useMemo(() => new Set(exercise.muscles.map((m) => m.id)), [exercise]);
@@ -90,4 +101,4 @@ export default function NativeFigure({ exercise }: { exercise: Exercise }) {
   );
 }
 
-useGLTF.preload(FIGURE_URL);
+useGLTF.preload(versioned(FIGURE_URL));

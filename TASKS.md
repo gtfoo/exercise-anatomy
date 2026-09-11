@@ -19,9 +19,13 @@ letter and a one-line task strands the *why*.
       each curve against the OpenSim lower-limb result before trusting it.
       `from: owner, 2026-09-10 · "the muscles are just lighting up at random period"`
 
-- [ ] **Content-hashed model filename**, then tell the droplet agent so
-      `/models/*` becomes `Cache-Control: immutable` for a year.
-      `from: droplet · MAIL-ARCHIVE.md#held-the-caddy-host-block`
+- [ ] **Tell the droplet agent `/models/*` can go immutable.** Every model
+      URL now carries a content hash as a query string (`?v=<sha1[:10]>`,
+      `scripts/hash-models.mjs` before dev and build), so a re-converted
+      clip is a new URL. The one-day cache the droplet set bit on
+      2026-09-11: the owner saw yesterday's pull-up after a deploy. With the
+      hashes in place a year-long immutable cache is safe; write the letter.
+      `from: droplet · MAIL-ARCHIVE.md#held-the-caddy-host-block · owner 2026-09-11 "i dont see any updates"`
 
 - [ ] **Owner to confirm the calf and the kneecaps.** Per-joint blend widths
       (2026-09-07) for the fibula head showing through the lateral
