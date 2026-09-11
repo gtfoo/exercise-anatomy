@@ -50,6 +50,34 @@ def smooth(t):
     return t * t * (3 - 2 * t)
 
 
+def splined(keys, t):
+    """Monotone cubic (Fritsch-Butland) through (t, value) keys: continuous velocity through every key, no
+    overshoot, flat where the keys are flat. `keyed` stops dead at each key, which made a sequence with many keys
+    (the muscle-up) look jerky (owner, 2026-09-11)."""
+    ts = [k[0] for k in keys]
+    vs = [k[1] for k in keys]
+    n = len(keys)
+    if t <= ts[0]:
+        return vs[0]
+    if t >= ts[-1]:
+        return vs[-1]
+    h = [ts[i + 1] - ts[i] for i in range(n - 1)]
+    d = [(vs[i + 1] - vs[i]) / h[i] if h[i] > 0 else 0.0 for i in range(n - 1)]
+    m = [0.0] * n
+    for i in range(1, n - 1):
+        if d[i - 1] * d[i] <= 0:
+            m[i] = 0.0
+        else:
+            w1, w2 = 2 * h[i] + h[i - 1], h[i] + 2 * h[i - 1]
+            m[i] = (w1 + w2) / (w1 / d[i - 1] + w2 / d[i])
+    for i in range(n - 1):
+        if t <= ts[i + 1]:
+            u = (t - ts[i]) / h[i]
+            h00, h10, h01, h11 = 2 * u**3 - 3 * u**2 + 1, u**3 - 2 * u**2 + u, -2 * u**3 + 3 * u**2, u**3 - u**2
+            return h00 * vs[i] + h10 * m[i] * h[i] + h01 * vs[i + 1] + h11 * m[i + 1] * h[i]
+    return vs[-1]
+
+
 def keyed(keys, t):
     """Piecewise smoothstep through (t, value) keys."""
     if t <= keys[0][0]:
@@ -289,8 +317,8 @@ DIPS = {
 
 
 def dips_sample(t):
-    a = keyed(DIPS["arm"], t) * DEG
-    trunk = keyed(DIPS["trunk"], t) * DEG
+    a = splined(DIPS["arm"], t) * DEG
+    trunk = splined(DIPS["trunk"], t) * DEG
     upper_dy = float(rig["shoulder.l"][1] - rig["elbow.l"][1])
     fore_dy = float(rig["elbow.l"][1] - rig["wrist.l"][1])
     hand = np.array([0.0, DIP_BAR + 0.015, 0.0])  # the palms on top of the bars (x is the rest wrist's)
@@ -657,10 +685,12 @@ def crow_hold():
     """Bakasana: hands on the floor, elbows bent, knees on the backs of the upper arms, feet lifted behind.
     The legs spread so the knees sit outside the arms, not through them (owner, 2026-09-11)."""
     q = all_ident()
-    trunk = 108 * DEG  # chest leant forward past the hands; the elbows bend about 90 degrees under it
+    trunk = 100 * DEG  # chest leant forward past the hands; the elbows bend about 90 degrees under it
     root, pelvis_pos = root_for_hip(np.array([0.0, 0.55, 0.0]), rx(trunk))
     q["pelvis"], q["spine"] = rx(trunk), rx(trunk)
-    q["neck"], q["head"] = rx(trunk - 45 * DEG), rx(trunk - 65 * DEG)  # the neck extends as far as a neck does; gaze forward and down
+    # The neck extends hard so the face looks forward (the crown pointed at the floor before, 2026-09-11): the
+    # neck bone takes half the extension, the head the rest, ending ten degrees short of upright.
+    q["neck"], q["head"] = rx(trunk - 50 * DEG), rx(trunk - 90 * DEG)
     for S, sgn in (("L", 1), ("R", -1)):
         spread = q_axis([0, 0, 1], sgn * 28 * DEG)  # about the forward axis: the far end of a hanging bone swings outward
         q["thigh." + S] = qmul(rx(-55 * DEG), spread)  # knees forward, up and out, onto the backs of the upper arms
@@ -705,17 +735,20 @@ def side_plank_sample(t):
 # (degrees), elbow bend, trunk lean, thigh, knee, and how far the wrists have
 # turned over onto the top of the bar.
 MUSCLE_UP = {
-    "armFwd": [(0, 175), (0.24, 42), (0.36, 5), (0.46, -12), (0.62, -12), (0.72, -38), (0.82, 30), (1, 175)],
-    "elbow": [(0, 5), (0.24, 140), (0.36, 110), (0.46, 2), (0.62, 2), (0.72, 95), (0.82, 130), (1, 5)],
-    "trunk": [(0, 2), (0.24, -4), (0.36, 32), (0.46, 6), (0.62, 6), (0.72, 24), (0.82, 8), (1, 2)],
-    "thigh": [(0, -2), (0.24, -12), (0.36, 22), (0.46, 2), (0.62, 2), (0.72, 15), (0.82, 5), (1, -2)],
-    "knee": [(0, 4), (0.24, 20), (0.36, 18), (0.46, 4), (0.62, 4), (0.72, 15), (0.82, 15), (1, 4)],
-    "wrist": [(0, 0), (0.24, 0), (0.30, 25), (0.36, 65), (0.46, 85), (0.62, 85), (0.72, 85), (0.80, 40), (0.86, 0), (1, 0)],
+    # Strict form (YouTube, 2026-09-11): pull high with the chest up, then lean the chest over the bar as the legs
+    # swing back under it and the elbows come up behind, press out, and reverse. The wrists stay on the bar; the
+    # lean is what carries the shoulders across it.
+    "armFwd": [(0, 175), (0.2, 55), (0.3, 20), (0.38, -25), (0.48, -8), (0.6, -8), (0.7, -35), (0.8, 20), (0.9, 100), (1, 175)],
+    "elbow": [(0, 5), (0.2, 130), (0.3, 120), (0.38, 100), (0.48, 3), (0.6, 3), (0.7, 95), (0.8, 125), (0.9, 70), (1, 5)],
+    "trunk": [(0, 2), (0.2, -5), (0.3, 25), (0.38, 35), (0.48, 8), (0.6, 8), (0.7, 28), (0.8, 22), (0.9, 2), (1, 2)],
+    "thigh": [(0, -2), (0.2, -15), (0.3, 25), (0.38, 20), (0.48, 5), (0.6, 5), (0.7, 15), (0.8, 20), (0.9, 0), (1, -2)],
+    "knee": [(0, 4), (0.2, 15), (0.3, 30), (0.38, 30), (0.48, 10), (0.6, 10), (0.7, 25), (0.8, 30), (0.9, 10), (1, 4)],
+    "wrist": [(0, 0), (0.2, 0), (0.28, 30), (0.38, 80), (0.48, 85), (0.6, 85), (0.7, 85), (0.8, 30), (0.88, 0), (1, 0)],
 }
 
 
 def muscle_up_sample(t):
-    k = lambda name: keyed(MUSCLE_UP[name], t) * DEG
+    k = lambda name: splined(MUSCLE_UP[name], t) * DEG
     thigh = k("thigh")
     shin = thigh + k("knee")
     foot = shin + POINT * DEG
@@ -754,7 +787,7 @@ HAND_Z = 0.55
 
 
 def handstand_sample(t):
-    k = lambda name: keyed(HANDSTAND[name], t)
+    k = lambda name: splined(HANDSTAND[name], t)
     trunk = k("trunk") * DEG
     shoulder_mid = np.array([0.0, k("sh_y"), k("sh_z")])
     hip_mid = shoulder_mid - np.array([0.0, math.cos(trunk), math.sin(trunk)]) * L_TRUNK
@@ -762,7 +795,7 @@ def handstand_sample(t):
     q = all_ident()
     q["pelvis"], q["spine"] = rx(trunk), rx(trunk)
     # The head looks between the hands: extended against the trunk once inverted, level while standing.
-    gaze = keyed([(0, 0), (0.16, -40), (0.40, -45), (0.62, -45), (0.86, -40), (1, 0)], t) * DEG
+    gaze = splined([(0, 0), (0.16, -40), (0.40, -45), (0.62, -45), (0.86, -40), (1, 0)], t) * DEG
     q["neck"], q["head"] = rx(trunk + gaze * 0.5), rx(trunk + gaze)
     for S, side in (("L", "l"), ("R", "r")):
         thigh = k("thigh_" + side) * DEG
@@ -775,7 +808,7 @@ def handstand_sample(t):
         hand = np.array([shoulder[0], 0.03, HAND_Z])
         d = hand - shoulder
         reach = angle_of(d / max(float(np.linalg.norm(d)), 1e-9))  # the straight arm from the shoulder to the planted hand
-        swing = keyed([(0, 0), (0.06, -10), (0.16, reach / DEG), (0.86, reach / DEG), (0.95, -10), (1, 0)], t) * DEG
+        swing = splined([(0, 0), (0.06, -10), (0.16, reach / DEG), (0.86, reach / DEG), (0.95, -10), (1, 0)], t) * DEG
         arm = swing if planted < 1 else reach
         q["upper_arm." + S] = q["forearm." + S] = qmul(rx(arm), PRONATE) if planted > 0 else rx(arm)
         q["hand." + S] = q["fingers." + S] = qmul(rx(arm - 90 * DEG * planted), PRONATE) if planted > 0 else rx(arm)

@@ -7,6 +7,11 @@ type ViewerState = {
   speed: 1 | 0.5;
   hovered: string | null;
   selected: string | null;
+  /** The exercise panel (left) and the muscle panel (right) on wide screens; both collapse to a tab. */
+  leftOpen: boolean;
+  rightOpen: boolean;
+  setLeftOpen: (open: boolean) => void;
+  setRightOpen: (open: boolean) => void;
   setT: (t: number) => void;
   setPlaying: (playing: boolean) => void;
   togglePlaying: () => void;
@@ -22,6 +27,10 @@ export const useViewer = create<ViewerState>((set) => ({
   speed: 1,
   hovered: null,
   selected: null,
+  leftOpen: true,
+  rightOpen: true,
+  setLeftOpen: (leftOpen) => set({ leftOpen }),
+  setRightOpen: (rightOpen) => set({ rightOpen }),
   setT: (t) => set({ t }),
   setPlaying: (playing) => set({ playing }),
   togglePlaying: () => set((s) => ({ playing: !s.playing })),

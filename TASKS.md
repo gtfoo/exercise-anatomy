@@ -118,6 +118,16 @@ letter and a one-line task strands the *why*.
       internal obliques, gracilis, pectineus, fibularis longus and brevis):
       50 named muscles now, each added to the exercises where a muscle it
       works alongside was already listed, with that entry's curve.
+      Fifth round: the exercise switcher is its own panel on the left, one
+      block per category with the exercises as chips, and both panels
+      collapse to a tab on the canvas (the owner found the inline list hard
+      to read); the atlas paints a selected muscle red against the bone; the
+      crow's neck extends so the face looks forward (the crown pointed at the
+      floor); the muscle-up follows the strict form in a slow-motion video
+      (pull high, lean the chest over the bar as the legs swing back, elbows
+      up behind, press) and the designed sequences interpolate their keys
+      with a monotone cubic spline instead of a smoothstep that stopped at
+      every key, which read as jerky.
       `from: owner, 2026-09-11 · from "for side plank, the muscle activation should be asymmetric right?" to "there seems to be a few missing frames between the end and the start"`
 
 - [x] **Cycling, plank, five yoga holds, categories** (2026-09-11): all

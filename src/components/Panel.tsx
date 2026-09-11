@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Exercise, MuscleActivation } from "@/lib/exercises/types";
 import { ROLE_LABEL, levelAt, phaseAt } from "@/lib/exercises/types";
@@ -23,6 +22,8 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
   const setSpeed = useViewer((s) => s.setSpeed);
   const setHovered = useViewer((s) => s.setHovered);
   const setSelected = useViewer((s) => s.setSelected);
+  const rightOpen = useViewer((s) => s.rightOpen);
+  const setRightOpen = useViewer((s) => s.setRightOpen);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -55,8 +56,20 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
   const groupOf = (m: MuscleActivation) => MUSCLES.find((x) => x.id === m.id)?.group ?? m.group;
 
   return (
-    <aside className="flex min-h-0 w-full flex-1 flex-col gap-4 overflow-y-auto border-t border-zinc-200 bg-white p-4 text-zinc-800 md:w-80 md:flex-none md:gap-5 md:border-t-0 md:border-l md:p-5">
+    <aside
+      className={`flex min-h-0 w-full flex-1 flex-col gap-4 overflow-y-auto border-t border-zinc-200 bg-white p-4 text-zinc-800 md:w-80 md:flex-none md:gap-5 md:border-t-0 md:border-l md:p-5 ${
+        rightOpen ? "" : "md:hidden"
+      }`}
+    >
       <header>
+        <button
+          type="button"
+          onClick={() => setRightOpen(false)}
+          className="float-right -mt-1 -mr-1 hidden rounded px-1.5 py-0.5 text-xs text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 md:block"
+          aria-label="Hide the muscle panel"
+        >
+          ›
+        </button>
         {/* Narrow screens: one grouped select. Wide screens: the groups laid out with headings. */}
         <label className="mb-2 block md:hidden">
           <span className="sr-only">Exercise</span>
@@ -80,24 +93,6 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
             ))}
           </select>
         </label>
-        <nav className="mb-3 hidden flex-col gap-1.5 text-xs md:flex" aria-label="Exercises">
-          {grouped.map((g) => (
-            <div key={g.category} className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
-              <span className="w-[6.5rem] shrink-0 text-[10px] font-medium uppercase tracking-wide text-zinc-400">{g.category}</span>
-              {g.items.map((e) =>
-                e.slug === exercise.slug ? (
-                  <span key={e.slug} className="font-medium text-zinc-900" aria-current="page">
-                    {e.name}
-                  </span>
-                ) : (
-                  <Link key={e.slug} href={routeFor(e)} className="text-zinc-500 hover:text-zinc-800">
-                    {e.name}
-                  </Link>
-                ),
-              )}
-            </div>
-          ))}
-        </nav>
         <h1 className="text-lg font-semibold tracking-tight text-zinc-900">{exercise.name}</h1>
         <p className="mt-1 line-clamp-3 text-xs leading-relaxed text-zinc-500 md:line-clamp-none">{exercise.disclaimer}</p>
       </header>

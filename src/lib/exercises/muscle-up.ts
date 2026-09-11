@@ -24,16 +24,16 @@ export const muscleUp: Exercise = {
   anchor: "hands",
   barHeight: 2.3,
   native: { clip: "/models/clips/muscle-up.glb" },
-  camera: { position: [0.6, 2.2, 4.2], target: [0, 1.9, 0] },
+  camera: { position: [3.4, 2.3, 2.0], target: [0, 1.9, 0] }, // from the side: the lean over the bar is the movement
   disclaimer:
     "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is designed, not captured: no free motion capture of a muscle-up exists. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
   phases: [
-    { name: "pull", t0: 0, t1: 0.24 },
-    { name: "transition", t0: 0.24, t1: 0.36 },
-    { name: "press", t0: 0.36, t1: 0.46 },
-    { name: "support", t0: 0.46, t1: 0.62 },
-    { name: "dip down", t0: 0.62, t1: 0.72 },
-    { name: "transition down", t0: 0.72, t1: 0.82 },
+    { name: "pull", t0: 0, t1: 0.22 },
+    { name: "lean over", t0: 0.22, t1: 0.38 },
+    { name: "press", t0: 0.38, t1: 0.48 },
+    { name: "support", t0: 0.48, t1: 0.6 },
+    { name: "dip down", t0: 0.6, t1: 0.7 },
+    { name: "back under", t0: 0.7, t1: 0.82 },
     { name: "lower", t0: 0.82, t1: 1 },
   ],
   muscles: [
