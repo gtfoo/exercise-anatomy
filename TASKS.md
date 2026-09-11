@@ -62,8 +62,24 @@ letter and a one-line task strands the *why*.
       the parent repo, once the site is live. The parent's own rules apply.
       `from: gtfoo AGENTS.md · case studies`
 
+## Open (continued)
+
+- [ ] **A jumping jack that jumps.** CMU subject 13's jumping jacks are a
+      step-jack: the hips move 2 mm over the cycle (probe_clip.py), so the
+      figure cannot leave the floor. Candidates on the same mirror: 14_06
+      (697 KB) and 14_14 (610 KB), "jumping jacks, jog, squats, side twists,
+      stretches"; 13_30 (368 KB) is the same subject again. Probe before
+      cutting. No synthetic hop: the page shows captures, not inventions.
+      `from: owner, 2026-09-11 · "the model isn't jumping??"`
+
 ## Done
 
+- [x] **Pull-up back to the designed strict movement; lunge arms at rest**
+      (2026-09-11). The captured playground pull-up (knees tucked, swing)
+      was rejected: "a standard pull up, just up and down". The lunge's
+      capture had the performer throwing punches; `convert_clip.py --arms
+      rest` holds the arms at the sides.
+      `from: owner, 2026-09-11`
 - [x] **Captured pull-up, forward lunge and jumping jacks** (2026-09-10),
       all from CMU takes cut with the new `probe_clip.py` and converted onto
       the rig: 01_12 frames 117-213 (pull-up on a low playground bar, knees

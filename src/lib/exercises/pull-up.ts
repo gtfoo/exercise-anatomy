@@ -1,11 +1,10 @@
 import type { CurvePoint, Exercise } from "./types";
-import type { MotionClip3D } from "@/lib/kinematics/types";
-import motion3d from "@/lib/motion/pull-up-3d.json";
 
-// One captured pull-up: CMU subject 1 trial 12, on playground equipment, cut
-// from a hang through the top and back to a hang (the subject's knees stay
-// bent, the bar being low). The designed kinematics in src/lib/kinematics/
-// pull-up.ts remain as the fallback and as the estimator's input.
+// A standard strict pull-up, designed (src/lib/kinematics/pull-up.ts, mirrored
+// by tools/myo/designed_clip.py): body straight, hands over the shoulders,
+// up and down. No free capture of one exists (Mixamo has none; CMU's, subject
+// 1 trial 12, is on a low playground bar with the knees tucked and a swing,
+// tried on 2026-09-10 and rejected by the owner).
 //
 // Qualitative curves. The MyoFullBody estimate (src/lib/activation/
 // pull-up-myofullbody.json) had every arm and shoulder muscle at maximum
@@ -24,19 +23,18 @@ const GRIP: CurvePoint[] = [[0, 0.5], [0.3, 0.7], [0.5, 0.7], [0.8, 0.6], [1, 0.
 const baseline: Exercise = {
   slug: "pull-up",
   name: "Pull-up",
-  durationMs: 3200, // the captured cycle at its real tempo
+  durationMs: 3600,
   anchor: "hands",
   barHeight: 2.3,
-  // The captured clip, converted onto the rigged figure's skeleton with the wrists placed on the bar.
-  motion3d: motion3d as unknown as MotionClip3D,
+  // The designed movement converted onto the rigged figure's skeleton with the wrists placed on the bar.
   native: { clip: "/models/clips/pull-up.glb" },
   camera: { position: [3.4, 2.0, 1.6], target: [0, 1.55, 0] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The musculoskeletal model used to estimate the squat has no arm or shoulder muscles, so nothing here is estimated or measured. The movement was captured on a low playground bar, so the knees stay bent. Educational illustration, not training or medical advice.",
+    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is designed, not captured: no free motion capture of a strict pull-up exists. The musculoskeletal model used to estimate the squat has no arm or shoulder muscles, so nothing here is estimated or measured. Educational illustration, not training or medical advice.",
   phases: [
-    { name: "pull", t0: 0, t1: 0.38 },
-    { name: "top", t0: 0.38, t1: 0.48 },
-    { name: "lower", t0: 0.48, t1: 1 },
+    { name: "pull", t0: 0, t1: 0.45 },
+    { name: "top", t0: 0.45, t1: 0.55 },
+    { name: "lower", t0: 0.55, t1: 1 },
   ],
   muscles: [
     // Back

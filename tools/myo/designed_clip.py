@@ -17,8 +17,8 @@ DEG = math.pi / 180
 N = 64
 
 # src/lib/kinematics/pull-up.ts
-HANG = {"armFwd": 172, "elbow": 5, "trunk": 3, "thigh": -3, "knee": 10}
-TOP = {"armFwd": 35, "elbow": 135, "trunk": -8, "thigh": -12, "knee": 35}
+HANG = {"armFwd": 175, "elbow": 5, "trunk": 2, "thigh": -2, "knee": 4}
+TOP = {"armFwd": 38, "elbow": 138, "trunk": -6, "thigh": -8, "knee": 18}
 POINT = 35
 WRIST_FLEX = 45  # AnatomyFigure.tsx, hanging
 

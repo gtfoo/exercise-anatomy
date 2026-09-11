@@ -10,6 +10,7 @@
         --clip3d ../../src/lib/motion/freestyle-3d.json --anchor free --root-offset 0 0.08 0 --name freestyle
     blender --background --python convert_clip.py -- out/mixamo-rig.json out/clips/pull-up.glb \
         --clip3d ../myo/out/pull-up-3d.json --anchor hands --bar 2.3 --name pull-up
+    # --arms rest holds the arms at the sides when the capture's arm motion is not the exercise
 
 The GLB holds the armature (no meshes) and one animation whose tracks are
 named by bone; three.js binds them onto the figure's bones by name. The
@@ -35,6 +36,10 @@ ANCHOR = opt("--anchor", "feet")
 BAR = float(opt("--bar", "2.3"))
 NAME = opt("--name", os.path.splitext(os.path.basename(OUT))[0])
 ROOT_OFFSET = [float(argv[argv.index("--root-offset") + 1 + i]) for i in range(3)] if "--root-offset" in argv else [0, 0, 0]
+# --arms rest: ignore the clip's arm rotations and hold the arms at the figure's
+# rest (hanging at the sides). For a capture whose performer did something with
+# the arms that is not the exercise (CMU's lunge subject threw punches).
+ARMS = opt("--arms", "clip")
 if not (FBX or CLIP3D):
     raise SystemExit(__doc__)
 
@@ -153,6 +158,8 @@ else:
         hips.location = Vector((0, 0, 0))
         for our in ORDER:
             q = s["q"].get(our)
+            if ARMS == "rest" and our.split(".")[0] in ("upper_arm", "forearm", "hand", "fingers"):
+                q = [0, 0, 0, 1]  # our rest: arms down at the sides, whatever the trunk does
             if q is None:
                 continue
             delta = q_app(q) @ cb_inv.get(our, Quaternion())
