@@ -1,0 +1,38 @@
+import type { CurvePoint, Exercise } from "./types";
+
+// A designed clamshell (tools/myo/designed_clip.py): lying on the right side,
+// hips bent 45 and knees 90 with the feet together, the top knee opens 40
+// degrees and closes while the pelvis stays still. Designed because no free
+// capture exists. Activation is qualitative.
+
+const t = (...pts: [number, number][]): CurvePoint[] => pts;
+// Abductors and external rotators: work through the opening, hold, and control the close.
+const OPEN = t([0, 0.2], [0.2, 0.7], [0.42, 1], [0.58, 0.95], [0.8, 0.6], [0.95, 0.25], [1, 0.2]);
+const BRACE = t([0, 0.3], [0.42, 0.5], [0.58, 0.5], [1, 0.3]);
+
+export const clamshell: Exercise = {
+  slug: "clamshell",
+  name: "Clamshell",
+  durationMs: 3000,
+  anchor: "free",
+  native: { clip: "/models/clips/clamshell.glb" },
+  // The body lies along X from the head at about -0.7 to the feet at +0.6; look at it from the front, slightly above.
+  camera: { position: [0.3, 0.9, 3.0], target: [0, 0.3, 0] },
+  disclaimer:
+    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is designed, not captured. The tensor fasciae latae and the deep rotators (piriformis and the gemelli) are not modelled in the atlas. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+  phases: [
+    { name: "open", t0: 0, t1: 0.42 },
+    { name: "hold", t0: 0.42, t1: 0.58 },
+    { name: "close", t0: 0.58, t1: 1 },
+  ],
+  muscles: [
+    { id: "gluteus-medius", name: "Gluteus medius", group: "Gluteals", role: "prime-mover", note: "Abducts and externally rotates the top hip to open the knee; the muscle the exercise is for.", curve: OPEN },
+    { id: "gluteus-minimus", name: "Gluteus minimus", group: "Gluteals", role: "prime-mover", note: "Works under gluteus medius on the same movement.", curve: OPEN },
+    { id: "gluteus-maximus", name: "Gluteus maximus", group: "Gluteals", role: "synergist", note: "Its upper fibres help rotate the hip outward.", curve: t([0, 0.15], [0.42, 0.6], [0.58, 0.55], [1, 0.15]) },
+    { id: "external-obliques", name: "External obliques", group: "Trunk", role: "stabiliser", note: "Keep the pelvis from rolling back as the knee opens.", curve: BRACE },
+    { id: "rectus-abdominis", name: "Rectus abdominis", group: "Trunk", role: "stabiliser", note: "Braces the trunk with the obliques.", curve: BRACE },
+    { id: "transversus-abdominis", name: "Transversus abdominis", group: "Trunk", role: "stabiliser", note: "Deep brace that holds the pelvis still.", curve: BRACE },
+    { id: "erector-spinae", name: "Erector spinae", group: "Trunk", role: "stabiliser", note: "Keep the spine neutral on the side.", curve: BRACE },
+    { id: "adductor-longus", name: "Adductor longus", group: "Bottom leg", role: "stabiliser", note: "Holds the bottom leg still as a base.", curve: BRACE },
+  ],
+};

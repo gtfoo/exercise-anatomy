@@ -28,8 +28,9 @@ const baseline: Exercise = {
   barHeight: 2.3,
   // The designed movement converted onto the rigged figure's skeleton with the wrists placed on the bar.
   native: { clip: "/models/clips/pull-up.glb" },
-  // Front three-quarter view: from the side the near post sat in the line of sight and the body looked pushed to one end of the bar.
-  camera: { position: [1.7, 2.0, 3.5], target: [0, 1.55, 0] },
+  // Straight-on front view: the body hangs at the middle of the bar, and any angled view puts a post
+  // between the camera and the body or shifts the body toward one end by perspective.
+  camera: { position: [0, 2.0, 3.9], target: [0, 1.55, 0] },
   disclaimer:
     "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is designed, not captured: no free motion capture of a strict pull-up exists. The musculoskeletal model used to estimate the squat has no arm or shoulder muscles, so nothing here is estimated or measured. Educational illustration, not training or medical advice.",
   phases: [

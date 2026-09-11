@@ -155,7 +155,14 @@ else:
     hips = arm.pose.bones["mixamorig:Hips"]
     hips_rest = rest_world["mixamorig:Hips"]
     foot_rest = Vector(rig["bones"]["mixamorig:LeftFoot"]["head"])
-    wrist_rest = Vector(rig["bones"]["mixamorig:LeftHand"]["head"])
+    # The bar-held wrist sits where the STANDING figure's wrist is (arm at the
+    # side, 0.27 m from the midline), not where the T-posed rig's LeftHand
+    # head is (0.71 m out along the arm); using the latter hung the pull-up
+    # 0.44 m to one side of the bar until 2026-09-11. rig-joints.json is the
+    # standing rest, Blender Z-up.
+    joints_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "mocap", "rig-joints.json")
+    standing = json.load(open(joints_path))
+    wrist_rest = Vector(standing["wrist.l"])
     shifts = []
     for i in range(N + 1):
         s = samples[i % N]

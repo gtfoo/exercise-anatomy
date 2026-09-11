@@ -133,11 +133,14 @@ LUNGE = {
     # The descent begins as the front foot lands, and the foot leaves before
     # the drive is complete: standing tall on a foot 0.98 m ahead would need
     # a straight front leg, which is not how a lunge is done.
-    "back_thigh": [(0, 0), (0.10, 0), (0.30, 28), (0.36, 24), (0.55, 16), (0.72, 22), (0.82, 26), (0.95, 0), (1, 0)],
-    "back_knee": [(0, 0), (0.10, 0), (0.30, 14), (0.36, 44), (0.55, 88), (0.72, 48), (0.82, 14), (0.95, 0), (1, 0)],
-    "back_foot": [(0, 0), (0.10, 0), (0.30, 38), (0.36, 44), (0.55, 55), (0.72, 44), (0.82, 36), (0.95, 0), (1, 0)],
-    "front_z": [(0, 0), (0.10, 0), (0.24, 0.5), (0.34, 1.0), (0.72, 1.0), (0.84, 0.5), (0.95, 0), (1, 0)],  # fraction of the step
-    "front_lift": [(0, 0), (0.10, 0), (0.22, 1.0), (0.34, 0), (0.72, 0), (0.82, 1.0), (0.95, 0), (1, 0)],
+    # Back leg stays where it stands, knee slightly bent through the step and
+    # the heel rising as the body comes forward; at the bottom the back thigh
+    # is vertical and the shin horizontal (knee 90), like the front knee.
+    "back_thigh": [(0, 0), (0.10, 0), (0.30, 10), (0.38, 14), (0.55, 0), (0.70, 14), (0.82, 10), (0.95, 0), (1, 0)],
+    "back_knee": [(0, 0), (0.10, 0), (0.22, 20), (0.30, 36), (0.38, 60), (0.55, 90), (0.70, 60), (0.82, 24), (0.95, 0), (1, 0)],
+    "back_foot": [(0, 0), (0.10, 0), (0.30, 28), (0.38, 42), (0.55, 65), (0.70, 42), (0.82, 25), (0.95, 0), (1, 0)],
+    "front_z": [(0, 0), (0.10, 0), (0.24, 0.5), (0.36, 1.0), (0.70, 1.0), (0.84, 0.5), (0.95, 0), (1, 0)],  # fraction of the step
+    "front_lift": [(0, 0), (0.10, 0), (0.22, 1.0), (0.36, 0), (0.70, 0), (0.82, 1.0), (0.95, 0), (1, 0)],
     "trunk": [(0, 0), (0.30, 3), (0.55, 6), (0.80, 3), (1, 0)],
 }
 LUNGE_LIFT = 0.10
@@ -256,8 +259,66 @@ def lsit_sample(t):
     return {"root": [round(float(v), 4) for v in root], "q": q}
 
 
+# ---------- clamshell, lying on the right side ----------
+# Body along the X axis, head toward -X, belly toward +Z (the camera), lower
+# arm stretched under the head, upper hand on the floor in front. Hips bent
+# 45, knees 90, feet together; the top knee opens 40 degrees by rotating the
+# whole top leg about the line from its hip to its ankle, so the feet stay
+# together, then closes.
+CLAM_OPEN = [(0, 0), (0.05, 0), (0.42, 40), (0.58, 40), (0.95, 0), (1, 0)]
+CLAM_HIP_FLEX = 45 * DEG
+CLAM_KNEE = 90 * DEG
+
+
+def q_axis(axis, a):
+    axis = np.asarray(axis, dtype=float)
+    axis = axis / np.linalg.norm(axis)
+    s = math.sin(a / 2)
+    return [float(axis[0] * s), float(axis[1] * s), float(axis[2] * s), math.cos(a / 2)]
+
+
+def q_rot(q, v):
+    """Rotate vector v by quaternion q = [x, y, z, w]."""
+    x, y, z, w = q
+    u = np.array([x, y, z])
+    v = np.asarray(v, dtype=float)
+    return v + 2 * w * np.cross(u, v) + 2 * np.cross(u, np.cross(u, v))
+
+
+def clam_sample(t):
+    roll = q_axis([0, 0, 1], 90 * DEG)  # upright -> lying on the right side, head to -X
+    # Legs: hip flexion swings the thigh toward the belly (+Z), a turn about the world Y axis.
+    thigh = qmul(q_axis([0, 1, 0], -CLAM_HIP_FLEX), roll)
+    shin = qmul(q_axis([0, 1, 0], -CLAM_HIP_FLEX + CLAM_KNEE), roll)
+    # Pelvis placed so the lower hip rests a thigh's thickness above the floor.
+    hip_r_target = np.array([0.0, 0.12, 0.0])
+    pelvis_pos = hip_r_target - q_rot(roll, rig["hip.r"] - rig["pelvis"])
+    root = pelvis_pos - rig["pelvis"]
+    hip_l = pelvis_pos + q_rot(roll, rig["hip.l"] - rig["pelvis"])
+    down = np.array([0.0, -1.0, 0.0])
+    knee_l = hip_l + q_rot(thigh, down) * L_THIGH
+    ankle_l = knee_l + q_rot(shin, down) * L_SHIN
+    # Open the top leg about its hip-to-ankle line; the sign that lifts the knee is the one wanted.
+    axis = ankle_l - hip_l
+    a = keyed(CLAM_OPEN, t) * DEG
+    q_open = q_axis(axis, a)
+    if q_rot(q_open, knee_l - hip_l)[1] < (knee_l - hip_l)[1] - 1e-6:
+        q_open = q_axis(axis, -a)
+    q = {"pelvis": roll, "spine": roll, "neck": roll, "head": roll}
+    q["thigh.R"], q["shin.R"], q["foot.R"] = thigh, shin, shin
+    q["thigh.L"], q["shin.L"], q["foot.L"] = qmul(q_open, thigh), qmul(q_open, shin), qmul(q_open, shin)
+    # Lower arm overhead along the floor (-X); upper arm forward and down, hand on the floor in front.
+    under = q_axis([0, 0, 1], -90 * DEG)
+    front = q_axis([1, 0, 0], -60 * DEG)
+    for b in ("upper_arm", "forearm", "hand", "fingers"):
+        q[b + ".R"] = under
+        q[b + ".L"] = front
+    return {"root": [round(float(v), 4) for v in root], "q": q}
+
+
 CLIPS = {
     "pull-up": (pull_up_sample, "designed pose, src/lib/kinematics/pull-up.ts"),
+    "clamshell": (clam_sample, "designed clamshell, tools/myo/designed_clip.py"),
     "l-sit": (lsit_sample, "designed L-sit on parallel bars, tools/myo/designed_clip.py"),
     "lunge": (lunge_sample, "designed forward lunge, tools/myo/designed_clip.py"),
     "push-up": (pushup_sample, "designed push-up, tools/myo/designed_clip.py"),
@@ -275,7 +336,7 @@ if slug == "lunge":
     bends = []
     for i in range(N):
         t = i / N
-        if 0.12 <= t <= 0.34 or 0.80 <= t <= 0.95:
+        if 0.12 <= t <= 0.36 or 0.78 <= t <= 0.95:
             hip_r, *_ = lunge_back_leg(t)
             hip_l = hip_r + (rig["hip.l"] - rig["hip.r"])
             target = rig["ankle.l"] + np.array([0.0, LUNGE_LIFT * keyed(LUNGE["front_lift"], t), LUNGE_STEP * keyed(LUNGE["front_z"], t)])

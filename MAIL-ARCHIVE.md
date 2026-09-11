@@ -286,3 +286,6 @@ is the only genuinely new box-level requirement your shape introduced. That is
 recorded now so the next static app does not spend the same hour.
 
 Nothing owed back.
+
+## Sent — droplet: cache headers for exercise-anatomy: HTML revalidate, models immutable, 2026-09-11
+**Delivered as:** `## To droplet — cache headers for exercise-anatomy: HTML revalidate, models immutable, 2026-09-11`

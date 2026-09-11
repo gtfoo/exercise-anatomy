@@ -78,6 +78,11 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Clamshell** (2026-09-11), designed side-lying: the top leg rotates
+      about its hip-to-ankle line so the feet stay together. Lunge retuned
+      again on the owner's note: back leg in place with a slight bend, both
+      knees 90 at the bottom.
+      `from: owner, 2026-09-11 · "add the clamshell exercise"`
 - [x] **L-sit on parallel bars** (2026-09-11), designed; Scene gained
       parallel bars (`anchor: "bars"`). Lunge retimed so the front knee
       stays bent through the step; push-up deepened to the chest near the
