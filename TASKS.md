@@ -78,6 +78,13 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Climb up and down, ledged wall, four stairs, alternating lunge,
+      half speed** (2026-09-11): `convert_clip.py --fbx a,b` chains clips
+      and `--repeat N` replays with the travel carried; the wall's ledges
+      come from `probe_clip.py --contacts`; the lunge is the designed left
+      lunge plus its mirror; the clamshell's knees now bend toward the
+      belly; the transport has a 1x/0.5x button.
+      `from: owner, 2026-09-11 · "proper wall with ledges", "combine climbing up and down", "2 steps on each side", "one step each leg", "0.5x speed"`
 - [x] **Five more Mixamo clips** (2026-09-11): kettlebell swing (bell
       parented to the hands), sprint (in place), bicycle crunch, wall climb
       (a wall face drawn; the clip climbs in place), climbing stairs (travel

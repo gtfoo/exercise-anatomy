@@ -102,47 +102,64 @@ def key_all(frame):
 
 # ---------- A. Mixamo FBX: bone for bone ----------
 if FBX:
-    bpy.ops.import_scene.fbx(filepath=os.path.abspath(FBX), use_anim=True, automatic_bone_orientation=False)
-    mx = next(o for o in bpy.data.objects if o.type == "ARMATURE" and o != arm)
-    f0, f1 = mx.animation_data.action.frame_range
-    RANGE = opt("--range", None)  # START:END frames of the FBX to keep (a cycle of a multi-rep take); keyed from 0
-    if RANGE:
-        a, b = (int(v) for v in RANGE.split(":"))
-        frames = list(range(a, b + 1))
-    else:
-        frames = list(range(int(f0), int(math.ceil(f1)) + 1))
-    for pb in mx.pose.bones:
-        pb.rotation_mode = "QUATERNION"
-    hip_scale = rig["leg_scale"] * mx.matrix_world.to_scale().x
-    # --root-motion vertical keeps only the hips' up-and-down and holds the
-    # travel of the first frame (a swimmer or walker stays in the camera's
-    # view); full copies the clip's travel. Mixamo's Hips bone rests with its
-    # local Y up, so "vertical" is the local Y component.
+    # Several files, comma-separated, play one after another (a climb up then
+    # down); --repeat N plays the whole sequence N times. Each following pass
+    # starts from the hips position the previous one ended at, so travel
+    # continues (two more stairs) instead of snapping back.
+    RANGE = opt("--range", None)  # START:END frames of the FIRST file to keep; keyed from 0
+    REPEAT = int(opt("--repeat", "1"))
+    # --root-motion vertical keeps only the hips' up-and-down and holds them
+    # over the origin (a swimmer or runner stays in the camera's view); full
+    # copies the clip's travel. Mixamo's Hips bone rests with its local Y up.
     ROOT_MOTION = opt("--root-motion", "full")
+    files = [os.path.abspath(p.strip()) for p in FBX.split(",")]
+    out_frame = 0
     hips_z = []
-    first_loc = None
-    for f in frames:
-        scene.frame_set(f)
-        for pb in arm.pose.bones:
-            src = mx.pose.bones.get(pb.name)
-            if src is None:
-                continue
-            pb.rotation_quaternion = src.rotation_quaternion.copy()
-            if pb.name == "mixamorig:Hips":
-                loc = src.location * hip_scale
-                if first_loc is None:
-                    first_loc = loc.copy()
-                if ROOT_MOTION == "vertical":
-                    loc = Vector((0.0, loc.y, 0.0))  # the hips stay over the origin; a cut from mid-take is otherwise a stride away
-                pb.location = loc
-        key_all(f - frames[0])
-        bpy.context.view_layer.update()
-        hips_z.append((arm.pose.bones["mixamorig:Hips"].head).z)
-    scene.frame_start, scene.frame_end = 0, frames[-1] - frames[0]
-    mx_action = mx.animation_data.action
-    bpy.data.objects.remove(mx, do_unlink=True)
-    bpy.data.actions.remove(mx_action)
-    print("copied %d frames (%d-%d) from %s; hips height %.2f..%.2f m" % (len(frames), frames[0], frames[-1], os.path.basename(FBX), min(hips_z), max(hips_z)))
+    carry = Vector((0.0, 0.0, 0.0))  # where the previous pass left the hips, minus where the next one starts
+    for rep in range(REPEAT):
+        for fi, path in enumerate(files):
+            bpy.ops.import_scene.fbx(filepath=path, use_anim=True, automatic_bone_orientation=False)
+            mx = next(o for o in bpy.data.objects if o.type == "ARMATURE" and o != arm)
+            f0, f1 = mx.animation_data.action.frame_range
+            if RANGE and fi == 0:
+                a, b = (int(v) for v in RANGE.split(":"))
+                frames = list(range(a, b + 1))
+            else:
+                frames = list(range(int(f0), int(math.ceil(f1)) + 1))
+            for pb in mx.pose.bones:
+                pb.rotation_mode = "QUATERNION"
+            hip_scale = rig["leg_scale"] * mx.matrix_world.to_scale().x
+            first_loc = last_loc = None
+            for k, f in enumerate(frames):
+                if rep + fi > 0 and k == 0:
+                    continue  # the first frame of a following clip repeats the last frame of the previous one
+                scene.frame_set(f)
+                for pb in arm.pose.bones:
+                    src = mx.pose.bones.get(pb.name)
+                    if src is None:
+                        continue
+                    pb.rotation_quaternion = src.rotation_quaternion.copy()
+                    if pb.name == "mixamorig:Hips":
+                        loc = src.location * hip_scale
+                        if first_loc is None:
+                            first_loc = loc.copy()
+                            if rep + fi > 0:
+                                carry = last_end - first_loc
+                        loc = loc + carry
+                        if ROOT_MOTION == "vertical":
+                            loc = Vector((0.0, loc.y, 0.0))
+                        pb.location = loc
+                        last_loc = loc.copy()
+                key_all(out_frame)
+                out_frame += 1
+                bpy.context.view_layer.update()
+                hips_z.append((arm.pose.bones["mixamorig:Hips"].head).z)
+            last_end = last_loc
+            mx_action = mx.animation_data.action
+            bpy.data.objects.remove(mx, do_unlink=True)
+            bpy.data.actions.remove(mx_action)
+    scene.frame_start, scene.frame_end = 0, out_frame - 1
+    print("copied %d frames from %s x%d; hips height %.2f..%.2f m" % (out_frame, ", ".join(os.path.basename(p) for p in files), REPEAT, min(hips_z), max(hips_z)))
 
 # ---------- B. MotionClip3D for our rig ----------
 else:

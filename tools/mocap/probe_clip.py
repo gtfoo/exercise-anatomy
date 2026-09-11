@@ -65,7 +65,11 @@ def head(name):
 
 
 print("clip %s: frames %d-%d @ %.0f fps (%.1f s)" % (os.path.basename(SRC), f0, f1, fps, (f1 - f0) / fps))
+CONTACTS = "--contacts" in argv  # also print where the hands and feet are (height, forward), for drawing holds
+RA = pick("rightfoot", "rfoot", "right_foot")
 print("%6s %6s | %7s %7s %7s | %6s | %7s %7s | %s" % ("frame", "s", "hips_z", "lw-hips", "rw-hips", "knee", "hips_x", "hips_fw", "lowest"))
+if CONTACTS:
+    print("%6s | %13s %13s %13s %13s   (height, forward)" % ("", "L hand", "R hand", "L foot", "R foot"))
 lowest = 1e9
 for f in range(FROM or int(f0), (TO or int(f1)) + 1, EVERY):
     scene.frame_set(f)
@@ -77,3 +81,6 @@ for f in range(FROM or int(f0), (TO or int(f1)) + 1, EVERY):
     lowest = min(lowest, h.z)
     # hips_fw: forward travel (Blender -Y is the figure's forward)
     print("%6d %6.2f | %7.3f %7.3f %7.3f | %6.0f | %7.3f %7.3f | %.3f" % (f, (f - f0) / fps, h.z, lw.z - h.z, rw.z - h.z, knee, h.x, -h.y, lowest))
+    if CONTACTS:
+        ra = head(RA)
+        print("%6s | %5.2f %6.2f  %5.2f %6.2f  %5.2f %6.2f  %5.2f %6.2f" % ("", lw.z, -lw.y, rw.z, -rw.y, c.z, -c.y, ra.z, -ra.y))

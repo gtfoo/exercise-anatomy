@@ -184,6 +184,23 @@ def lunge_sample(t):
     return {"root": [round(float(v), 4) for v in root], "q": q}
 
 
+def mirror_sample(s):
+    """Swap left and right. Every designed rotation here is about the world X
+    axis, which is its own mirror image across the sagittal plane, so a swap
+    of the .L/.R keys and a negated root x is the whole mirror."""
+    q = {}
+    for k, v in s["q"].items():
+        k2 = k[:-2] + ".R" if k.endswith(".L") else k[:-2] + ".L" if k.endswith(".R") else k
+        q[k2] = v
+    r = s["root"]
+    return {"root": [-r[0], r[1], r[2]], "q": q}
+
+
+def lunge_alternating_sample(t):
+    """One cycle: a lunge on the left leg, then the same on the right."""
+    return lunge_sample(t * 2) if t < 0.5 else mirror_sample(lunge_sample((t - 0.5) * 2))
+
+
 # ---------- push-up ----------
 # The body is one straight line from the toes to the shoulders, pivoting on
 # the planted toes; the hands stay where the straight arms put them at the
@@ -290,9 +307,12 @@ def clam_sample(t):
     # the other way, so the head goes to +X and the belly stays toward +Z, the
     # camera. The top leg is then the right one.
     roll = q_axis([0, 0, 1], -90 * DEG)
-    # Legs: hip flexion swings the thigh toward the belly (+Z), a turn about the world Y axis.
-    thigh = qmul(q_axis([0, 1, 0], -CLAM_HIP_FLEX), roll)
-    shin = qmul(q_axis([0, 1, 0], -CLAM_HIP_FLEX + CLAM_KNEE), roll)
+    # Legs: hip flexion swings the thigh toward the belly (+Z). Lying on the
+    # left side the thighs point to -X, so the turn about the world Y axis is
+    # positive to bring the knees forward (it was negative for the right side,
+    # which sent the knees behind the body: "feet facing the wrong side").
+    thigh = qmul(q_axis([0, 1, 0], CLAM_HIP_FLEX), roll)
+    shin = qmul(q_axis([0, 1, 0], CLAM_HIP_FLEX - CLAM_KNEE), roll)
     # Pelvis placed so the lower hip rests a thigh's thickness above the floor.
     hip_low_target = np.array([0.0, 0.12, 0.0])
     pelvis_pos = hip_low_target - q_rot(roll, rig["hip.l"] - rig["pelvis"])
@@ -361,7 +381,7 @@ CLIPS = {
     "lateral-raise": (lateral_raise_sample, "designed dumbbell lateral raise, tools/myo/designed_clip.py"),
     "clamshell": (clam_sample, "designed clamshell, tools/myo/designed_clip.py"),
     "l-sit": (lsit_sample, "designed L-sit on parallel bars, tools/myo/designed_clip.py"),
-    "lunge": (lunge_sample, "designed forward lunge, tools/myo/designed_clip.py"),
+    "lunge": (lunge_alternating_sample, "designed forward lunge, left then right, tools/myo/designed_clip.py"),
     "push-up": (pushup_sample, "designed push-up, tools/myo/designed_clip.py"),
 }
 

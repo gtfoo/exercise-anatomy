@@ -16,6 +16,8 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
   const setT = useViewer((s) => s.setT);
   const setPlaying = useViewer((s) => s.setPlaying);
   const togglePlaying = useViewer((s) => s.togglePlaying);
+  const speed = useViewer((s) => s.speed);
+  const setSpeed = useViewer((s) => s.setSpeed);
   const setHovered = useViewer((s) => s.setHovered);
   const setSelected = useViewer((s) => s.setSelected);
 
@@ -73,6 +75,15 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
               aria-label={playing ? "Pause" : "Play"}
             >
               {playing ? "Pause" : "Play"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setSpeed(speed === 1 ? 0.5 : 1)}
+              className="rounded-md border border-zinc-300 px-2 py-1 font-mono text-xs text-zinc-600 hover:bg-zinc-50"
+              aria-label={speed === 1 ? "Play at half speed" : "Play at full speed"}
+              title="Playback speed"
+            >
+              {speed === 1 ? "1×" : "0.5×"}
             </button>
             <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs uppercase tracking-wide text-zinc-600">
               {phase?.name}

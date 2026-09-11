@@ -1,13 +1,16 @@
 import type { CurvePoint, Exercise } from "./types";
 
-// A designed forward lunge (tools/myo/designed_clip.py): left leg steps,
-// front thigh horizontal and shin vertical at the bottom (t = 0.55), back
-// knee a hand above the floor, both legs in the sagittal plane, arms at the
-// sides. The only free capture (CMU subject 144, tried 2026-09-10) had a
+// A designed forward lunge (tools/myo/designed_clip.py): the left leg steps,
+// then the right; front thigh horizontal and shin vertical at each bottom
+// (t = 0.275 and 0.775), back knee a hand above the floor, both legs in the
+// sagittal plane, arms at the sides. The only free capture (CMU subject 144, tried 2026-09-10) had a
 // wide martial-arts stance with the back thigh swung 28° out; the owner
 // chose textbook form. Activation is qualitative.
 
-const t = (...pts: [number, number][]): CurvePoint[] => pts;
+// One cycle is a lunge on the left leg then one on the right, so every curve
+// is a single lunge's shape played twice; both sides are one mesh.
+const twice = (pts: [number, number][]): CurvePoint[] => [...pts.map(([x, v]) => [x / 2, v] as CurvePoint), ...pts.map(([x, v]) => [0.5 + x / 2, v] as CurvePoint)];
+const t = (...pts: [number, number][]): CurvePoint[] => twice(pts);
 // Front-leg extensors: load builds through the descent, peaks on the drive back up.
 const EXTENSOR = t([0, 0.1], [0.3, 0.45], [0.54, 0.8], [0.7, 1], [0.85, 0.5], [1, 0.1]);
 const HIP_EXT = t([0, 0.1], [0.35, 0.3], [0.54, 0.7], [0.72, 0.95], [0.88, 0.4], [1, 0.1]);
@@ -19,17 +22,21 @@ const BRACE = t([0, 0.2], [0.54, 0.45], [1, 0.2]);
 export const lunge: Exercise = {
   slug: "lunge",
   name: "Forward lunge",
-  durationMs: 2800,
+  durationMs: 5600, // two lunges, one on each leg
   anchor: "free",
   native: { clip: "/models/clips/lunge.glb" },
   camera: { position: [3.0, 1.25, 1.6], target: [0, 0.8, 0.3] },
   disclaimer:
     "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is designed to textbook form, not captured: the only free capture used a wide stance. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
   phases: [
-    { name: "step", t0: 0, t1: 0.3 },
-    { name: "descent", t0: 0.3, t1: 0.55 },
-    { name: "drive", t0: 0.55, t1: 0.85 },
-    { name: "recover", t0: 0.85, t1: 1 },
+    { name: "left step", t0: 0, t1: 0.15 },
+    { name: "left descent", t0: 0.15, t1: 0.275 },
+    { name: "left drive", t0: 0.275, t1: 0.425 },
+    { name: "recover", t0: 0.425, t1: 0.5 },
+    { name: "right step", t0: 0.5, t1: 0.65 },
+    { name: "right descent", t0: 0.65, t1: 0.775 },
+    { name: "right drive", t0: 0.775, t1: 0.925 },
+    { name: "recover", t0: 0.925, t1: 1 },
   ],
   muscles: [
     { id: "rectus-femoris", name: "Rectus femoris", group: "Quadriceps", role: "prime-mover", note: "Extends the front knee on the drive back up; also flexes the hip of the stepping leg.", curve: EXTENSOR },

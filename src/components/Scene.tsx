@@ -14,7 +14,7 @@ function Ticker({ durationMs }: { durationMs: number }) {
   useFrame((_, delta) => {
     const s = useViewer.getState();
     if (!s.playing) return;
-    s.setT((s.t + (delta * 1000) / durationMs) % 1);
+    s.setT((s.t + (delta * 1000 * s.speed) / durationMs) % 1);
   });
   return null;
 }
@@ -91,10 +91,18 @@ function ParallelBars({ height, spacing }: { height: number; spacing: number }) 
 function Scenery({ scenery }: { scenery: NonNullable<Exercise["scenery"]> }) {
   const plaster = useMemo(() => new THREE.MeshStandardMaterial({ color: "#d9d4cc", roughness: 0.95 }), []);
   if (scenery.kind === "wall") {
+    // The face sits at `front`; ledges stand 6 cm proud of it at the heights the hands and feet land.
     return (
-      <mesh material={plaster} position={[0, scenery.height / 2, scenery.front + 0.15]}>
-        <boxGeometry args={[3, scenery.height, 0.3]} />
-      </mesh>
+      <group>
+        <mesh material={plaster} position={[0, scenery.height / 2, scenery.front + 0.15]}>
+          <boxGeometry args={[3, scenery.height, 0.3]} />
+        </mesh>
+        {(scenery.ledges ?? []).map((y) => (
+          <mesh key={y} material={plaster} position={[0, y - 0.02, scenery.front - 0.03]}>
+            <boxGeometry args={[3, 0.04, 0.06]} />
+          </mesh>
+        ))}
+      </group>
     );
   }
   const { rise, run, count, first } = scenery;
