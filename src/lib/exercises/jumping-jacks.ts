@@ -2,9 +2,10 @@ import type { CurvePoint, Exercise } from "./types";
 import type { MotionClip3D } from "@/lib/kinematics/types";
 import motion3d from "@/lib/motion/jumping-jacks-3d.json";
 
-// One jumping jack from CMU subject 13 trial 29: arms overhead and feet apart
-// at t = 0, together at about t = 0.5, apart again at t = 1. Activation is
-// qualitative: no estimate has been run for this movement.
+// One jumping jack from CMU subject 14 trial 6: arms overhead and feet apart
+// at t = 0, together at about t = 0.5, apart again at t = 1, with a real hop
+// each way (subject 13's take, tried first, was a step-jack: the hips moved
+// 2 mm). Activation is qualitative: no estimate has been run for this movement.
 
 const t = (...pts: [number, number][]): CurvePoint[] => pts;
 // The jump itself: the calves fire twice a cycle, at each take-off.

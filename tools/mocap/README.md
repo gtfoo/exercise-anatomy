@@ -37,7 +37,7 @@ Cuts in use (CMU FBX from Hugging Face `gbionics/cmu-fbx`, 30 fps):
 | exercise | take | frames | anchor |
 |---|---|---|---|
 | pull-up | 01_12 | 117:213 | hands, bar 2.3 |
-| jumping jacks | 13_29 | 402:434 | free |
+| jumping jacks | 14_06 | 64:96 | free (13_29's jacks are a step-jack, hips move 2 mm) |
 | forward lunge | 144_17 | 168:252 | free |
 | freestyle | 126_12 | 297:364 | free, root offset y 0.216 |
 
@@ -49,8 +49,9 @@ squat is the estimator's input.
   planar.
 
 Sources so far: Mixamo *Air Squat* (both extractors) and CMU subjects 126
-(freestyle, mimed on land), 1 (pull-up on playground equipment), 13 (jumping
-jacks) and 144 (lunges), all 3D only. CMU terms: free for any use, credit
+(freestyle, mimed on land), 14 (jumping jacks) and 144 (lunges), all 3D
+only. Subject 1's playground pull-up was tried and rejected (knees tucked,
+a swing); the pull-up is designed. CMU terms: free for any use, credit
 "CMU Graphics Lab Motion Capture Database".
 
 ## Inputs (not in git)
