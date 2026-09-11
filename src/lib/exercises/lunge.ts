@@ -12,6 +12,7 @@ import { inHalf } from "./types";
 // get a single lunge's shape in their own half (left first, right second)
 // and rest in the other; the trunk braces through both.
 const twice = (pts: [number, number][]): CurvePoint[] => [...pts.map(([x, v]) => [x / 2, v] as CurvePoint), ...pts.map(([x, v]) => [0.5 + x / 2, v] as CurvePoint)];
+const scaled = (c: readonly CurvePoint[], k: number): CurvePoint[] => c.map(([x, y]) => [x, y * k] as CurvePoint);
 const t = (...pts: [number, number][]): CurvePoint[] => pts;
 const leftHalf = (c: CurvePoint[]) => inHalf(c, 0, c[0][1]);
 const rightHalf = (c: CurvePoint[]) => inHalf(c, 1, c[0][1]);
@@ -56,10 +57,13 @@ export const lunge: Exercise = {
     { id: "semimembranosus", name: "Semimembranosus", group: "Hamstrings", role: "synergist", note: "Hip extension and knee control on the front leg.", curve: leftHalf(STEADY), right: rightHalf(STEADY) },
     { id: "adductor-magnus", name: "Adductor magnus", group: "Adductors", role: "synergist", note: "Its hamstring-like part extends the hip; the rest steadies the thigh.", curve: leftHalf(STEADY), right: rightHalf(STEADY) },
     { id: "adductor-longus", name: "Adductor longus", group: "Adductors", role: "stabiliser", note: "Holds the thigh in line while the legs are split.", curve: BRACE, stretch: inHalf([[0, 0.05], [0.55, 0.6], [1, 0.05]], 1, 0.05), stretchRight: inHalf([[0, 0.05], [0.55, 0.6], [1, 0.05]], 0, 0.05) },
+    { id: "pectineus", name: "Pectineus", group: "Adductors", role: "synergist", note: "Adducts and flexes the hip with adductor longus.", curve: scaled(BRACE, 0.8) },
+    { id: "gracilis", name: "Gracilis", group: "Adductors", role: "synergist", note: "Adducts the hip along the inner thigh.", curve: scaled(BRACE, 0.7) },
     { id: "gastrocnemius-medial", name: "Gastrocnemius (medial)", group: "Calf", role: "synergist", note: "Pushes off the front foot on the way back.", curve: leftHalf(CALF), right: rightHalf(CALF) },
     { id: "gastrocnemius-lateral", name: "Gastrocnemius (lateral)", group: "Calf", role: "synergist", note: "Pushes off the front foot on the way back.", curve: leftHalf(CALF), right: rightHalf(CALF) },
     { id: "soleus", name: "Soleus", group: "Calf", role: "stabiliser", note: "Steadies the ankle under the front knee.", curve: leftHalf(CALF), right: rightHalf(CALF) },
     { id: "tibialis-anterior", name: "Tibialis anterior", group: "Calf", role: "stabiliser", note: "Controls the shin over the planted front foot.", curve: leftHalf(BRACE), right: rightHalf(BRACE) },
+    { id: "fibularis", name: "Fibularis longus and brevis", group: "Calf", role: "stabiliser", note: "Steady the ankle from the outside against tibialis anterior.", curve: scaled(leftHalf(BRACE), 0.8), right: scaled(rightHalf(BRACE), 0.8) },
     { id: "erector-spinae", name: "Erector spinae", group: "Trunk", role: "stabiliser", note: "Keeps the trunk upright over the split stance.", curve: BRACE },
     { id: "rectus-abdominis", name: "Rectus abdominis", group: "Trunk", role: "stabiliser", note: "Braces the trunk with the back muscles.", curve: BRACE },
   ],

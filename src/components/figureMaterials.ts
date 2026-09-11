@@ -78,7 +78,12 @@ export function paintMaterials(materials: FigureMaterials, exercise: Exercise, t
       const lit = hovered === m.id || selected === m.id;
       // A selected muscle keeps its activation colour (the owner wants to read it in focus mode, 2026-09-11): it only
       // glows a little in its own colour. The orange tint is for hovering, a passing cue.
-      if (selected === m.id) mat.emissive.copy(mat.color).multiplyScalar(0.2);
+      // On the atlas nothing is working, so a selected muscle would stay off-white against off-white bone: paint it
+      // the working red instead (owner, 2026-09-11), and glow a little so it reads through the skeleton's shading.
+      if (selected === m.id && exercise.static) {
+        mat.color.copy(hot);
+        mat.emissive.copy(hot).multiplyScalar(0.3);
+      } else if (selected === m.id) mat.emissive.copy(mat.color).multiplyScalar(0.2);
       else if (lit) mat.emissive.copy(highlight).multiplyScalar(0.35);
       else mat.emissive.copy(hot).multiplyScalar(level * 0.25);
       const faded = selected !== null && !lit;

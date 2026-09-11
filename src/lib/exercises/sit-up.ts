@@ -4,6 +4,7 @@ import type { CurvePoint, Exercise } from "./types";
 // with the knees bent, the trunk curls up to sitting by t = 0.45 and lowers
 // again. Activation is qualitative.
 
+const scaled = (c: readonly CurvePoint[], k: number): CurvePoint[] => c.map(([x, y]) => [x, y * k] as CurvePoint);
 const t = (...pts: [number, number][]): CurvePoint[] => pts;
 const CURL = t([0, 0.4], [0.1, 0.8], [0.25, 1], [0.45, 0.7], [0.6, 0.6], [0.8, 0.8], [1, 0.4]); // hardest lifting the shoulders off, working again lowering
 const HIPFLEX = t([0, 0.2], [0.2, 0.5], [0.35, 0.9], [0.45, 0.7], [0.65, 0.6], [0.85, 0.5], [1, 0.2]); // once the trunk is up, the hip flexors finish the sit
@@ -28,10 +29,14 @@ export const sitUp: Exercise = {
   muscles: [
     { id: "rectus-abdominis", name: "Rectus abdominis", group: "Trunk", role: "prime-mover", note: "Curls the trunk off the floor and lowers it again.", curve: CURL },
     { id: "external-obliques", name: "External obliques", group: "Trunk", role: "synergist", note: "Flex the trunk with rectus abdominis.", curve: t([0, 0.3], [0.25, 0.75], [0.45, 0.55], [0.8, 0.6], [1, 0.3]) },
+    { id: "internal-obliques", name: "Internal obliques", group: "Trunk", role: "synergist", note: "Brace and rotate the trunk with the external obliques, fibres the other way.", curve: t([0, 0.3], [0.25, 0.75], [0.45, 0.55], [0.8, 0.6], [1, 0.3]) },
     { id: "transversus-abdominis", name: "Transversus abdominis", group: "Trunk", role: "stabiliser", note: "Deep brace under the movers.", curve: BRACE },
     { id: "rectus-femoris", name: "Rectus femoris", group: "Hip flexors", role: "prime-mover", note: "Flexes the hips to bring the trunk the rest of the way up to sitting.", curve: HIPFLEX },
     { id: "adductor-longus", name: "Adductor longus", group: "Hip flexors", role: "synergist", note: "Assists hip flexion from the inner thigh.", curve: t([0, 0.15], [0.35, 0.55], [0.65, 0.4], [1, 0.15]) },
+    { id: "pectineus", name: "Pectineus", group: "Hip flexors", role: "synergist", note: "Adducts and flexes the hip with adductor longus.", curve: scaled(t([0, 0.15], [0.35, 0.55], [0.65, 0.4], [1, 0.15]), 0.8) },
+    { id: "gracilis", name: "Gracilis", group: "Hip flexors", role: "synergist", note: "Adducts the hip along the inner thigh.", curve: scaled(t([0, 0.15], [0.35, 0.55], [0.65, 0.4], [1, 0.15]), 0.7) },
     { id: "tibialis-anterior", name: "Tibialis anterior", group: "Lower leg", role: "stabiliser", note: "Pulls the feet down against the floor to anchor the legs.", curve: ANCHOR },
+    { id: "fibularis", name: "Fibularis longus and brevis", group: "Lower leg", role: "stabiliser", note: "Steady the ankle from the outside against tibialis anterior.", curve: scaled(ANCHOR, 0.8) },
     { id: "erector-spinae", name: "Erector spinae", group: "Trunk", role: "stabiliser", note: "Lengthened as the back rounds up; controls the lowering.", curve: t([0, 0.15], [0.45, 0.25], [0.7, 0.35], [1, 0.15]), stretch: t([0, 0.1], [0.3, 0.5], [0.45, 0.7], [0.65, 0.5], [1, 0.1]) },
   ],
 };

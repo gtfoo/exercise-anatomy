@@ -77,6 +77,27 @@ TARGETS = {
     "rhomboids": ["Rhomboid major muscle", "Rhomboid minor muscle"],
     "pectoralis-major": ["Sternocostal head of pectoralis major muscle", "Clavicular head of pectoralis major muscle"],
     "triceps-long-head": ["Long head of triceps brachii"],
+    # The owner's list of 2026-09-11: the rest of the triceps, the deep chest and
+    # cuff, the extensors that balance the grip, the deep obliques, the serratus,
+    # the smaller adductors and the outside of the calf.
+    "triceps-lateral-head": ["Lateral head of triceps brachii"],
+    "triceps-medial-head": ["Medial head of triceps brachii"],
+    "coracobrachialis": ["Coracobrachialis muscle"],
+    "forearm-extensors": [
+        "Extensor carpi radialis longus",
+        "Extensor carpi radialis brevis",
+        "Humeral head of extensor carpi ulnaris",
+        "Ulnar head of extensor carpi ulnaris",
+        "Extensor digitorum",
+        "Extensor digiti minimi",
+    ],
+    "pectoralis-minor": ["Pectoralis minor muscle"],
+    "subscapularis": ["Subscapularis muscle"],
+    "serratus-anterior": ["Serratus anterior muscle"],
+    "internal-obliques": ["Internal abdominal oblique muscle"],
+    "gracilis": ["Gracilis muscle"],
+    "pectineus": ["Pectineus muscle"],
+    "fibularis": ["Fibularis longus muscle", "Fibularis brevis muscle"],
     "forearm-flexors": [
         "Flexor digitorum profundus",
         "Humero-ulnar head of flexor digitorum superficialis",

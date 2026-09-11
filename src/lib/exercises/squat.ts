@@ -17,6 +17,7 @@ import estimated from "@/lib/activation/bodyweight-squat.json";
 // where there is a mechanical reason for it (rectus femoris and gastrocnemius
 // are both two-joint muscles that a bent hip or knee slackens; soleus is not).
 
+const scaled = (c: readonly CurvePoint[], k: number): CurvePoint[] => c.map(([x, y]) => [x, y * k] as CurvePoint);
 const KNEE_EXTENSOR: CurvePoint[] = [[0, 0.15], [0.25, 0.45], [0.45, 0.9], [0.55, 1], [0.7, 0.8], [0.85, 0.4], [1, 0.15]];
 const HIP_EXTENSOR: CurvePoint[] = [[0, 0.15], [0.25, 0.35], [0.45, 0.8], [0.55, 1], [0.7, 0.75], [0.85, 0.35], [1, 0.15]];
 const HAMSTRING: CurvePoint[] = [[0, 0.1], [0.3, 0.3], [0.5, 0.4], [0.7, 0.4], [0.9, 0.2], [1, 0.1]];
@@ -154,6 +155,22 @@ const baseline: Exercise = {
       curve: MINOR_ADDUCTOR, stretch: [[0, 0.05], [0.42, 0.7], [0.58, 0.7], [0.8, 0.2], [1, 0.05]],
     },
     {
+      id: "pectineus",
+      name: "Pectineus",
+      group: "Adductors",
+      role: "synergist",
+      note: "Adducts and flexes the hip with adductor longus.",
+      curve: scaled(MINOR_ADDUCTOR, 0.8),
+    },
+    {
+      id: "gracilis",
+      name: "Gracilis",
+      group: "Adductors",
+      role: "synergist",
+      note: "Adducts the hip along the inner thigh.",
+      curve: scaled(MINOR_ADDUCTOR, 0.7),
+    },
+    {
       id: "adductor-brevis",
       name: "Adductor brevis",
       group: "Adductors",
@@ -195,6 +212,14 @@ const baseline: Exercise = {
       note: "Front of the shin. Controls the forward travel of the shin over the foot on the way down.",
       curve: [[0, 0.1], [0.2, 0.3], [0.45, 0.35], [0.7, 0.25], [1, 0.1]],
     },
+    {
+      id: "fibularis",
+      name: "Fibularis longus and brevis",
+      group: "Lower leg",
+      role: "stabiliser",
+      note: "Steady the ankle from the outside against tibialis anterior.",
+      curve: scaled([[0, 0.1], [0.2, 0.3], [0.45, 0.35], [0.7, 0.25], [1, 0.1]], 0.8),
+    },
 
     // Trunk
     {
@@ -219,6 +244,14 @@ const baseline: Exercise = {
       group: "Trunk",
       role: "stabiliser",
       note: "Sides of the trunk. Brace with the rest of the abdominal wall.",
+      curve: BRACE,
+    },
+    {
+      id: "internal-obliques",
+      name: "Internal obliques",
+      group: "Trunk",
+      role: "stabiliser",
+      note: "Brace and rotate the trunk with the external obliques, fibres the other way.",
       curve: BRACE,
     },
     {

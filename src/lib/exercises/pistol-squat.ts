@@ -7,6 +7,7 @@ import type { CurvePoint, Exercise } from "./types";
 // squats, the other is held straight out in front: its own work is holding
 // itself up, and its hamstrings are on stretch. Activation is qualitative.
 
+const scaled = (c: readonly CurvePoint[], k: number): CurvePoint[] => c.map(([x, y]) => [x, y * k] as CurvePoint);
 const t = (...pts: [number, number][]): CurvePoint[] => pts;
 // The squatting leg: loaded most at the bottom, easing as it stands, then loaded again lowering (eccentric).
 const LEFT = t([0, 1], [0.12, 0.8], [0.25, 0.3], [0.3, 0.15], [0.7, 0.15], [0.75, 0.3], [0.9, 0.8], [1, 1]);
@@ -57,8 +58,11 @@ export const pistolSquat: Exercise = {
     { id: "gastrocnemius-lateral", name: "Gastrocnemius (lateral)", group: "Lower leg", role: "stabiliser", note: "Ankle balance with the medial head.", ...side(LEFT_BAL, RIGHT_BAL) },
     { id: "soleus", name: "Soleus", group: "Lower leg", role: "stabiliser", note: "Works hard with the knee far forward over the foot.", ...side(LEFT_BAL, RIGHT_BAL), stretch: LEFT_DEEP, stretchRight: RIGHT_DEEP },
     { id: "tibialis-anterior", name: "Tibialis anterior", group: "Lower leg", role: "stabiliser", note: "Pulls the shin forward over the standing foot at the bottom; holds the free foot up.", ...side(t([0, 0.7], [0.25, 0.5], [0.55, 0.7], [0.75, 0.5], [1, 0.7]), t([0, 0.7], [0.25, 0.5], [0.55, 0.7], [0.75, 0.5], [1, 0.7])) },
+    { id: "fibularis", name: "Fibularis longus and brevis", group: "Lower leg", role: "stabiliser", note: "Steady the ankle from the outside against tibialis anterior.", ...side(t([0, 0.7], [0.25, 0.5], [0.55, 0.7], [0.75, 0.5], [1, 0.7]), t([0, 0.7], [0.25, 0.5], [0.55, 0.7], [0.75, 0.5], [1, 0.7])) },
     { id: "erector-spinae", name: "Erector spinae", group: "Trunk", role: "stabiliser", note: "Holds the spine as the trunk leans forward to balance.", curve: BRACE },
     { id: "rectus-abdominis", name: "Rectus abdominis", group: "Trunk", role: "stabiliser", note: "Braces the trunk, and helps hold the free leg up.", curve: BRACE },
     { id: "anterior-deltoid", name: "Anterior deltoid", group: "Shoulder", role: "stabiliser", note: "Holds the arms out in front as a counterbalance.", curve: ARMS },
+    { id: "serratus-anterior", name: "Serratus anterior", group: "Shoulder", role: "synergist", note: "Pins the shoulder blade to the ribs and pulls it forward as the arm reaches or presses.", curve: scaled(ARMS, 0.8) },
+    { id: "coracobrachialis", name: "Coracobrachialis", group: "Shoulder", role: "stabiliser", note: "Helps lift the arm forward and draws it in to the body.", curve: scaled(ARMS, 0.5) },
   ],
 };

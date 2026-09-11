@@ -19,7 +19,7 @@ letter and a one-line task strands the *why*.
       each curve against the OpenSim lower-limb result before trusting it.
       `from: owner, 2026-09-10 · "the muscles are just lighting up at random period"`
 
-- [ ] **Tell the droplet agent `/models/*` can go immutable.** Every model
+- [x] **Tell the droplet agent `/models/*` can go immutable.** Done: the letter went 2026-09-11 and the droplet applied it the same day (models and _next/static immutable for a year, HTML no-cache with a working ETag); the reply is archived. Every model
       URL now carries a content hash as a query string (`?v=<sha1[:10]>`,
       `scripts/hash-models.mjs` before dev and build), so a re-converted
       clip is a new URL. The one-day cache the droplet set bit on
@@ -105,6 +105,19 @@ letter and a one-line task strands the *why*.
       swing, lateral raise, snatch, overhead squat, burpee, jumping jacks,
       breaststroke, boat, wheel, crow; the pike walk's alternating steps are
       the one thing left symmetric that is not.
+      Fourth round: the side plank is entered the way it is taught (a
+      YouTube demonstration was the reference: sitting on the hip with the
+      lower hand planted, then pressing the hips up); the crow's neck
+      extends only as far as a neck does; three designed movements are new,
+      a bar muscle-up (hang, pull, wrists over, press, back down), a
+      handstand kicked up from standing, and parallel-bar dips; the climb
+      shows its lengthened muscles (the reaching arm's lat, the high foot's
+      glute). The figure gained the eleven muscles the owner listed
+      (triceps lateral and medial heads, coracobrachialis, forearm
+      extensors, pectoralis minor, subscapularis, serratus anterior,
+      internal obliques, gracilis, pectineus, fibularis longus and brevis):
+      50 named muscles now, each added to the exercises where a muscle it
+      works alongside was already listed, with that entry's curve.
       `from: owner, 2026-09-11 · from "for side plank, the muscle activation should be asymmetric right?" to "there seems to be a few missing frames between the end and the start"`
 
 - [x] **Cycling, plank, five yoga holds, categories** (2026-09-11): all

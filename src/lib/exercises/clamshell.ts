@@ -5,6 +5,7 @@ import type { CurvePoint, Exercise } from "./types";
 // opens 40 degrees and closes while the pelvis stays still. Designed because
 // no free capture exists. Activation is qualitative.
 
+const scaled = (c: readonly CurvePoint[], k: number): CurvePoint[] => c.map(([x, y]) => [x, y * k] as CurvePoint);
 const t = (...pts: [number, number][]): CurvePoint[] => pts;
 // Abductors and external rotators: work through the opening, hold, and control the close.
 const OPEN = t([0, 0.2], [0.2, 0.7], [0.42, 1], [0.58, 0.95], [0.8, 0.6], [0.95, 0.25], [1, 0.2]);
@@ -32,9 +33,12 @@ export const clamshell: Exercise = {
     { id: "gluteus-minimus", name: "Gluteus minimus", group: "Gluteals", role: "prime-mover", note: "Works under gluteus medius on the same movement, top side.", curve: t([0, 0.15], [1, 0.15]), right: OPEN },
     { id: "gluteus-maximus", name: "Gluteus maximus", group: "Gluteals", role: "synergist", note: "Its upper fibres help rotate the top hip outward.", curve: t([0, 0.1], [1, 0.1]), right: t([0, 0.15], [0.42, 0.6], [0.58, 0.55], [1, 0.15]) },
     { id: "external-obliques", name: "External obliques", group: "Trunk", role: "stabiliser", note: "Keep the pelvis from rolling back as the knee opens.", curve: BRACE },
+    { id: "internal-obliques", name: "Internal obliques", group: "Trunk", role: "stabiliser", note: "Brace and rotate the trunk with the external obliques, fibres the other way.", curve: BRACE },
     { id: "rectus-abdominis", name: "Rectus abdominis", group: "Trunk", role: "stabiliser", note: "Braces the trunk with the obliques.", curve: BRACE },
     { id: "transversus-abdominis", name: "Transversus abdominis", group: "Trunk", role: "stabiliser", note: "Deep brace that holds the pelvis still.", curve: BRACE },
     { id: "erector-spinae", name: "Erector spinae", group: "Trunk", role: "stabiliser", note: "Keep the spine neutral on the side.", curve: BRACE },
     { id: "adductor-longus", name: "Adductor longus", group: "Bottom leg", role: "stabiliser", note: "Holds the bottom (left) leg still as a base.", curve: BRACE, right: t([0, 0.15], [1, 0.15]) },
+    { id: "pectineus", name: "Pectineus", group: "Bottom leg", role: "synergist", note: "Adducts and flexes the hip with adductor longus.", curve: scaled(BRACE, 0.8), right: scaled(t([0, 0.15], [1, 0.15]), 0.8) },
+    { id: "gracilis", name: "Gracilis", group: "Bottom leg", role: "synergist", note: "Adducts the hip along the inner thigh.", curve: scaled(BRACE, 0.7), right: scaled(t([0, 0.15], [1, 0.15]), 0.7) },
   ],
 };

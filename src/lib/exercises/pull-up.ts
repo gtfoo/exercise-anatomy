@@ -14,6 +14,7 @@ import type { CurvePoint, Exercise } from "./types";
 // (0.48-1) parts of the rep: concentric work peaks mid-pull, the lowering
 // half carries a lower, steadier eccentric load.
 
+const scaled = (c: readonly CurvePoint[], k: number): CurvePoint[] => c.map(([x, y]) => [x, y * k] as CurvePoint);
 const PRIME: CurvePoint[] = [[0, 0.2], [0.15, 0.6], [0.3, 0.95], [0.45, 1], [0.55, 0.85], [0.7, 0.6], [0.85, 0.45], [1, 0.2]];
 const HELPER: CurvePoint[] = [[0, 0.15], [0.2, 0.45], [0.4, 0.65], [0.5, 0.6], [0.7, 0.4], [1, 0.15]];
 const SCAPULAR: CurvePoint[] = [[0, 0.2], [0.1, 0.5], [0.3, 0.7], [0.5, 0.75], [0.7, 0.5], [0.9, 0.3], [1, 0.2]];
@@ -100,6 +101,14 @@ const baseline: Exercise = {
       curve: STEADY,
     },
     {
+      id: "subscapularis",
+      name: "Subscapularis",
+      group: "Shoulder",
+      role: "stabiliser",
+      note: "The front of the rotator cuff: holds the humeral head in the socket under load.",
+      curve: STEADY,
+    },
+    {
       id: "teres-minor",
       name: "Teres minor",
       group: "Shoulder",
@@ -152,12 +161,28 @@ const baseline: Exercise = {
       curve: [[0, 0.15], [0.2, 0.45], [0.35, 0.5], [0.5, 0.35], [0.75, 0.25], [1, 0.15]],
     },
     {
+      id: "pectoralis-minor",
+      name: "Pectoralis minor",
+      group: "Chest",
+      role: "stabiliser",
+      note: "Pulls the shoulder blade forward and down under the pectoralis major.",
+      curve: scaled([[0, 0.15], [0.2, 0.45], [0.35, 0.5], [0.5, 0.35], [0.75, 0.25], [1, 0.15]], 0.6),
+    },
+    {
       id: "forearm-flexors",
       name: "Forearm flexors",
       group: "Forearm",
       role: "stabiliser",
       note: "Grip. Isometric for the whole rep, and often what gives out first.",
       curve: GRIP,
+    },
+    {
+      id: "forearm-extensors",
+      name: "Forearm extensors",
+      group: "Forearm",
+      role: "stabiliser",
+      note: "Hold the wrist steady from the back against the flexors' grip.",
+      curve: scaled(GRIP, 0.6),
     },
 
     // Trunk
@@ -175,6 +200,14 @@ const baseline: Exercise = {
       group: "Trunk",
       role: "stabiliser",
       note: "Brace the trunk with the abdominals and resist swinging.",
+      curve: STEADY,
+    },
+    {
+      id: "internal-obliques",
+      name: "Internal obliques",
+      group: "Trunk",
+      role: "stabiliser",
+      note: "Brace and rotate the trunk with the external obliques, fibres the other way.",
       curve: STEADY,
     },
   ],

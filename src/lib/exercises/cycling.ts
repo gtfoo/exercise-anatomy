@@ -8,6 +8,7 @@ import { shifted } from "./types";
 // the other way round. Each side follows its own pedal (`right` is the left
 // curve shifted by half a turn). Activation is qualitative.
 
+const scaled = (c: readonly CurvePoint[], k: number): CurvePoint[] => c.map(([x, y]) => [x, y * k] as CurvePoint);
 const t = (...pts: [number, number][]): CurvePoint[] => pts;
 // The left down-stroke: from the top of the circle (t = 0.5) to the bottom.
 const PUSH = t([0, 0.55], [0.1, 0.35], [0.5, 0.35], [0.6, 0.45], [0.75, 0.9], [0.9, 1], [1, 0.55]);
@@ -44,8 +45,11 @@ export const cycling: Exercise = {
     { id: "gastrocnemius-lateral", name: "Gastrocnemius (lateral)", group: "Ankle", role: "synergist", note: "Ankle push with the medial head.", curve: CALF, right: shifted(CALF, 0.5) },
     { id: "soleus", name: "Soleus", group: "Ankle", role: "synergist", note: "Steadies the ankle on the pedal.", curve: CALF, right: shifted(CALF, 0.5) },
     { id: "tibialis-anterior", name: "Tibialis anterior", group: "Ankle", role: "synergist", note: "Lifts the toes on the up-stroke.", curve: HIPFLEX, right: shifted(HIPFLEX, 0.5) },
+    { id: "fibularis", name: "Fibularis longus and brevis", group: "Ankle", role: "stabiliser", note: "Steady the ankle from the outside against tibialis anterior.", curve: scaled(HIPFLEX, 0.8), right: scaled(shifted(HIPFLEX, 0.5), 0.8) },
     { id: "erector-spinae", name: "Erector spinae", group: "Trunk", role: "stabiliser", note: "Holds the leant trunk.", curve: BRACE },
     { id: "rectus-abdominis", name: "Rectus abdominis", group: "Trunk", role: "stabiliser", note: "Braces the trunk against the leg drive.", curve: BRACE },
     { id: "triceps-long-head", name: "Triceps, long head", group: "Arms", role: "stabiliser", note: "Props the trunk on the handlebar.", curve: BRACE },
+    { id: "triceps-lateral-head", name: "Triceps, lateral head", group: "Arms", role: "stabiliser", note: "Straightens the elbow with the long head.", curve: BRACE },
+    { id: "triceps-medial-head", name: "Triceps, medial head", group: "Arms", role: "stabiliser", note: "Deep elbow extensor, working in every press and lockout.", curve: BRACE },
   ],
 };

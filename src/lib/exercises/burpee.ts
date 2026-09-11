@@ -5,6 +5,7 @@ import type { CurvePoint, Exercise } from "./types";
 // the arms overhead, lands, squats, the hands go down and the feet kick
 // back to the bottom again. Activation is qualitative.
 
+const scaled = (c: readonly CurvePoint[], k: number): CurvePoint[] => c.map(([x, y]) => [x, y * k] as CurvePoint);
 const t = (...pts: [number, number][]): CurvePoint[] => pts;
 const PRESS = t([0, 0.9], [0.1, 0.7], [0.2, 0.2], [0.75, 0.2], [0.85, 0.5], [0.95, 0.8], [1, 0.9]); // push-up at both ends
 const JUMP = t([0, 0.2], [0.15, 0.4], [0.28, 0.7], [0.38, 1], [0.45, 0.4], [0.55, 0.8], [0.65, 0.6], [0.75, 0.5], [0.85, 0.3], [1, 0.2]); // extend to jump, absorb the landing, squat
@@ -44,13 +45,20 @@ export const burpee: Exercise = {
     { id: "gastrocnemius-lateral", name: "Gastrocnemius (lateral)", group: "Lower leg", role: "prime-mover", note: "Push-off with the medial head.", curve: CALF },
     { id: "soleus", name: "Soleus", group: "Lower leg", role: "synergist", note: "Push-off and landing under the gastrocnemius.", curve: CALF },
     { id: "pectoralis-major", name: "Pectoralis major", group: "Chest", role: "prime-mover", note: "Presses the body up off the floor at the start, and lowers it at the end.", curve: PRESS },
+    { id: "pectoralis-minor", name: "Pectoralis minor", group: "Chest", role: "stabiliser", note: "Pulls the shoulder blade forward and down under the pectoralis major.", curve: scaled(PRESS, 0.6) },
     { id: "anterior-deltoid", name: "Anterior deltoid", group: "Shoulder", role: "prime-mover", note: "Presses with the chest, then swings the arms overhead for the jump.", curve: t([0, 0.9], [0.1, 0.7], [0.2, 0.3], [0.35, 0.7], [0.45, 0.6], [0.6, 0.3], [0.85, 0.5], [0.95, 0.8], [1, 0.9]) },
+    { id: "serratus-anterior", name: "Serratus anterior", group: "Shoulder", role: "synergist", note: "Pins the shoulder blade to the ribs and pulls it forward as the arm reaches or presses.", curve: scaled(t([0, 0.9], [0.1, 0.7], [0.2, 0.3], [0.35, 0.7], [0.45, 0.6], [0.6, 0.3], [0.85, 0.5], [0.95, 0.8], [1, 0.9]), 0.8) },
+    { id: "coracobrachialis", name: "Coracobrachialis", group: "Shoulder", role: "stabiliser", note: "Helps lift the arm forward and draws it in to the body.", curve: scaled(t([0, 0.9], [0.1, 0.7], [0.2, 0.3], [0.35, 0.7], [0.45, 0.6], [0.6, 0.3], [0.85, 0.5], [0.95, 0.8], [1, 0.9]), 0.5) },
     { id: "triceps-long-head", name: "Triceps, long head", group: "Arm", role: "prime-mover", note: "Straightens the elbows out of the push-up.", curve: PRESS },
+    { id: "triceps-lateral-head", name: "Triceps, lateral head", group: "Arm", role: "prime-mover", note: "Straightens the elbow with the long head.", curve: PRESS },
+    { id: "triceps-medial-head", name: "Triceps, medial head", group: "Arm", role: "prime-mover", note: "Deep elbow extensor, working in every press and lockout.", curve: PRESS },
     { id: "middle-deltoid", name: "Middle deltoid", group: "Shoulder", role: "synergist", note: "Raises the arms overhead in the jump.", curve: ARMS },
     { id: "rectus-abdominis", name: "Rectus abdominis", group: "Trunk", role: "stabiliser", note: "Holds the plank line and pulls the knees in.", curve: t([0, 0.7], [0.15, 0.85], [0.3, 0.5], [0.8, 0.5], [0.9, 0.8], [1, 0.7]) },
     { id: "external-obliques", name: "External obliques", group: "Trunk", role: "stabiliser", note: "Brace the trunk through every transition.", curve: BRACE },
+    { id: "internal-obliques", name: "Internal obliques", group: "Trunk", role: "stabiliser", note: "Brace and rotate the trunk with the external obliques, fibres the other way.", curve: BRACE },
     { id: "transversus-abdominis", name: "Transversus abdominis", group: "Trunk", role: "stabiliser", note: "Deep brace.", curve: BRACE },
     { id: "erector-spinae", name: "Erector spinae", group: "Trunk", role: "stabiliser", note: "Straightens the back coming up and holds it in the plank.", curve: t([0, 0.4], [0.3, 0.7], [0.38, 0.8], [0.5, 0.5], [0.7, 0.6], [1, 0.4]) },
     { id: "tibialis-anterior", name: "Tibialis anterior", group: "Lower leg", role: "stabiliser", note: "Lifts the toes to clear the floor on the jump in and out.", curve: TUCK },
+    { id: "fibularis", name: "Fibularis longus and brevis", group: "Lower leg", role: "stabiliser", note: "Steady the ankle from the outside against tibialis anterior.", curve: scaled(TUCK, 0.8) },
   ],
 };

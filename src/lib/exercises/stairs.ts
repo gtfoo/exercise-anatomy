@@ -6,6 +6,7 @@ import { shifted } from "./types";
 // strides and the staircase is drawn to that rise and run. Each leg steps up
 // twice per cycle. Activation is qualitative.
 
+const scaled = (c: readonly CurvePoint[], k: number): CurvePoint[] => c.map(([x, y]) => [x, y * k] as CurvePoint);
 const t = (...pts: [number, number][]): CurvePoint[] => pts;
 const FOUR = (a: number, b: number): CurvePoint[] => t([0, b], [0.08, a], [0.18, b], [0.25, b], [0.33, a], [0.43, b], [0.5, b], [0.58, a], [0.68, b], [0.75, b], [0.83, a], [0.93, b], [1, b]);
 const STEP_UP = FOUR(1, 0.35); // the stance leg lifts the body onto the next step
@@ -45,6 +46,7 @@ export const stairs: Exercise = {
     { id: "gastrocnemius-lateral", name: "Gastrocnemius (lateral)", group: "Ankle", role: "prime-mover", note: "Pushes off the trailing foot.", curve: PUSH, right: shifted(PUSH, 0.25) },
     { id: "soleus", name: "Soleus", group: "Ankle", role: "synergist", note: "Push-off and ankle stiffness.", curve: PUSH, right: shifted(PUSH, 0.25) },
     { id: "tibialis-anterior", name: "Tibialis anterior", group: "Ankle", role: "synergist", note: "Lifts the toes over the next step.", curve: SWING, right: shifted(SWING, 0.25) },
+    { id: "fibularis", name: "Fibularis longus and brevis", group: "Ankle", role: "stabiliser", note: "Steady the ankle from the outside against tibialis anterior.", curve: scaled(SWING, 0.8), right: scaled(shifted(SWING, 0.25), 0.8) },
     { id: "erector-spinae", name: "Erector spinae", group: "Trunk", role: "stabiliser", note: "Holds the trunk upright on the lean.", curve: BRACE },
     { id: "rectus-abdominis", name: "Rectus abdominis", group: "Trunk", role: "stabiliser", note: "Braces the trunk.", curve: BRACE },
   ],

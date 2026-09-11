@@ -26,6 +26,9 @@ import { pikeWalk } from "./pike-walk";
 import { cleanAndJerk } from "./clean-and-jerk";
 import { snatch } from "./snatch";
 import { overheadSquat } from "./overhead-squat";
+import { muscleUp } from "./muscle-up";
+import { handstand } from "./handstand";
+import { dips } from "./dips";
 import { CATEGORIES } from "./types";
 
 /** Display order within a category. Routes are `/` for the atlas and `/<slug>` for the rest. */
@@ -40,6 +43,9 @@ export const exercises: readonly Exercise[] = [
   // Push and pull
   pushUp,
   pullUp,
+  dips,
+  muscleUp,
+  handstand,
   wallClimb,
   pikeWalk,
   // Weights

@@ -4,6 +4,7 @@ import type { CurvePoint, Exercise } from "./types";
 // the bottom of the hinge with the bell behind the knees, t = 0.5 the top
 // with the arms level, t = 1 the bottom again. Activation is qualitative.
 
+const scaled = (c: readonly CurvePoint[], k: number): CurvePoint[] => c.map(([x, y]) => [x, y * k] as CurvePoint);
 const t = (...pts: [number, number][]): CurvePoint[] => pts;
 // The hip drive: everything on the back of the body fires from the bottom to about a third of the way up.
 const DRIVE = t([0, 0.55], [0.12, 1], [0.3, 0.7], [0.5, 0.3], [0.75, 0.5], [0.9, 0.8], [1, 0.55]);
@@ -38,10 +39,14 @@ export const kettlebellSwing: Exercise = {
     { id: "erector-spinae", name: "Erector spinae", group: "Trunk", role: "synergist", note: "Holds the back flat through the hinge and drives the trunk up.", curve: HINGE, stretch: [[0, 0.5], [0.3, 0.1], [0.7, 0.1], [1, 0.5]] },
     { id: "rectus-abdominis", name: "Rectus abdominis", group: "Trunk", role: "stabiliser", note: "Braces at the top so the ribs do not flare.", curve: BRACE },
     { id: "external-obliques", name: "External obliques", group: "Trunk", role: "stabiliser", note: "Brace the trunk with rectus abdominis.", curve: BRACE },
+    { id: "internal-obliques", name: "Internal obliques", group: "Trunk", role: "stabiliser", note: "Brace and rotate the trunk with the external obliques, fibres the other way.", curve: BRACE },
     { id: "transversus-abdominis", name: "Transversus abdominis", group: "Trunk", role: "stabiliser", note: "Deep brace through the whole swing.", curve: BRACE },
     { id: "latissimus-dorsi", name: "Latissimus dorsi", group: "Upper body", role: "synergist", note: "Keeps the bell close and guides it back into the hinge.", curve: ARMS },
     { id: "anterior-deltoid", name: "Anterior deltoid", group: "Upper body", role: "stabiliser", note: "The arms are a pendulum; the shoulders only steady them.", curve: ARMS },
+    { id: "serratus-anterior", name: "Serratus anterior", group: "Upper body", role: "synergist", note: "Pins the shoulder blade to the ribs and pulls it forward as the arm reaches or presses.", curve: scaled(ARMS, 0.8) },
+    { id: "coracobrachialis", name: "Coracobrachialis", group: "Upper body", role: "stabiliser", note: "Helps lift the arm forward and draws it in to the body.", curve: scaled(ARMS, 0.5) },
     { id: "forearm-flexors", name: "Forearm flexors", group: "Upper body", role: "stabiliser", note: "Grip the handle.", curve: GRIP },
+    { id: "forearm-extensors", name: "Forearm extensors", group: "Upper body", role: "stabiliser", note: "Hold the wrist steady from the back against the flexors' grip.", curve: scaled(GRIP, 0.6) },
     { id: "vastus-lateralis", name: "Vastus lateralis", group: "Legs", role: "synergist", note: "Straightens the slightly bent knees on the drive.", curve: DRIVE },
     { id: "gastrocnemius-medial", name: "Gastrocnemius (medial)", group: "Legs", role: "stabiliser", note: "Keeps the feet rooted as the weight shifts.", curve: BRACE },
     { id: "gastrocnemius-lateral", name: "Gastrocnemius (lateral)", group: "Legs", role: "stabiliser", note: "Keeps the feet rooted as the weight shifts.", curve: BRACE },

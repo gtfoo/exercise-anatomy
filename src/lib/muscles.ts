@@ -24,14 +24,18 @@ export const MUSCLES: readonly MuscleInfo[] = [
   { id: "adductor-magnus", name: "Adductor magnus", group: "Adductors", note: "The largest adductor; its back part also extends the hip." },
   { id: "adductor-longus", name: "Adductor longus", group: "Adductors", note: "Pulls the thigh inward and helps flex the hip." },
   { id: "adductor-brevis", name: "Adductor brevis", group: "Adductors", note: "Short adductor deep to adductor longus." },
+  { id: "pectineus", name: "Pectineus", group: "Adductors", note: "Top of the inner thigh: adducts and helps flex the hip." },
+  { id: "gracilis", name: "Gracilis", group: "Adductors", note: "Long strap down the inner thigh: adducts the hip and helps bend the knee." },
   // Lower leg
   { id: "gastrocnemius-medial", name: "Gastrocnemius, medial head", group: "Lower leg", note: "Inner calf: points the foot and helps bend the knee." },
   { id: "gastrocnemius-lateral", name: "Gastrocnemius, lateral head", group: "Lower leg", note: "Outer calf: points the foot and helps bend the knee." },
   { id: "soleus", name: "Soleus", group: "Lower leg", note: "Deep calf muscle under gastrocnemius; the main ankle plantarflexor when the knee is bent." },
   { id: "tibialis-anterior", name: "Tibialis anterior", group: "Lower leg", note: "Front of the shin: lifts the foot and toes." },
+  { id: "fibularis", name: "Fibularis longus and brevis", group: "Lower leg", note: "Outside of the lower leg: turn the sole outward and steady the ankle." },
   // Trunk
   { id: "rectus-abdominis", name: "Rectus abdominis", group: "Trunk", note: "The six-pack: flexes the trunk and braces the abdomen." },
   { id: "external-obliques", name: "External obliques", group: "Trunk", note: "Side abdominals: rotate and side-bend the trunk, brace the core." },
+  { id: "internal-obliques", name: "Internal obliques", group: "Trunk", note: "Under the external obliques, fibres the other way: rotate and brace with them." },
   { id: "transversus-abdominis", name: "Transversus abdominis", group: "Trunk", note: "Deepest abdominal; a corset that stiffens the trunk." },
   { id: "erector-spinae", name: "Erector spinae", group: "Trunk", note: "Long muscles either side of the spine that hold it upright and extend it." },
   // Back and shoulder blade
@@ -48,11 +52,18 @@ export const MUSCLES: readonly MuscleInfo[] = [
   { id: "supraspinatus", name: "Supraspinatus", group: "Shoulder", note: "Rotator cuff: starts the arm's lift to the side and seats the joint." },
   { id: "infraspinatus", name: "Infraspinatus", group: "Shoulder", note: "Rotator cuff: rotates the arm outward and steadies the joint." },
   { id: "teres-minor", name: "Teres minor", group: "Shoulder", note: "Rotator cuff: outward rotation with infraspinatus." },
+  { id: "subscapularis", name: "Subscapularis", group: "Shoulder", note: "The fourth rotator cuff muscle, on the front of the shoulder blade: rotates the arm inward and holds the joint." },
+  { id: "serratus-anterior", name: "Serratus anterior", group: "Shoulder", note: "Finger-like slips on the side of the ribs: pull the shoulder blade forward and pin it to the ribcage." },
   { id: "pectoralis-major", name: "Pectoralis major", group: "Chest", note: "The chest: brings the arm forward and across the body." },
+  { id: "pectoralis-minor", name: "Pectoralis minor", group: "Chest", note: "Under pectoralis major: pulls the shoulder blade forward and down." },
   // Arm
   { id: "biceps-brachii", name: "Biceps brachii", group: "Arm", note: "Front of the upper arm: bends the elbow and turns the palm up." },
   { id: "brachialis", name: "Brachialis", group: "Arm", note: "Under the biceps; the strongest elbow flexor." },
   { id: "brachioradialis", name: "Brachioradialis", group: "Arm", note: "From the upper arm to the wrist; bends the elbow in a neutral grip." },
-  { id: "triceps-long-head", name: "Triceps, long head", group: "Arm", note: "Back of the upper arm: straightens the elbow." },
+  { id: "triceps-long-head", name: "Triceps, long head", group: "Arm", note: "Back of the upper arm: straightens the elbow, and crosses the shoulder to pull the arm back." },
+  { id: "triceps-lateral-head", name: "Triceps, lateral head", group: "Arm", note: "Outer head of the triceps: straightens the elbow." },
+  { id: "triceps-medial-head", name: "Triceps, medial head", group: "Arm", note: "Deep head of the triceps: straightens the elbow, working in every extension." },
+  { id: "coracobrachialis", name: "Coracobrachialis", group: "Arm", note: "Small muscle inside the upper arm: helps lift the arm forward and draw it in." },
   { id: "forearm-flexors", name: "Forearm flexors", group: "Arm", note: "Front of the forearm: close the hand and flex the wrist." },
+  { id: "forearm-extensors", name: "Forearm extensors", group: "Arm", note: "Back of the forearm: open the hand and extend the wrist, and hold it steady against the flexors in a grip." },
 ];

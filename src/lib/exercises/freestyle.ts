@@ -9,6 +9,7 @@ import motion3d from "@/lib/motion/freestyle-3d.json";
 // right arm is half a cycle out of phase. Activation is qualitative: no water,
 // no propulsive forces, so nothing can be estimated.
 
+const scaled = (c: readonly CurvePoint[], k: number): CurvePoint[] => c.map(([x, y]) => [x, y * k] as CurvePoint);
 const t = (...pts: [number, number][]): CurvePoint[] => pts;
 // Left-arm timing; the right arm is shifted by half a cycle, and both sides are one mesh, so curves are summed roughly.
 const PULLER = t([0, 0.35], [0.15, 0.85], [0.3, 1], [0.45, 0.7], [0.55, 0.45], [0.65, 0.75], [0.8, 0.95], [0.9, 0.6], [1, 0.35]);
@@ -69,6 +70,14 @@ export const freestyle: Exercise = {
       curve: PULLER, right: shifted(PULLER, 0.5),
     },
     {
+      id: "pectoralis-minor",
+      name: "Pectoralis minor",
+      group: "Chest",
+      role: "stabiliser",
+      note: "Pulls the shoulder blade forward and down under the pectoralis major.",
+      curve: scaled(PULLER, 0.6), right: scaled(shifted(PULLER, 0.5), 0.6),
+    },
+    {
       id: "posterior-deltoid",
       name: "Posterior deltoid",
       group: "Shoulder",
@@ -101,6 +110,14 @@ export const freestyle: Exercise = {
       curve: CUFF, right: shifted(CUFF, 0.5),
     },
     {
+      id: "subscapularis",
+      name: "Subscapularis",
+      group: "Shoulder",
+      role: "stabiliser",
+      note: "The front of the rotator cuff: holds the humeral head in the socket under load.",
+      curve: CUFF, right: shifted(CUFF, 0.5),
+    },
+    {
       id: "teres-minor",
       name: "Teres minor",
       group: "Shoulder",
@@ -119,6 +136,22 @@ export const freestyle: Exercise = {
       curve: FINISH, right: shifted(FINISH, 0.5),
     },
     {
+      id: "triceps-lateral-head",
+      name: "Triceps, lateral head",
+      group: "Arm",
+      role: "prime-mover",
+      note: "Straightens the elbow with the long head.",
+      curve: FINISH, right: shifted(FINISH, 0.5),
+    },
+    {
+      id: "triceps-medial-head",
+      name: "Triceps, medial head",
+      group: "Arm",
+      role: "prime-mover",
+      note: "Deep elbow extensor, working in every press and lockout.",
+      curve: FINISH, right: shifted(FINISH, 0.5),
+    },
+    {
       id: "biceps-brachii",
       name: "Biceps brachii",
       group: "Arm",
@@ -133,6 +166,14 @@ export const freestyle: Exercise = {
       role: "stabiliser",
       note: "Hold the hand as a paddle against the water.",
       curve: PULLER, right: shifted(PULLER, 0.5),
+    },
+    {
+      id: "forearm-extensors",
+      name: "Forearm extensors",
+      group: "Arm",
+      role: "stabiliser",
+      note: "Hold the wrist steady from the back against the flexors' grip.",
+      curve: scaled(PULLER, 0.6), right: scaled(shifted(PULLER, 0.5), 0.6),
     },
 
     // Trunk
@@ -150,6 +191,14 @@ export const freestyle: Exercise = {
       group: "Trunk",
       role: "synergist",
       note: "Drive and control the body roll from one side to the other.",
+      curve: t([0, 0.6], [0.25, 0.4], [0.5, 0.6], [0.75, 0.4], [1, 0.6]),
+    },
+    {
+      id: "internal-obliques",
+      name: "Internal obliques",
+      group: "Trunk",
+      role: "synergist",
+      note: "Brace and rotate the trunk with the external obliques, fibres the other way.",
       curve: t([0, 0.6], [0.25, 0.4], [0.5, 0.6], [0.75, 0.4], [1, 0.6]),
     },
     {

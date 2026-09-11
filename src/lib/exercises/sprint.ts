@@ -7,6 +7,7 @@ import { shifted } from "./types";
 // the left curve shifted by half a cycle), and the arms go the other way
 // round: the right arm drives with the left leg. Activation is qualitative.
 
+const scaled = (c: readonly CurvePoint[], k: number): CurvePoint[] => c.map(([x, y]) => [x, y * k] as CurvePoint);
 const t = (...pts: [number, number][]): CurvePoint[] => pts;
 const ONE = (a: number, b: number): CurvePoint[] => t([0, b], [0.12, a], [0.3, b], [1, b]); // the left leg at ground contact
 const DRIVE = ONE(1, 0.45); // hip and knee extension at ground contact
@@ -37,6 +38,8 @@ export const sprint: Exercise = {
     { id: "semimembranosus", name: "Semimembranosus", group: "Hip", role: "prime-mover", note: "Hip extension with the other hamstrings.", curve: DRIVE, right: shifted(DRIVE, 0.5) },
     { id: "rectus-femoris", name: "Rectus femoris", group: "Hip", role: "prime-mover", note: "Flexes the hip to swing the leg through, then extends the knee.", curve: SWING, right: shifted(SWING, 0.5) },
     { id: "adductor-longus", name: "Adductor longus", group: "Hip", role: "synergist", note: "Helps bring the thigh forward on the swing.", curve: SWING, right: shifted(SWING, 0.5) },
+    { id: "pectineus", name: "Pectineus", group: "Hip", role: "synergist", note: "Adducts and flexes the hip with adductor longus.", curve: scaled(SWING, 0.8), right: scaled(shifted(SWING, 0.5), 0.8) },
+    { id: "gracilis", name: "Gracilis", group: "Hip", role: "synergist", note: "Adducts the hip along the inner thigh.", curve: scaled(SWING, 0.7), right: scaled(shifted(SWING, 0.5), 0.7) },
     { id: "gluteus-medius", name: "Gluteus medius", group: "Hip", role: "stabiliser", note: "Levels the pelvis on each single-leg stance.", curve: ONE(0.8, 0.35), right: shifted(ONE(0.8, 0.35), 0.5) },
     { id: "vastus-lateralis", name: "Vastus lateralis", group: "Knee", role: "synergist", note: "Straightens the knee through stance.", curve: DRIVE, right: shifted(DRIVE, 0.5) },
     { id: "vastus-medialis", name: "Vastus medialis", group: "Knee", role: "synergist", note: "Knee extension with the other vasti.", curve: DRIVE, right: shifted(DRIVE, 0.5) },
@@ -44,10 +47,14 @@ export const sprint: Exercise = {
     { id: "gastrocnemius-lateral", name: "Gastrocnemius (lateral)", group: "Ankle", role: "prime-mover", note: "Push-off with the medial head.", curve: PUSH, right: shifted(PUSH, 0.5) },
     { id: "soleus", name: "Soleus", group: "Ankle", role: "synergist", note: "Adds to the push-off and stiffens the ankle at contact.", curve: PUSH, right: shifted(PUSH, 0.5) },
     { id: "tibialis-anterior", name: "Tibialis anterior", group: "Ankle", role: "synergist", note: "Lifts the toes clear on the swing.", curve: SWING, right: shifted(SWING, 0.5) },
+    { id: "fibularis", name: "Fibularis longus and brevis", group: "Ankle", role: "stabiliser", note: "Steady the ankle from the outside against tibialis anterior.", curve: scaled(SWING, 0.8), right: scaled(shifted(SWING, 0.5), 0.8) },
     { id: "rectus-abdominis", name: "Rectus abdominis", group: "Trunk", role: "stabiliser", note: "Keeps the trunk from folding under the leg drive.", curve: BRACE },
     { id: "external-obliques", name: "External obliques", group: "Trunk", role: "stabiliser", note: "Resist the twist of the arm and leg swing.", curve: BRACE },
+    { id: "internal-obliques", name: "Internal obliques", group: "Trunk", role: "stabiliser", note: "Brace and rotate the trunk with the external obliques, fibres the other way.", curve: BRACE },
     { id: "erector-spinae", name: "Erector spinae", group: "Trunk", role: "stabiliser", note: "Hold the trunk tall.", curve: BRACE },
     { id: "anterior-deltoid", name: "Anterior deltoid", group: "Arms", role: "synergist", note: "Drives the arm forward, opposite to the leg.", curve: shifted(ARMS, 0.5), right: ARMS },
+    { id: "serratus-anterior", name: "Serratus anterior", group: "Arms", role: "synergist", note: "Pins the shoulder blade to the ribs and pulls it forward as the arm reaches or presses.", curve: scaled(shifted(ARMS, 0.5), 0.8), right: scaled(ARMS, 0.8) },
+    { id: "coracobrachialis", name: "Coracobrachialis", group: "Arms", role: "stabiliser", note: "Helps lift the arm forward and draws it in to the body.", curve: scaled(shifted(ARMS, 0.5), 0.5), right: scaled(ARMS, 0.5) },
     { id: "posterior-deltoid", name: "Posterior deltoid", group: "Arms", role: "synergist", note: "Drives the arm back.", curve: ARMS, right: shifted(ARMS, 0.5) },
   ],
 };

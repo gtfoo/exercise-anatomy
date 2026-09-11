@@ -7,6 +7,7 @@ import motion3d from "@/lib/motion/jumping-jacks-3d.json";
 // each way (subject 13's take, tried first, was a step-jack: the hips moved
 // 2 mm). Activation is qualitative: no estimate has been run for this movement.
 
+const scaled = (c: readonly CurvePoint[], k: number): CurvePoint[] => c.map(([x, y]) => [x, y * k] as CurvePoint);
 const t = (...pts: [number, number][]): CurvePoint[] => pts;
 // The jump itself: the calves fire twice a cycle, at each take-off.
 const JUMP = t([0, 0.3], [0.15, 0.9], [0.3, 0.3], [0.5, 0.4], [0.65, 0.9], [0.8, 0.3], [1, 0.3]);
@@ -38,9 +39,12 @@ export const jumpingJacks: Exercise = {
     { id: "gastrocnemius-lateral", name: "Gastrocnemius (lateral)", group: "Calf", role: "prime-mover", note: "Springs the body off the floor with the medial head.", curve: JUMP },
     { id: "soleus", name: "Soleus", group: "Calf", role: "synergist", note: "Adds to the push-off and cushions each landing.", curve: JUMP },
     { id: "tibialis-anterior", name: "Tibialis anterior", group: "Calf", role: "stabiliser", note: "Lifts the toes clear between hops and steadies the ankle on landing.", curve: BRACE },
+    { id: "fibularis", name: "Fibularis longus and brevis", group: "Calf", role: "stabiliser", note: "Steady the ankle from the outside against tibialis anterior.", curve: scaled(BRACE, 0.8) },
     { id: "gluteus-medius", name: "Gluteus medius", group: "Hip", role: "prime-mover", note: "Swings the legs apart in the air.", curve: ABDUCT },
     { id: "gluteus-minimus", name: "Gluteus minimus", group: "Hip", role: "synergist", note: "Abducts the hip with gluteus medius.", curve: ABDUCT },
     { id: "adductor-longus", name: "Adductor longus", group: "Hip", role: "prime-mover", note: "Brings the legs back together.", curve: ADDUCT },
+    { id: "pectineus", name: "Pectineus", group: "Hip", role: "synergist", note: "Adducts and flexes the hip with adductor longus.", curve: scaled(ADDUCT, 0.8) },
+    { id: "gracilis", name: "Gracilis", group: "Hip", role: "synergist", note: "Adducts the hip along the inner thigh.", curve: scaled(ADDUCT, 0.7) },
     { id: "adductor-magnus", name: "Adductor magnus", group: "Hip", role: "synergist", note: "Adducts the thigh with the other adductors.", curve: ADDUCT },
     { id: "adductor-brevis", name: "Adductor brevis", group: "Hip", role: "synergist", note: "Adducts the thigh.", curve: ADDUCT },
     { id: "rectus-femoris", name: "Rectus femoris", group: "Quadriceps", role: "synergist", note: "Straightens the knee for each take-off.", curve: JUMP },
@@ -53,6 +57,7 @@ export const jumpingJacks: Exercise = {
     { id: "lower-trapezius", name: "Lower trapezius", group: "Shoulder", role: "synergist", note: "Upward rotation of the shoulder blade with the middle fibres.", curve: ARM_UP },
     { id: "latissimus-dorsi", name: "Latissimus dorsi", group: "Shoulder", role: "synergist", note: "Pulls the arms back down to the sides.", curve: ARM_DOWN },
     { id: "pectoralis-major", name: "Pectoralis major", group: "Shoulder", role: "synergist", note: "Brings the arms down and in with the lats.", curve: ARM_DOWN },
+    { id: "pectoralis-minor", name: "Pectoralis minor", group: "Shoulder", role: "stabiliser", note: "Pulls the shoulder blade forward and down under the pectoralis major.", curve: scaled(ARM_DOWN, 0.6) },
     { id: "rectus-abdominis", name: "Rectus abdominis", group: "Trunk", role: "stabiliser", note: "Braces the trunk through the hops.", curve: BRACE },
     { id: "erector-spinae", name: "Erector spinae", group: "Trunk", role: "stabiliser", note: "Keeps the spine upright while the limbs swing.", curve: BRACE },
   ],

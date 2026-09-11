@@ -8,6 +8,7 @@ import type { CurvePoint, Exercise } from "./types";
 // 0.65, split jerk to 0.72, recover to 0.81, then lower to the shoulders,
 // the hips and the floor. Activation is qualitative.
 
+const scaled = (c: readonly CurvePoint[], k: number): CurvePoint[] => c.map(([x, y]) => [x, y * k] as CurvePoint);
 const t = (...pts: [number, number][]): CurvePoint[] => pts;
 const BACK = t([0, 0.5], [0.09, 0.7], [0.2, 0.95], [0.27, 1], [0.36, 0.8], [0.44, 0.85], [0.61, 0.6], [0.72, 0.7], [0.81, 0.6], [0.96, 0.85], [1, 0.5]); // the spine held through the pull and under the rack
 const SHRUG = t([0, 0.2], [0.2, 0.4], [0.27, 1], [0.32, 0.6], [0.44, 0.5], [0.61, 0.5], [0.66, 0.9], [0.72, 0.7], [0.81, 0.6], [0.87, 0.3], [1, 0.2]); // the second pull and the jerk
@@ -63,17 +64,24 @@ export const cleanAndJerk: Exercise = {
     { id: "soleus", name: "Soleus", group: "Lower leg", role: "synergist", note: "Ankle extension and balance in the split.", curve: CALF_L, right: CALF_R },
     { id: "upper-trapezius", name: "Upper trapezius", group: "Shoulder", role: "prime-mover", note: "Shrugs the bar high in the second pull; supports it in the rack and overhead.", curve: SHRUG },
     { id: "anterior-deltoid", name: "Anterior deltoid", group: "Shoulder", role: "prime-mover", note: "Drives the bar up in the jerk and holds it overhead.", curve: OVERHEAD },
+    { id: "serratus-anterior", name: "Serratus anterior", group: "Shoulder", role: "synergist", note: "Pins the shoulder blade to the ribs and pulls it forward as the arm reaches or presses.", curve: scaled(OVERHEAD, 0.8) },
+    { id: "coracobrachialis", name: "Coracobrachialis", group: "Shoulder", role: "stabiliser", note: "Helps lift the arm forward and draws it in to the body.", curve: scaled(OVERHEAD, 0.5) },
     { id: "middle-deltoid", name: "Middle deltoid", group: "Shoulder", role: "synergist", note: "Overhead support with the anterior fibres.", curve: OVERHEAD },
     { id: "triceps-long-head", name: "Triceps, long head", group: "Arm", role: "prime-mover", note: "Locks the elbows out overhead.", curve: OVERHEAD },
+    { id: "triceps-lateral-head", name: "Triceps, lateral head", group: "Arm", role: "prime-mover", note: "Straightens the elbow with the long head.", curve: OVERHEAD },
+    { id: "triceps-medial-head", name: "Triceps, medial head", group: "Arm", role: "prime-mover", note: "Deep elbow extensor, working in every press and lockout.", curve: OVERHEAD },
     { id: "supraspinatus", name: "Supraspinatus", group: "Shoulder", role: "stabiliser", note: "Seats the shoulder under the overhead load.", curve: t([0, 0.2], [0.61, 0.3], [0.68, 0.8], [0.81, 0.7], [0.87, 0.3], [1, 0.2]) },
     { id: "infraspinatus", name: "Infraspinatus", group: "Shoulder", role: "stabiliser", note: "Rotator cuff, steadying the bar overhead.", curve: t([0, 0.2], [0.61, 0.3], [0.68, 0.7], [0.81, 0.6], [0.87, 0.3], [1, 0.2]) },
+    { id: "subscapularis", name: "Subscapularis", group: "Shoulder", role: "stabiliser", note: "The front of the rotator cuff: holds the humeral head in the socket under load.", curve: t([0, 0.2], [0.61, 0.3], [0.68, 0.7], [0.81, 0.6], [0.87, 0.3], [1, 0.2]) },
     { id: "latissimus-dorsi", name: "Latissimus dorsi", group: "Back", role: "synergist", note: "Keeps the bar close to the body through the pull.", curve: t([0, 0.4], [0.2, 0.7], [0.27, 0.6], [0.36, 0.3], [0.81, 0.4], [0.9, 0.6], [1, 0.4]) },
     { id: "biceps-brachii", name: "Biceps brachii", group: "Arm", role: "synergist", note: "Pulls the body under the bar into the rack.", curve: ARMPULL },
     { id: "forearm-flexors", name: "Forearm flexors", group: "Arm", role: "stabiliser", note: "Grip the bar.", curve: GRIP },
+    { id: "forearm-extensors", name: "Forearm extensors", group: "Arm", role: "stabiliser", note: "Hold the wrist steady from the back against the flexors' grip.", curve: scaled(GRIP, 0.6) },
     { id: "middle-trapezius", name: "Middle trapezius", group: "Shoulder", role: "stabiliser", note: "Holds the shoulder blades back under the bar.", curve: BRACE },
     { id: "rhomboids", name: "Rhomboids", group: "Shoulder", role: "stabiliser", note: "Shoulder blade control with the middle trapezius.", curve: BRACE },
     { id: "rectus-abdominis", name: "Rectus abdominis", group: "Trunk", role: "stabiliser", note: "Braces the trunk under the rack and the overhead bar.", curve: BRACE },
     { id: "external-obliques", name: "External obliques", group: "Trunk", role: "stabiliser", note: "Brace the trunk with rectus abdominis.", curve: BRACE },
+    { id: "internal-obliques", name: "Internal obliques", group: "Trunk", role: "stabiliser", note: "Brace and rotate the trunk with the external obliques, fibres the other way.", curve: BRACE },
     { id: "transversus-abdominis", name: "Transversus abdominis", group: "Trunk", role: "stabiliser", note: "Deep brace.", curve: BRACE },
   ],
 };

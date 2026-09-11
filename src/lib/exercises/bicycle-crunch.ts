@@ -5,6 +5,7 @@ import { shifted } from "./types";
 // bone: lying on the back, elbow to the opposite knee as the other leg
 // extends, then the other way. Activation is qualitative.
 
+const scaled = (c: readonly CurvePoint[], k: number): CurvePoint[] => c.map(([x, y]) => [x, y * k] as CurvePoint);
 const t = (...pts: [number, number][]): CurvePoint[] => pts;
 const TWO = (a: number, b: number): CurvePoint[] => t([0, b], [0.12, a], [0.3, b], [0.5, b], [0.62, a], [0.8, b], [1, b]);
 const CRUNCH = t([0, 0.5], [0.15, 0.95], [0.35, 0.6], [0.5, 0.5], [0.65, 0.95], [0.85, 0.6], [1, 0.5]);
@@ -30,11 +31,15 @@ export const bicycleCrunch: Exercise = {
   muscles: [
     { id: "rectus-abdominis", name: "Rectus abdominis", group: "Trunk", role: "prime-mover", note: "Curls the trunk up off the floor on every rep.", curve: CRUNCH },
     { id: "external-obliques", name: "External obliques", group: "Trunk", role: "prime-mover", note: "Twist the trunk to bring the elbow across to the opposite knee.", curve: TWIST, right: shifted(TWIST, 0.5) },
+    { id: "internal-obliques", name: "Internal obliques", group: "Trunk", role: "prime-mover", note: "Brace and rotate the trunk with the external obliques, fibres the other way.", curve: TWIST, right: shifted(TWIST, 0.5) },
     { id: "transversus-abdominis", name: "Transversus abdominis", group: "Trunk", role: "stabiliser", note: "Holds the lower back to the floor.", curve: BRACE },
     { id: "rectus-femoris", name: "Rectus femoris", group: "Hip", role: "synergist", note: "Holds the legs up and draws each knee in.", curve: HIPFLEX, right: shifted(HIPFLEX, 0.5) },
     { id: "adductor-longus", name: "Adductor longus", group: "Hip", role: "synergist", note: "Helps flex the hip on the knee that comes in.", curve: HIPFLEX, right: shifted(HIPFLEX, 0.5) },
+    { id: "pectineus", name: "Pectineus", group: "Hip", role: "synergist", note: "Adducts and flexes the hip with adductor longus.", curve: scaled(HIPFLEX, 0.8), right: scaled(shifted(HIPFLEX, 0.5), 0.8) },
+    { id: "gracilis", name: "Gracilis", group: "Hip", role: "synergist", note: "Adducts the hip along the inner thigh.", curve: scaled(HIPFLEX, 0.7), right: scaled(shifted(HIPFLEX, 0.5), 0.7) },
     { id: "vastus-lateralis", name: "Vastus lateralis", group: "Leg", role: "synergist", note: "Straightens the leg that extends out.", curve: TWO(0.8, 0.35), right: shifted(TWO(0.8, 0.35), 0.5) },
     { id: "biceps-femoris", name: "Biceps femoris", group: "Leg", role: "synergist", note: "Bends the knee that comes in.", curve: TWO(0.7, 0.3), right: shifted(TWO(0.7, 0.3), 0.5) },
     { id: "tibialis-anterior", name: "Tibialis anterior", group: "Leg", role: "stabiliser", note: "Holds the feet flexed.", curve: BRACE },
+    { id: "fibularis", name: "Fibularis longus and brevis", group: "Leg", role: "stabiliser", note: "Steady the ankle from the outside against tibialis anterior.", curve: scaled(BRACE, 0.8) },
   ],
 };
