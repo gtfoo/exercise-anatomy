@@ -65,6 +65,28 @@ function Bar({ height }: { height: number }) {
   );
 }
 
+/** Two parallel bars running forward, one under each hand, on posts. */
+function ParallelBars({ height, spacing }: { height: number; spacing: number }) {
+  const steel = useMemo(() => new THREE.MeshStandardMaterial({ color: "#5a5652", roughness: 0.45, metalness: 0.6 }), []);
+  const length = 1.6;
+  return (
+    <group>
+      {[-spacing, spacing].map((x) => (
+        <group key={x}>
+          <mesh material={steel} position={[x, height, 0]} rotation-x={Math.PI / 2}>
+            <cylinderGeometry args={[0.02, 0.02, length, 24]} />
+          </mesh>
+          {[-length / 2 + 0.1, length / 2 - 0.1].map((z) => (
+            <mesh key={z} material={steel} position={[x, height / 2, z]}>
+              <cylinderGeometry args={[0.022, 0.022, height, 16]} />
+            </mesh>
+          ))}
+        </group>
+      ))}
+    </group>
+  );
+}
+
 /** A translucent surface: the figure is drawn through it, which is what a swimmer at the surface looks like. */
 function Water({ level }: { level: number }) {
   return (
@@ -101,6 +123,7 @@ export default function Scene({ exercise }: { exercise: Exercise }) {
       <Suspense fallback={null}>{exercise.native ? <NativeFigure exercise={exercise} /> : <AnatomyFigure exercise={exercise} />}</Suspense>
       <Ticker durationMs={exercise.durationMs} />
       {exercise.anchor === "hands" && <Bar height={exercise.barHeight ?? 2.3} />}
+      {exercise.anchor === "bars" && <ParallelBars height={exercise.barHeight ?? 1.0} spacing={exercise.barSpacing ?? 0.27} />}
       {exercise.environment === "water" ? <Water level={exercise.waterLevel ?? 0.95} /> : exercise.anchor !== "hands" && <FloorShadow />}
 
       <OrbitControls target={target} minDistance={1.2} maxDistance={7} maxPolarAngle={Math.PI / 2 - 0.02} enablePan={false} />

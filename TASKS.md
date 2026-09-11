@@ -78,6 +78,11 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **L-sit on parallel bars** (2026-09-11), designed; Scene gained
+      parallel bars (`anchor: "bars"`). Lunge retimed so the front knee
+      stays bent through the step; push-up deepened to the chest near the
+      floor, both on the owner's notes.
+      `from: owner, 2026-09-11 · "add L-sit on a parallel bars"`
 - [x] **Lunge to textbook form; push-up added** (2026-09-11). The captured
       lunge's back thigh swung 28° out (measured through the clip; CMU
       subject 144 is a punching performer and the only lunge source), so

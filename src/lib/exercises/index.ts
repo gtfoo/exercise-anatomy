@@ -5,8 +5,9 @@ import { freestyle } from "./freestyle";
 import { lunge } from "./lunge";
 import { jumpingJacks } from "./jumping-jacks";
 import { pushUp } from "./push-up";
+import { lSit } from "./l-sit";
 
 /** Display order. Routes are `/` for the first and `/<slug>` for the rest. */
-export const exercises: readonly Exercise[] = [squat, lunge, jumpingJacks, pushUp, pullUp, freestyle];
+export const exercises: readonly Exercise[] = [squat, lunge, jumpingJacks, pushUp, pullUp, lSit, freestyle];
 
 export const routeFor = (e: Exercise) => (e === exercises[0] ? "/" : `/${e.slug}`);

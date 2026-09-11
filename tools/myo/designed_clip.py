@@ -226,8 +226,39 @@ def pushup_sample(t):
 
 pushup_sample.hand = None
 
+# ---------- L-sit on parallel bars ----------
+# Straight support (arms locked, body hanging vertical, feet off the floor)
+# to an L-sit (legs horizontal, knees locked, toes pointed) and back. The
+# hands rest on top of the bars, fingers forward, and stay put; the trunk
+# leans back a little in the L and the pelvis follows so the wrists do not move.
+LSIT_RAISE = 0.15  # the support lifts the whole body this far off the floor
+LSIT = {
+    "hip": [(0, 0), (0.08, 0), (0.42, -92), (0.62, -92), (0.95, 0), (1, 0)],  # thigh angle: negative = forward
+    "trunk": [(0, 0), (0.08, 0), (0.42, 10), (0.62, 10), (0.95, 0), (1, 0)],
+    "foot": [(0, 10), (0.08, 10), (0.42, 40), (0.62, 40), (0.95, 10), (1, 10)],  # pointed toes
+}
+
+
+def lsit_sample(t):
+    thigh = keyed(LSIT["hip"], t) * DEG
+    trunk = keyed(LSIT["trunk"], t) * DEG
+    foot = keyed(LSIT["foot"], t) * DEG
+    # Wrists fixed: the pelvis moves so a trunk lean does not carry the shoulders (and hands) with it.
+    d = rig["shoulder.r"] - rig["hip.r"]
+    root = np.array([0.0, LSIT_RAISE, 0.0]) - (rot_x(trunk, d) - d)
+    palm_down = lambda r: qmul(r, PRONATE)
+    q = {"pelvis": rx(trunk), "spine": rx(trunk), "neck": IDENT, "head": IDENT}
+    for S in ("L", "R"):
+        q["thigh." + S], q["shin." + S], q["foot." + S] = rx(thigh), rx(thigh), rx(thigh + foot)
+        q["upper_arm." + S], q["forearm." + S] = IDENT, IDENT  # locked straight, vertical
+        q["hand." + S] = palm_down(rx(-90 * DEG))  # flat on the bar, fingers forward
+        q["fingers." + S] = palm_down(rx(-60 * DEG))  # fingertips over the far side
+    return {"root": [round(float(v), 4) for v in root], "q": q}
+
+
 CLIPS = {
     "pull-up": (pull_up_sample, "designed pose, src/lib/kinematics/pull-up.ts"),
+    "l-sit": (lsit_sample, "designed L-sit on parallel bars, tools/myo/designed_clip.py"),
     "lunge": (lunge_sample, "designed forward lunge, tools/myo/designed_clip.py"),
     "push-up": (pushup_sample, "designed push-up, tools/myo/designed_clip.py"),
 }

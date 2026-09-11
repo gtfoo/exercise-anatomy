@@ -44,10 +44,16 @@ export type Exercise = {
    * `figure` overrides the default rigged model.
    */
   native?: { clip: string; figure?: string };
-  /** What the body is fixed to: feet on the floor (default), hands on a bar, or nothing (root follows the clip). */
-  anchor?: "feet" | "hands" | "free";
-  /** Bar height in metres when anchored by the hands. */
+  /**
+   * What the body is fixed to: feet on the floor (default), hands on a pull-up
+   * bar, hands on parallel bars, or nothing (root follows the clip). "bars"
+   * only draws the parallel bars; a converted clip already carries the root.
+   */
+  anchor?: "feet" | "hands" | "bars" | "free";
+  /** Bar height in metres when anchored by the hands (pull-up bar, or the top of the parallel bars). */
   barHeight?: number;
+  /** Half the distance between parallel bars, metres: where the hands rest. */
+  barSpacing?: number;
   /** Added to the root when free: where to put a body the clip does not place (a swimmer at the surface). */
   rootOffset?: [number, number, number];
   /** Floor by default; water draws a surface at `waterLevel` and no floor shadow. */
