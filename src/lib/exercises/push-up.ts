@@ -20,7 +20,7 @@ export const pushUp: Exercise = {
   anchor: "free",
   native: { clip: "/models/clips/push-up.glb" },
   // The body lies from the toes at z = 0.2 to the hands at z = 1.6; look at its middle from the side, a little ahead.
-  camera: { position: [3.4, 1.3, 1.4], target: [0, 0.35, 0.85] },
+  camera: { position: [3.7, 1.3, 1.7], target: [0, 0.3, 0.95] },
   disclaimer:
     "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is designed, not captured: no free motion capture of a floor push-up exists. The anterior deltoid, a main presser, is not modelled separately in the atlas. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
   phases: [
