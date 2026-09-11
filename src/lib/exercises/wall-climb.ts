@@ -8,11 +8,22 @@ import type { CurvePoint, Exercise } from "./types";
 // Activation is qualitative.
 
 const t = (...pts: [number, number][]): CurvePoint[] => pts;
-const PULL = t([0, 0.4], [0.08, 0.9], [0.18, 1], [0.3, 0.7], [0.45, 0.4], [0.5, 0.35], [0.65, 0.55], [0.85, 0.8], [0.95, 0.55], [1, 0.4]);
-const PUSH = t([0, 0.2], [0.15, 0.4], [0.25, 0.85], [0.35, 1], [0.45, 0.5], [0.5, 0.3], [0.6, 0.8], [0.75, 0.5], [1, 0.2]);
-const LEGS = t([0, 0.35], [0.1, 0.6], [0.2, 0.9], [0.3, 0.8], [0.42, 0.9], [0.5, 0.4], [0.6, 0.8], [0.8, 0.7], [0.95, 0.6], [1, 0.35]);
-const GRIP = t([0, 0.7], [0.2, 0.9], [0.5, 0.7], [0.75, 0.9], [1, 0.7]);
+// Read off the clips: the right hand holds and pulls while the left reaches (t 0-0.15) with the left foot pushing
+// and the right foot stepping up; then the left hand pulls, the right reaches, the right foot pushes and the left
+// steps (t 0.27-0.42). Coming down, the left arm and right leg lower the body first (t 0.6-0.75), then the right
+// arm and left leg (t 0.83-1). Each side's muscles follow its own limb.
+const LEFT_PULL = t([0, 0.3], [0.1, 0.35], [0.2, 0.6], [0.3, 1], [0.4, 0.85], [0.5, 0.4], [0.6, 0.7], [0.72, 0.8], [0.8, 0.4], [1, 0.3]);
+const RIGHT_PULL = t([0, 0.85], [0.08, 1], [0.17, 0.6], [0.3, 0.35], [0.5, 0.3], [0.7, 0.35], [0.85, 0.75], [0.95, 0.85], [1, 0.85]);
+const LEFT_PUSH = t([0, 0.2], [0.2, 0.4], [0.3, 0.85], [0.38, 0.9], [0.45, 0.4], [0.6, 0.6], [0.7, 0.5], [1, 0.2]); // pressing down on its hold while the other arm reaches
+const RIGHT_PUSH = t([0, 0.8], [0.06, 0.9], [0.15, 0.4], [0.5, 0.2], [0.8, 0.5], [0.9, 0.7], [1, 0.8]);
+const LEFT_LEG = t([0, 0.85], [0.1, 1], [0.18, 0.5], [0.27, 0.3], [0.4, 0.35], [0.5, 0.3], [0.7, 0.35], [0.85, 0.8], [0.95, 0.9], [1, 0.85]); // the foot on its hold driving up, later lowering
+const RIGHT_LEG = t([0, 0.3], [0.15, 0.35], [0.27, 0.7], [0.35, 1], [0.42, 0.8], [0.5, 0.4], [0.6, 0.8], [0.72, 0.85], [0.8, 0.4], [1, 0.3]);
+const LEFT_STEP = t([0, 0.2], [0.25, 0.3], [0.32, 0.9], [0.4, 0.6], [0.5, 0.2], [1, 0.2]); // lifting the knee to the next hold
+const RIGHT_STEP = t([0, 0.9], [0.1, 0.7], [0.15, 0.3], [0.9, 0.2], [1, 0.6]);
+const LEFT_GRIP = t([0, 0.5], [0.05, 0.4], [0.12, 0.9], [0.3, 1], [0.5, 0.8], [0.75, 0.9], [0.85, 0.7], [0.93, 0.4], [1, 0.5]); // slack only while that hand moves
+const RIGHT_GRIP = t([0, 0.95], [0.1, 1], [0.3, 0.9], [0.38, 0.5], [0.47, 0.9], [0.55, 0.9], [0.6, 0.5], [0.7, 0.9], [1, 0.95]);
 const BRACE = t([0, 0.5], [0.25, 0.7], [0.5, 0.55], [0.75, 0.7], [1, 0.5]);
+const side = (l: CurvePoint[], r: CurvePoint[]) => ({ curve: l, right: r });
 
 export const wallClimb: Exercise = {
   slug: "wall-climb",
@@ -28,7 +39,7 @@ export const wallClimb: Exercise = {
   native: { clip: "/models/clips/wall-climb.glb" },
   camera: { position: [3.2, 2.2, -2.6], target: [0, 1.6, 0] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is two motion-capture clips, up and then down; the wall and its holds are drawn to where the hands and feet rest, not modelled. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is two motion-capture clips, up and then down; the wall and its holds are drawn to where the hands and feet rest, not modelled; each side follows its own limb. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
   phases: [
     { name: "pull", t0: 0, t1: 0.2 },
     { name: "mantle", t0: 0.2, t1: 0.38 },
@@ -37,21 +48,21 @@ export const wallClimb: Exercise = {
     { name: "step down", t0: 0.85, t1: 1 },
   ],
   muscles: [
-    { id: "latissimus-dorsi", name: "Latissimus dorsi", group: "Pull", role: "prime-mover", note: "Pulls the body up the wall.", curve: PULL },
-    { id: "biceps-brachii", name: "Biceps brachii", group: "Pull", role: "prime-mover", note: "Bends the elbows on the pull.", curve: PULL },
-    { id: "brachialis", name: "Brachialis", group: "Pull", role: "prime-mover", note: "Elbow flexion under the biceps.", curve: PULL },
-    { id: "brachioradialis", name: "Brachioradialis", group: "Pull", role: "synergist", note: "Elbow flexion in the hanging grip.", curve: PULL },
-    { id: "teres-major", name: "Teres major", group: "Pull", role: "synergist", note: "Pulls with the lat.", curve: PULL },
-    { id: "posterior-deltoid", name: "Posterior deltoid", group: "Pull", role: "synergist", note: "Draws the arms down and back.", curve: PULL },
-    { id: "forearm-flexors", name: "Forearm flexors", group: "Pull", role: "stabiliser", note: "Grip the edge the whole way.", curve: GRIP },
-    { id: "triceps-long-head", name: "Triceps, long head", group: "Mantle", role: "prime-mover", note: "Presses the body up over the edge.", curve: PUSH },
-    { id: "pectoralis-major", name: "Pectoralis major", group: "Mantle", role: "synergist", note: "Presses down on the edge with the triceps.", curve: PUSH },
-    { id: "anterior-deltoid", name: "Anterior deltoid", group: "Mantle", role: "synergist", note: "Presses over the edge.", curve: PUSH },
-    { id: "vastus-lateralis", name: "Vastus lateralis", group: "Legs", role: "prime-mover", note: "Straightens the stepping leg to drive up.", curve: LEGS },
-    { id: "rectus-femoris", name: "Rectus femoris", group: "Legs", role: "synergist", note: "Lifts the knee to the foothold and extends it.", curve: LEGS },
-    { id: "gluteus-maximus", name: "Gluteus maximus", group: "Legs", role: "prime-mover", note: "Extends the hip as the foot pushes on the wall.", curve: LEGS },
-    { id: "gastrocnemius-medial", name: "Gastrocnemius (medial)", group: "Legs", role: "synergist", note: "Pushes off the toes against the wall.", curve: LEGS },
-    { id: "gastrocnemius-lateral", name: "Gastrocnemius (lateral)", group: "Legs", role: "synergist", note: "Pushes off the toes against the wall.", curve: LEGS },
+    { id: "latissimus-dorsi", name: "Latissimus dorsi", group: "Pull", role: "prime-mover", note: "Pulls the body up the wall.", ...side(LEFT_PULL, RIGHT_PULL) },
+    { id: "biceps-brachii", name: "Biceps brachii", group: "Pull", role: "prime-mover", note: "Bends the elbows on the pull.", ...side(LEFT_PULL, RIGHT_PULL) },
+    { id: "brachialis", name: "Brachialis", group: "Pull", role: "prime-mover", note: "Elbow flexion under the biceps.", ...side(LEFT_PULL, RIGHT_PULL) },
+    { id: "brachioradialis", name: "Brachioradialis", group: "Pull", role: "synergist", note: "Elbow flexion in the hanging grip.", ...side(LEFT_PULL, RIGHT_PULL) },
+    { id: "teres-major", name: "Teres major", group: "Pull", role: "synergist", note: "Pulls with the lat.", ...side(LEFT_PULL, RIGHT_PULL) },
+    { id: "posterior-deltoid", name: "Posterior deltoid", group: "Pull", role: "synergist", note: "Draws the arms down and back.", ...side(LEFT_PULL, RIGHT_PULL) },
+    { id: "forearm-flexors", name: "Forearm flexors", group: "Pull", role: "stabiliser", note: "Grip the holds; a hand only lets go to reach.", ...side(LEFT_GRIP, RIGHT_GRIP) },
+    { id: "triceps-long-head", name: "Triceps, long head", group: "Press", role: "prime-mover", note: "Presses down on its hold while the other arm reaches.", ...side(LEFT_PUSH, RIGHT_PUSH) },
+    { id: "pectoralis-major", name: "Pectoralis major", group: "Press", role: "synergist", note: "Presses down on the hold with the triceps.", ...side(LEFT_PUSH, RIGHT_PUSH) },
+    { id: "anterior-deltoid", name: "Anterior deltoid", group: "Press", role: "synergist", note: "Presses on the hold with the triceps.", ...side(LEFT_PUSH, RIGHT_PUSH) },
+    { id: "vastus-lateralis", name: "Vastus lateralis", group: "Legs", role: "prime-mover", note: "Straightens the stepping leg to drive up.", ...side(LEFT_LEG, RIGHT_LEG) },
+    { id: "rectus-femoris", name: "Rectus femoris", group: "Legs", role: "synergist", note: "Lifts the knee to the next foothold.", ...side(LEFT_STEP, RIGHT_STEP) },
+    { id: "gluteus-maximus", name: "Gluteus maximus", group: "Legs", role: "prime-mover", note: "Extends the hip as the foot pushes on the wall.", ...side(LEFT_LEG, RIGHT_LEG) },
+    { id: "gastrocnemius-medial", name: "Gastrocnemius (medial)", group: "Legs", role: "synergist", note: "Pushes off the toes against the wall.", ...side(LEFT_LEG, RIGHT_LEG) },
+    { id: "gastrocnemius-lateral", name: "Gastrocnemius (lateral)", group: "Legs", role: "synergist", note: "Pushes off the toes against the wall.", ...side(LEFT_LEG, RIGHT_LEG) },
     { id: "rectus-abdominis", name: "Rectus abdominis", group: "Trunk", role: "stabiliser", note: "Keeps the body tight to the wall.", curve: BRACE },
     { id: "erector-spinae", name: "Erector spinae", group: "Trunk", role: "stabiliser", note: "Holds the back through the pull and mantle.", curve: BRACE },
   ],

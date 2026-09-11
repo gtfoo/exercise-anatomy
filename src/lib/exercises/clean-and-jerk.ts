@@ -9,13 +9,19 @@ import type { CurvePoint, Exercise } from "./types";
 // the hips and the floor. Activation is qualitative.
 
 const t = (...pts: [number, number][]): CurvePoint[] => pts;
-const PULL = t([0, 0.3], [0.09, 0.6], [0.2, 0.9], [0.27, 1], [0.32, 0.3], [0.36, 0.7], [0.44, 0.9], [0.5, 0.4], [0.61, 0.5], [0.64, 0.9], [0.68, 0.5], [0.72, 0.8], [0.81, 0.4], [0.9, 0.5], [0.96, 0.7], [1, 0.3]); // legs and hips: both pulls, the front squat, the dip and drive, the split, the lowering
 const BACK = t([0, 0.5], [0.09, 0.7], [0.2, 0.95], [0.27, 1], [0.36, 0.8], [0.44, 0.85], [0.61, 0.6], [0.72, 0.7], [0.81, 0.6], [0.96, 0.85], [1, 0.5]); // the spine held through the pull and under the rack
 const SHRUG = t([0, 0.2], [0.2, 0.4], [0.27, 1], [0.32, 0.6], [0.44, 0.5], [0.61, 0.5], [0.66, 0.9], [0.72, 0.7], [0.81, 0.6], [0.87, 0.3], [1, 0.2]); // the second pull and the jerk
 const OVERHEAD = t([0, 0.1], [0.61, 0.15], [0.65, 0.7], [0.68, 1], [0.72, 0.95], [0.81, 0.85], [0.84, 0.4], [1, 0.1]); // shoulders and triceps: the jerk and the lockout
-const CALF = t([0, 0.2], [0.24, 0.4], [0.27, 1], [0.3, 0.3], [0.61, 0.3], [0.64, 1], [0.67, 0.4], [0.72, 0.5], [0.81, 0.3], [1, 0.2]); // triple extension, twice
 const GRIP = t([0, 0.6], [0.27, 0.9], [0.36, 0.5], [0.61, 0.5], [0.81, 0.7], [0.9, 0.8], [1, 0.6]);
 const BRACE = t([0, 0.5], [0.2, 0.7], [0.36, 0.8], [0.61, 0.7], [0.72, 0.85], [0.81, 0.7], [1, 0.5]);
+// The split jerk lands the LEFT foot forward (t 0.65-0.72): the front leg's quads and glutes catch and then push
+// back to recover; the back (right) foot is on its toes with the hip extended, so its calf works and its hip flexor
+// is on stretch.
+const PULL_L = t([0, 0.3], [0.09, 0.6], [0.2, 0.9], [0.27, 1], [0.32, 0.3], [0.36, 0.7], [0.44, 0.9], [0.5, 0.4], [0.61, 0.5], [0.64, 0.9], [0.66, 1], [0.68, 0.8], [0.72, 0.9], [0.81, 0.4], [0.9, 0.5], [0.96, 0.7], [1, 0.3]);
+const PULL_R = t([0, 0.3], [0.09, 0.6], [0.2, 0.9], [0.27, 1], [0.32, 0.3], [0.36, 0.7], [0.44, 0.9], [0.5, 0.4], [0.61, 0.5], [0.64, 0.9], [0.66, 0.5], [0.68, 0.35], [0.72, 0.5], [0.81, 0.4], [0.9, 0.5], [0.96, 0.7], [1, 0.3]);
+const CALF_L = t([0, 0.2], [0.24, 0.4], [0.27, 1], [0.3, 0.3], [0.61, 0.3], [0.64, 1], [0.67, 0.3], [0.72, 0.5], [0.81, 0.3], [1, 0.2]);
+const CALF_R = t([0, 0.2], [0.24, 0.4], [0.27, 1], [0.3, 0.3], [0.61, 0.3], [0.64, 1], [0.67, 0.9], [0.72, 0.8], [0.76, 0.4], [0.81, 0.3], [1, 0.2]);
+const BACK_HIP = t([0, 0], [0.64, 0], [0.67, 0.6], [0.72, 0.5], [0.78, 0], [1, 0]); // the back leg's hip flexor lengthened in the split
 const ARMPULL = t([0, 0.1], [0.24, 0.2], [0.29, 0.7], [0.33, 0.9], [0.4, 0.5], [0.61, 0.4], [0.84, 0.6], [0.9, 0.4], [1, 0.1]); // pulling under the bar, then holding the rack
 
 export const cleanAndJerk: Exercise = {
@@ -38,23 +44,23 @@ export const cleanAndJerk: Exercise = {
     { name: "front squat", t0: 0.36, t1: 0.44 },
     { name: "rack", t0: 0.44, t1: 0.61 },
     { name: "dip and drive", t0: 0.61, t1: 0.65 },
-    { name: "split jerk", t0: 0.65, t1: 0.72 },
+    { name: "split jerk (left foot forward)", t0: 0.65, t1: 0.72 },
     { name: "recover", t0: 0.72, t1: 0.81 },
     { name: "lower", t0: 0.81, t1: 1 },
   ],
   muscles: [
-    { id: "vastus-lateralis", name: "Vastus lateralis", group: "Quadriceps", role: "prime-mover", note: "Knee extension in both pulls, out of the front squat, and in the drive.", curve: PULL },
-    { id: "vastus-medialis", name: "Vastus medialis", group: "Quadriceps", role: "prime-mover", note: "Knee extension with the other vasti.", curve: PULL },
-    { id: "vastus-intermedius", name: "Vastus intermedius", group: "Quadriceps", role: "prime-mover", note: "Deep knee extensor.", curve: PULL },
-    { id: "rectus-femoris", name: "Rectus femoris", group: "Quadriceps", role: "synergist", note: "Knee extension; slack when the hip is flexed at the bottom.", curve: t([0, 0.2], [0.27, 0.7], [0.44, 0.6], [0.64, 0.7], [0.81, 0.4], [1, 0.2]) },
-    { id: "gluteus-maximus", name: "Gluteus maximus", group: "Gluteals", role: "prime-mover", note: "Hip extension: the second pull, standing from the front squat, the split recovery.", curve: PULL },
+    { id: "vastus-lateralis", name: "Vastus lateralis", group: "Quadriceps", role: "prime-mover", note: "Knee extension in both pulls, out of the front squat, and in the drive.", curve: PULL_L, right: PULL_R },
+    { id: "vastus-medialis", name: "Vastus medialis", group: "Quadriceps", role: "prime-mover", note: "Knee extension with the other vasti.", curve: PULL_L, right: PULL_R },
+    { id: "vastus-intermedius", name: "Vastus intermedius", group: "Quadriceps", role: "prime-mover", note: "Deep knee extensor.", curve: PULL_L, right: PULL_R },
+    { id: "rectus-femoris", name: "Rectus femoris", group: "Quadriceps", role: "synergist", note: "Knee extension; slack when the hip is flexed at the bottom. On the back leg of the split it is on stretch.", curve: t([0, 0.2], [0.27, 0.7], [0.44, 0.6], [0.64, 0.7], [0.81, 0.4], [1, 0.2]), stretchRight: BACK_HIP },
+    { id: "gluteus-maximus", name: "Gluteus maximus", group: "Gluteals", role: "prime-mover", note: "Hip extension: the second pull, standing from the front squat, the split recovery.", curve: PULL_L, right: PULL_R },
     { id: "biceps-femoris", name: "Biceps femoris", group: "Hamstrings", role: "prime-mover", note: "Hip extension through the first pull, on stretch at the set.", curve: t([0, 0.4], [0.09, 0.7], [0.2, 0.9], [0.27, 0.8], [0.36, 0.5], [0.44, 0.7], [0.61, 0.4], [0.72, 0.6], [0.81, 0.5], [0.96, 0.7], [1, 0.4]), stretch: t([0, 0.7], [0.09, 0.7], [0.2, 0.3], [0.27, 0.05], [0.9, 0.05], [0.96, 0.6], [1, 0.7]) },
     { id: "semitendinosus", name: "Semitendinosus", group: "Hamstrings", role: "synergist", note: "Hip extension with biceps femoris.", curve: t([0, 0.4], [0.09, 0.65], [0.2, 0.85], [0.27, 0.75], [0.36, 0.5], [0.44, 0.65], [0.61, 0.4], [0.72, 0.55], [0.81, 0.5], [0.96, 0.65], [1, 0.4]), stretch: t([0, 0.7], [0.09, 0.7], [0.2, 0.3], [0.27, 0.05], [0.9, 0.05], [0.96, 0.6], [1, 0.7]) },
     { id: "adductor-magnus", name: "Adductor magnus", group: "Adductors", role: "synergist", note: "Hip extension from the deep catch.", curve: t([0, 0.3], [0.2, 0.6], [0.36, 0.8], [0.44, 0.7], [0.61, 0.3], [0.72, 0.6], [1, 0.3]) },
     { id: "erector-spinae", name: "Erector spinae", group: "Trunk", role: "prime-mover", note: "Holds the back flat through the pulls and upright under the rack and the jerk.", curve: BACK },
-    { id: "gastrocnemius-medial", name: "Gastrocnemius (medial)", group: "Lower leg", role: "synergist", note: "Finishes the second pull and the drive on the toes.", curve: CALF },
-    { id: "gastrocnemius-lateral", name: "Gastrocnemius (lateral)", group: "Lower leg", role: "synergist", note: "Ankle extension with the medial head.", curve: CALF },
-    { id: "soleus", name: "Soleus", group: "Lower leg", role: "synergist", note: "Ankle extension and balance in the split.", curve: CALF },
+    { id: "gastrocnemius-medial", name: "Gastrocnemius (medial)", group: "Lower leg", role: "synergist", note: "Finishes the second pull and the drive on the toes.", curve: CALF_L, right: CALF_R },
+    { id: "gastrocnemius-lateral", name: "Gastrocnemius (lateral)", group: "Lower leg", role: "synergist", note: "Ankle extension with the medial head.", curve: CALF_L, right: CALF_R },
+    { id: "soleus", name: "Soleus", group: "Lower leg", role: "synergist", note: "Ankle extension and balance in the split.", curve: CALF_L, right: CALF_R },
     { id: "upper-trapezius", name: "Upper trapezius", group: "Shoulder", role: "prime-mover", note: "Shrugs the bar high in the second pull; supports it in the rack and overhead.", curve: SHRUG },
     { id: "anterior-deltoid", name: "Anterior deltoid", group: "Shoulder", role: "prime-mover", note: "Drives the bar up in the jerk and holds it overhead.", curve: OVERHEAD },
     { id: "middle-deltoid", name: "Middle deltoid", group: "Shoulder", role: "synergist", note: "Overhead support with the anterior fibres.", curve: OVERHEAD },

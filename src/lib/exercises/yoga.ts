@@ -1,13 +1,22 @@
 import type { CurvePoint, Exercise, MuscleActivation } from "./types";
 
 // Five yoga holds, designed (tools/myo/designed_clip.py) because no free
-// capture exists. Each is a still position; the muscles listed work the
-// whole time, so every curve is flat. Activation is qualitative.
+// capture exists. Each cycle enters the position from rest (lying, standing
+// or crouching) over its first 40 %, holds it to 75 %, then releases back,
+// so the loop is continuous. The muscles listed rise into the hold and ease
+// off with it. Activation is qualitative.
 
 const t = (...pts: [number, number][]): CurvePoint[] => pts;
-const HOLD = (v: number) => t([0, v], [1, v]);
+const ENTER = 0.4;
+const RELEASE = 0.75;
+const HOLD = (v: number) => t([0, Math.min(v, 0.15)], [ENTER, v], [RELEASE, v], [1, Math.min(v, 0.15)]);
+const PHASES = [
+  { name: "enter", t0: 0, t1: ENTER },
+  { name: "hold", t0: ENTER, t1: RELEASE },
+  { name: "release", t0: RELEASE, t1: 1 },
+];
 const DISCLAIMER =
-  "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The position is designed, not captured, and held; nothing here is estimated or measured. Educational illustration, not training or medical advice.";
+  "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The position is designed, not captured: entered from rest, held, released; nothing here is estimated or measured. Educational illustration, not training or medical advice.";
 // v is the left side's level; vr the right side's, when the hold is asymmetric.
 const m = (id: string, name: string, group: string, role: MuscleActivation["role"], v: number, note: string, vr?: number): MuscleActivation => ({
   id,
@@ -25,12 +34,12 @@ export const boatPose: Exercise = {
   slug: "boat-pose",
   category: "Yoga",
   name: "Boat pose",
-  durationMs: 4000,
+  durationMs: 6000,
   anchor: "free",
   native: { clip: "/models/clips/boat-pose.glb" },
   camera: { position: [3.0, 1.3, 1.6], target: [0, 0.5, 0.3] },
   disclaimer: DISCLAIMER + " Navasana.",
-  phases: [{ name: "hold", t0: 0, t1: 1 }],
+  phases: PHASES,
   muscles: [
     m("rectus-abdominis", "Rectus abdominis", "Trunk", "prime-mover", 0.9, "Holds the trunk up off the floor against the lever of the legs."),
     m("external-obliques", "External obliques", "Trunk", "synergist", 0.6, "Brace the sides of the trunk."),
@@ -49,12 +58,12 @@ export const warrior3: Exercise = {
   slug: "warrior-3",
   category: "Yoga",
   name: "Warrior III",
-  durationMs: 4000,
+  durationMs: 6000,
   anchor: "feet",
   native: { clip: "/models/clips/warrior-3.glb" },
   camera: { position: [3.2, 1.5, 1.4], target: [0, 0.95, 0.1] },
   disclaimer: DISCLAIMER + " Virabhadrasana III, standing on the left leg.",
-  phases: [{ name: "hold", t0: 0, t1: 1 }],
+  phases: PHASES,
   muscles: [
     m("gluteus-maximus", "Gluteus maximus", "Standing hip", "prime-mover", 0.75, "Left: holds the trunk level over the standing leg. Right: holds the lifted leg up.", 0.9),
     m("gluteus-medius", "Gluteus medius", "Standing hip", "prime-mover", 0.85, "Keeps the pelvis level on the standing (left) leg: the balance muscle here.", 0.35),
@@ -79,12 +88,12 @@ export const wheelPose: Exercise = {
   slug: "wheel-pose",
   category: "Yoga",
   name: "Wheel pose",
-  durationMs: 4000,
+  durationMs: 6000,
   anchor: "free",
   native: { clip: "/models/clips/wheel-pose.glb" },
   camera: { position: [3.0, 1.2, 1.4], target: [0, 0.5, 0] },
   disclaimer: DISCLAIMER + " Urdhva Dhanurasana.",
-  phases: [{ name: "hold", t0: 0, t1: 1 }],
+  phases: PHASES,
   muscles: [
     m("gluteus-maximus", "Gluteus maximus", "Hips", "prime-mover", 0.9, "Extends the hips to lift the arch."),
     m("biceps-femoris", "Biceps femoris", "Hips", "synergist", 0.6, "Hip extension with the glutes."),
@@ -105,12 +114,12 @@ export const crowPose: Exercise = {
   slug: "crow-pose",
   category: "Yoga",
   name: "Crow pose",
-  durationMs: 4000,
+  durationMs: 6000,
   anchor: "free",
   native: { clip: "/models/clips/crow-pose.glb" },
   camera: { position: [2.8, 1.1, 1.8], target: [0, 0.45, 0.15] },
   disclaimer: DISCLAIMER + " Bakasana.",
-  phases: [{ name: "hold", t0: 0, t1: 1 }],
+  phases: PHASES,
   muscles: [
     m("pectoralis-major", "Pectoralis major", "Arms", "prime-mover", 0.8, "Holds the bent arms against the load of the whole body."),
     m("anterior-deltoid", "Anterior deltoid", "Arms", "prime-mover", 0.85, "Carries the weight over the hands."),
@@ -130,12 +139,12 @@ export const sidePlank: Exercise = {
   slug: "side-plank",
   category: "Yoga",
   name: "Side plank",
-  durationMs: 4000,
+  durationMs: 6000,
   anchor: "free",
   native: { clip: "/models/clips/side-plank.glb" },
   camera: { position: [0.2, 1.2, 3.0], target: [0, 0.5, 0] },
   disclaimer: DISCLAIMER + " Vasisthasana, on the left hand.",
-  phases: [{ name: "hold", t0: 0, t1: 1 }],
+  phases: PHASES,
   muscles: [
     st(m("external-obliques", "External obliques", "Trunk", "prime-mover", 0.9, "The lower (left) side holds the hips up off the floor; the top side only braces.", 0.35), 0.05, 0.45),
     m("transversus-abdominis", "Transversus abdominis", "Trunk", "synergist", 0.7, "Deep brace along the whole trunk."),

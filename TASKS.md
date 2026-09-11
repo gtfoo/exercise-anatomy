@@ -94,6 +94,17 @@ letter and a one-line task strands the *why*.
       onto the floor; the pistol squat plays both legs (the clip closes on
       itself at frame 122); `convert_clip.py --loop-blend N` eases the last
       pose back to the first, used on both swims, whose cut cycles snapped.
+      Third round: every yoga hold now enters from rest (boat and wheel
+      from lying on the back, warrior III from standing, crow from a crouch
+      with the hands down, side plank from lying on the side), holds, and
+      releases, so the loop is continuous; the wheel's head hangs in line
+      with the arch. A sweep of every exercise for sidedness: the wall climb
+      and the jerk's split (left foot forward) were the two still drawn
+      symmetric, both now per side from the clips' contact timelines. Still
+      symmetric on purpose: squat, push-up, pull-up, plank, sit-up, L-sit,
+      swing, lateral raise, snatch, overhead squat, burpee, jumping jacks,
+      breaststroke, boat, wheel, crow; the pike walk's alternating steps are
+      the one thing left symmetric that is not.
       `from: owner, 2026-09-11 · from "for side plank, the muscle activation should be asymmetric right?" to "there seems to be a few missing frames between the end and the start"`
 
 - [x] **Cycling, plank, five yoga holds, categories** (2026-09-11): all

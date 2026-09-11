@@ -478,7 +478,67 @@ def cycling_sample(t):
 
 
 # ---------- yoga holds ----------
-def boat_sample(t):
+# Each hold is entered from a resting position over the first ENTER of the
+# cycle, held to RELEASE, then released back to rest, so the loop is
+# continuous (the owner asked for the way in, as the plank has, 2026-09-11).
+ENTER, RELEASE = 0.4, 0.75
+
+
+def q_slerp(a, b, f):
+    dot = sum(x * y for x, y in zip(a, b))
+    if dot < 0:
+        b, dot = [-v for v in b], -dot
+    if dot > 0.9995:
+        q = [x + (y - x) * f for x, y in zip(a, b)]
+        n = math.sqrt(sum(v * v for v in q))
+        return [v / n for v in q]
+    th = math.acos(min(1.0, dot))
+    s = math.sin(th)
+    wa, wb = math.sin((1 - f) * th) / s, math.sin(f * th) / s
+    return [x * wa + y * wb for x, y in zip(a, b)]
+
+
+def blend_samples(a, b, f):
+    q = {k: q_slerp(a["q"][k], b["q"].get(k, a["q"][k]), f) for k in a["q"]}
+    root = [round(a["root"][i] + (b["root"][i] - a["root"][i]) * f, 4) for i in range(3)]
+    return {"root": root, "q": q}
+
+
+def envelope(t):
+    """0 at rest, 1 in the hold: eases in over ENTER, holds to RELEASE, eases out."""
+    if t < ENTER:
+        return smooth(t / ENTER)
+    if t < RELEASE:
+        return 1.0
+    return 1 - smooth((t - RELEASE) / (1 - RELEASE))
+
+
+def entered(start, hold, t):
+    return blend_samples(start, hold, envelope(t))
+
+
+def supine_sample(knees_bent=False, hands_by_ears=False):
+    """Lying on the back, head to -Z, feet to +Z. Optionally the knees up with the feet flat, and the hands on the
+    floor beside the ears (the way into a wheel)."""
+    q = all_ident()
+    trunk = -90 * DEG
+    root, _ = root_for_hip(np.array([0.0, 0.12, 0.0]), rx(trunk))
+    q["pelvis"], q["spine"], q["neck"], q["head"] = rx(trunk), rx(trunk), rx(trunk), rx(trunk)
+    if knees_bent:
+        set_legs(q, -127 * DEG, -10 * DEG, 0.0)  # thighs up and forward, shins near vertical, feet flat
+    else:
+        set_legs(q, -90 * DEG, -90 * DEG, -90 * DEG + 20 * DEG)  # legs along the floor
+    if hands_by_ears:
+        for S in ("L", "R"):
+            q["upper_arm." + S] = rx(143 * DEG)  # elbows up and back toward the head
+            q["forearm." + S] = qmul(rx(45 * DEG), PRONATE)  # down to the floor beside the ears
+            q["hand." + S] = q["fingers." + S] = qmul(rx(-90 * DEG), PRONATE)  # palms flat, fingers toward the feet
+    else:
+        set_arms(q, -90 * DEG, -90 * DEG, palm_down=False)  # arms along the sides on the floor
+    return {"root": [round(float(v), 4) for v in root], "q": q}
+
+
+def boat_hold():
     """Navasana: seated, trunk leant back 30, legs straight up at 30 above horizontal, arms forward."""
     q = all_ident()
     trunk = -30 * DEG
@@ -490,7 +550,15 @@ def boat_sample(t):
     return {"root": [round(float(v), 4) for v in root], "q": q}
 
 
+def boat_sample(t):
+    return entered(supine_sample(), boat_hold(), t)
+
+
 def warrior3_sample(t):
+    return entered(stand_sample(0), warrior3_hold(), t)
+
+
+def warrior3_hold():
     """Virabhadrasana III: standing on the left leg, trunk and back leg horizontal, arms forward."""
     q = all_ident()
     trunk = 88 * DEG
@@ -505,6 +573,10 @@ def warrior3_sample(t):
 
 
 def wheel_sample(t):
+    return entered(supine_sample(knees_bent=True, hands_by_ears=True), wheel_hold(), t)
+
+
+def wheel_hold():
     """Urdhva Dhanurasana: belly up on hands and feet, the trunk arched back until the head hangs toward the floor."""
     q = all_ident()
     trunk = -125 * DEG
@@ -512,7 +584,7 @@ def wheel_sample(t):
     hip_y = 0.09 + L_SHIN + L_THIGH * math.cos(knee_f)
     root, pelvis_pos = root_for_hip(np.array([0.0, hip_y, 0.0]), rx(trunk))
     q["pelvis"], q["spine"] = rx(trunk), rx(trunk)
-    q["neck"], q["head"] = rx(trunk - 20 * DEG), rx(trunk - 20 * DEG)
+    q["neck"], q["head"] = rx(trunk), rx(trunk + 10 * DEG)  # the head hangs in line with the arch, relaxed, face toward the floor
     set_legs(q, knee_f, shin_a, 0.0)
     for S, side in (("L", "l"), ("R", "r")):
         shoulder = shoulder_from(pelvis_pos, rx(trunk), side)
@@ -524,8 +596,33 @@ def wheel_sample(t):
 
 
 def crow_sample(t):
+    return entered(crouch_sample(), crow_hold(), t)
+
+
+def crouch_sample():
+    """The way into a crow: a deep squat, knees out, hands planted on the floor just ahead of the feet."""
+    q = all_ident()
+    trunk = 70 * DEG
+    root, pelvis_pos = root_for_hip(np.array([0.0, 0.30, 0.0]), rx(trunk))
+    q["pelvis"], q["spine"] = rx(trunk), rx(trunk)
+    q["neck"], q["head"] = rx(trunk - 60 * DEG), rx(trunk - 60 * DEG)
+    for S, sgn in (("L", 1), ("R", -1)):
+        spread = q_axis([0, 0, 1], sgn * 24 * DEG)
+        q["thigh." + S] = qmul(rx(-85 * DEG), spread)
+        q["shin." + S] = qmul(rx(62 * DEG), spread)
+        q["foot." + S] = spread
+    for S, side in (("L", "l"), ("R", "r")):
+        shoulder = shoulder_from(pelvis_pos, rx(trunk), side)
+        hand = np.array([shoulder[0], 0.03, shoulder[2] + 0.05])
+        up_a, fo_a, _ = two_link(shoulder, hand, L_UPPER, L_FORE, bend_forward=False)
+        q["upper_arm." + S], q["forearm." + S] = rx(up_a), qmul(rx(fo_a), PRONATE)
+        q["hand." + S] = q["fingers." + S] = qmul(rx(fo_a - 90 * DEG), PRONATE)
+    return {"root": [round(float(v), 4) for v in root], "q": q}
+
+
+def crow_hold():
     """Bakasana: hands on the floor, elbows bent, knees on the backs of the upper arms, feet lifted behind.
-    The legs spread 32 degrees so the knees sit outside the arms, not through them (owner, 2026-09-11)."""
+    The legs spread so the knees sit outside the arms, not through them (owner, 2026-09-11)."""
     q = all_ident()
     trunk = 108 * DEG  # chest leant forward past the hands; the elbows bend about 90 degrees under it
     root, pelvis_pos = root_for_hip(np.array([0.0, 0.55, 0.0]), rx(trunk))
@@ -546,18 +643,23 @@ def crow_sample(t):
 
 
 def side_plank_sample(t):
-    """Vasisthasana: on the left hand and the outside of the left foot, body straight and tilted up, top arm raised."""
-    tilt = 22 * DEG
+    """Vasisthasana: on the left hand and the outside of the left foot, body straight and tilted up, top arm raised.
+    Entered from lying on the left side with the lower arm overhead along the floor: the body lifts while that arm
+    sweeps down under the shoulder (lagging, so the hand stays above the floor) and the top arm rises."""
+    f = envelope(t)
+    f_arm = smooth(max(0.0, (f - 0.25) / 0.75))
+    tilt = 22 * DEG * f
     roll = q_axis([0, 0, 1], -(90 * DEG - tilt))  # lying on the left side, head to +X, then lifted 22 degrees
     q = {"pelvis": roll, "spine": roll, "neck": roll, "head": roll}
     for S in ("L", "R"):
         q["thigh." + S] = q["shin." + S] = q["foot." + S] = roll
     for b in ("upper_arm", "forearm", "hand", "fingers"):
-        q[b + ".L"] = IDENT  # straight down to the floor
-        q[b + ".R"] = q_axis([0, 0, 1], 180 * DEG)  # straight up
-    # Root: the lower (left) foot on the floor, the body line rising toward the head.
+        q[b + ".L"] = q_axis([0, 0, 1], 90 * DEG * (1 - f_arm))  # from overhead along the floor to straight down
+        q[b + ".R"] = q_axis([0, 0, 1], -90 * DEG + 270 * DEG * f_arm)  # from along the body to straight up
+    # Root: the lower (left) foot on the floor, the body line rising toward the head; lying, the hips sit on the
+    # floor at the body's half-width.
     body_dir = q_rot(roll, UP)
-    ankle_low = np.array([0.0, 0.06, 0.0])
+    ankle_low = np.array([0.0, 0.06 + 0.08 * (1 - f), 0.0])
     hip_mid = ankle_low + body_dir * (L_SHIN + L_THIGH)
     root, _ = root_for_hip(hip_mid, roll)
     return {"root": [round(float(v), 4) for v in root], "q": q}
