@@ -14,6 +14,7 @@ const ARMS = t([0, 0.3], [0.15, 0.6], [0.5, 0.5], [0.8, 0.6], [1, 0.3]);
 
 export const kettlebellSwing: Exercise = {
   slug: "kettlebell-swing",
+  category: "Legs and hips",
   name: "Kettlebell swing",
   durationMs: 2000, // the captured cycle at its real tempo
   anchor: "free",
@@ -42,6 +43,7 @@ export const kettlebellSwing: Exercise = {
     { id: "anterior-deltoid", name: "Anterior deltoid", group: "Upper body", role: "stabiliser", note: "The arms are a pendulum; the shoulders only steady them.", curve: ARMS },
     { id: "forearm-flexors", name: "Forearm flexors", group: "Upper body", role: "stabiliser", note: "Grip the handle.", curve: GRIP },
     { id: "vastus-lateralis", name: "Vastus lateralis", group: "Legs", role: "synergist", note: "Straightens the slightly bent knees on the drive.", curve: DRIVE },
-    { id: "gastrocnemius-medial", name: "Gastrocnemius", group: "Legs", role: "stabiliser", note: "Keeps the feet rooted as the weight shifts.", curve: BRACE },
+    { id: "gastrocnemius-medial", name: "Gastrocnemius (medial)", group: "Legs", role: "stabiliser", note: "Keeps the feet rooted as the weight shifts.", curve: BRACE },
+    { id: "gastrocnemius-lateral", name: "Gastrocnemius (lateral)", group: "Legs", role: "stabiliser", note: "Keeps the feet rooted as the weight shifts.", curve: BRACE },
   ],
 };

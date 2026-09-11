@@ -24,6 +24,10 @@ export type MuscleActivation = {
 
 export type Phase = { name: string; t0: number; t1: number };
 
+/** Switcher groups, in display order. */
+export const CATEGORIES = ["Atlas", "Legs and hips", "Push and pull", "Core", "Cardio", "Swimming", "Yoga"] as const;
+export type ExerciseCategory = (typeof CATEGORIES)[number];
+
 import type { MotionClip, MotionClip3D } from "@/lib/kinematics/types";
 
 export type Exercise = {
@@ -54,12 +58,15 @@ export type Exercise = {
   barHeight?: number;
   /** Half the distance between parallel bars, metres: where the hands rest. */
   barSpacing?: number;
-  /** Hand-held equipment the viewer attaches to the hand bones. */
-  props?: "dumbbells" | "kettlebell";
-  /** Fixed scenery besides the floor: a wall to climb (top edge at `wallHeight`, face at `wallFront`), or a staircase. */
+  /** Equipment the viewer attaches to bones: to the hands, or pedals to the feet. */
+  props?: "dumbbells" | "kettlebell" | "pedals";
+  /** Fixed scenery besides the floor: a wall to climb, a staircase, or a bicycle (drawn to tools/myo/designed_clip.py's BIKE_* constants). */
   scenery?:
     | { kind: "wall"; height: number; front: number; ledges?: number[] }
-    | { kind: "stairs"; rise: number; run: number; count: number; first: number };
+    | { kind: "stairs"; rise: number; run: number; count: number; first: number }
+    | { kind: "bike" };
+  /** Where the switcher lists it. */
+  category: ExerciseCategory;
   /** Who captured the movement, when the clip came straight from a source file rather than through `motion`/`motion3d`. */
   credit?: string;
   /** A resting figure and a plain muscle list: no transport, no roles, no provenance line. */

@@ -78,6 +78,13 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Cycling, plank, five yoga holds, categories** (2026-09-11): all
+      designed in `designed_clip.py`; the bike is drawn to the same
+      constants (`BIKE_*`); the switcher is grouped by `category`; muscle
+      groups come from `src/lib/muscles.ts` on every page (owner: "why do we
+      categorise differently"); the lateral gastrocnemius is listed wherever
+      the medial head is.
+      `from: owner, 2026-09-11 · "add cycling and plank", "popular challenging yoga poses", "organise them"`
 - [x] **Climb up and down, ledged wall, four stairs, alternating lunge,
       half speed** (2026-09-11): `convert_clip.py --fbx a,b` chains clips
       and `--repeat N` replays with the travel carried; the wall's ledges

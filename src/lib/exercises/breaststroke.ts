@@ -15,6 +15,7 @@ const BRACE = t([0, 0.35], [0.3, 0.55], [0.6, 0.55], [1, 0.35]);
 
 export const breaststroke: Exercise = {
   slug: "breaststroke",
+  category: "Swimming",
   name: "Breaststroke swimming",
   durationMs: 2000, // the captured cycle at its real tempo
   anchor: "free",
@@ -45,7 +46,8 @@ export const breaststroke: Exercise = {
     { id: "vastus-medialis", name: "Vastus medialis", group: "Kick", role: "synergist", note: "Straightens the knees with the other vasti.", curve: KICK },
     { id: "biceps-femoris", name: "Biceps femoris", group: "Kick", role: "synergist", note: "Draws the heels up toward the hips before the kick.", curve: DRAW },
     { id: "semitendinosus", name: "Semitendinosus", group: "Kick", role: "synergist", note: "Draws the heels up with biceps femoris.", curve: DRAW },
-    { id: "gastrocnemius-medial", name: "Gastrocnemius", group: "Kick", role: "stabiliser", note: "Points the feet at the end of the kick.", curve: KICK },
+    { id: "gastrocnemius-medial", name: "Gastrocnemius (medial)", group: "Kick", role: "stabiliser", note: "Points the feet at the end of the kick.", curve: KICK },
+    { id: "gastrocnemius-lateral", name: "Gastrocnemius (lateral)", group: "Kick", role: "stabiliser", note: "Points the feet at the end of the kick.", curve: KICK },
     { id: "tibialis-anterior", name: "Tibialis anterior", group: "Kick", role: "synergist", note: "Flexes the feet to catch the water on the outsweep.", curve: DRAW },
     { id: "erector-spinae", name: "Erector spinae", group: "Trunk", role: "synergist", note: "Lifts the chest for the breath as the arms sweep in.", curve: PULL },
     { id: "rectus-abdominis", name: "Rectus abdominis", group: "Trunk", role: "stabiliser", note: "Brings the body back flat for the glide.", curve: BRACE },

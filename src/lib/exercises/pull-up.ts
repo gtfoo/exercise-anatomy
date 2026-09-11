@@ -22,6 +22,7 @@ const GRIP: CurvePoint[] = [[0, 0.5], [0.3, 0.7], [0.5, 0.7], [0.8, 0.6], [1, 0.
 
 const baseline: Exercise = {
   slug: "pull-up",
+  category: "Push and pull",
   name: "Pull-up",
   durationMs: 3600,
   anchor: "hands",

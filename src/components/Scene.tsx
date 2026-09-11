@@ -87,24 +87,77 @@ function ParallelBars({ height, spacing }: { height: number; spacing: number }) 
   );
 }
 
+/** A tube between two points. */
+function Tube({ a, b, r = 0.018, material }: { a: [number, number, number]; b: [number, number, number]; r?: number; material: THREE.Material }) {
+  const va = new THREE.Vector3(...a);
+  const vb = new THREE.Vector3(...b);
+  const mid = va.clone().add(vb).multiplyScalar(0.5);
+  const dir = vb.clone().sub(va);
+  const len = dir.length();
+  const quat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
+  return (
+    <mesh material={material} position={mid} quaternion={quat}>
+      <cylinderGeometry args={[r, r, len, 12]} />
+    </mesh>
+  );
+}
+
+/**
+ * A bicycle the designed cycling clip sits on: bottom bracket at (0, 0.30, 0.20),
+ * saddle top at 0.92, handlebar at (0, 0.98, 0.55) — the same numbers as
+ * tools/myo/designed_clip.py. Cranks and pedals ride on the feet (props).
+ */
+function Bike() {
+  const steel = useMemo(() => new THREE.MeshStandardMaterial({ color: "#3d3a37", roughness: 0.5, metalness: 0.5 }), []);
+  const rubber = useMemo(() => new THREE.MeshStandardMaterial({ color: "#26241f", roughness: 0.9 }), []);
+  const bb: [number, number, number] = [0, 0.3, 0.2];
+  const seat: [number, number, number] = [0, 0.88, -0.02];
+  const head: [number, number, number] = [0, 0.86, 0.5];
+  const rear: [number, number, number] = [0, 0.34, -0.32];
+  const front: [number, number, number] = [0, 0.34, 0.74];
+  return (
+    <group>
+      {[rear, front].map((c, i) => (
+        <mesh key={i} material={rubber} position={c} rotation-y={Math.PI / 2}>
+          <torusGeometry args={[0.34, 0.022, 12, 40]} />
+        </mesh>
+      ))}
+      <Tube a={bb} b={seat} material={steel} />
+      <Tube a={bb} b={head} material={steel} />
+      <Tube a={seat} b={head} material={steel} />
+      <Tube a={bb} b={rear} material={steel} r={0.012} />
+      <Tube a={seat} b={rear} material={steel} r={0.012} />
+      <Tube a={head} b={front} material={steel} r={0.012} />
+      <Tube a={head} b={[0, 0.98, 0.55]} material={steel} r={0.014} />
+      <mesh material={steel} position={[0, 0.98, 0.55]} rotation-z={Math.PI / 2}>
+        <cylinderGeometry args={[0.014, 0.014, 0.52, 12]} />
+      </mesh>
+      <mesh material={rubber} position={[0, 0.905, -0.02]}>
+        <boxGeometry args={[0.14, 0.05, 0.26]} />
+      </mesh>
+    </group>
+  );
+}
+
 /** A wall face in front of the figure, for a climb, and a staircase rising away from it, drawn to the clip's rise and run. */
 function Scenery({ scenery }: { scenery: NonNullable<Exercise["scenery"]> }) {
   const plaster = useMemo(() => new THREE.MeshStandardMaterial({ color: "#d9d4cc", roughness: 0.95 }), []);
   if (scenery.kind === "wall") {
-    // The face sits at `front`; ledges stand 6 cm proud of it at the heights the hands and feet land.
+    // The face sits at `front`; ledges stand 12 cm proud of it at the heights the hands and feet land.
     return (
       <group>
         <mesh material={plaster} position={[0, scenery.height / 2, scenery.front + 0.15]}>
           <boxGeometry args={[3, scenery.height, 0.3]} />
         </mesh>
         {(scenery.ledges ?? []).map((y) => (
-          <mesh key={y} material={plaster} position={[0, y - 0.02, scenery.front - 0.03]}>
-            <boxGeometry args={[3, 0.04, 0.06]} />
+          <mesh key={y} material={plaster} position={[0, y - 0.02, scenery.front - 0.06]}>
+            <boxGeometry args={[3, 0.04, 0.12]} />
           </mesh>
         ))}
       </group>
     );
   }
+  if (scenery.kind === "bike") return <Bike />;
   const { rise, run, count, first } = scenery;
   return (
     <group>

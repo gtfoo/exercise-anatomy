@@ -15,6 +15,7 @@ const BRACE = t([0, 0.4], [0.42, 0.7], [0.62, 0.7], [1, 0.4]);
 
 export const lSit: Exercise = {
   slug: "l-sit",
+  category: "Core",
   name: "L-sit",
   durationMs: 4000,
   anchor: "bars",
@@ -47,6 +48,7 @@ export const lSit: Exercise = {
     { id: "erector-spinae", name: "Erector spinae", group: "Trunk", role: "stabiliser", note: "Keeps the spine long as the trunk leans back.", curve: BRACE },
     { id: "adductor-longus", name: "Adductor longus", group: "Hip flexors", role: "synergist", note: "Assists hip flexion from the hanging position.", curve: RAISE },
     { id: "tibialis-anterior", name: "Tibialis anterior", group: "Leg", role: "stabiliser", note: "Steadies the ankle; the calves point the toes.", curve: BRACE },
-    { id: "gastrocnemius-medial", name: "Gastrocnemius", group: "Leg", role: "synergist", note: "Points the toes.", curve: KNEE },
+    { id: "gastrocnemius-medial", name: "Gastrocnemius (medial)", group: "Leg", role: "synergist", note: "Points the toes.", curve: KNEE },
+    { id: "gastrocnemius-lateral", name: "Gastrocnemius (lateral)", group: "Leg", role: "synergist", note: "Points the toes.", curve: KNEE },
   ],
 };

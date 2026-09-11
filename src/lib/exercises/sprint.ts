@@ -15,6 +15,7 @@ const ARMS = TWO(0.75, 0.4);
 
 export const sprint: Exercise = {
   slug: "sprint",
+  category: "Cardio",
   name: "Sprint",
   durationMs: 570, // the captured stride at its real tempo
   anchor: "free",

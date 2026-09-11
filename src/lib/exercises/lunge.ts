@@ -21,6 +21,7 @@ const BRACE = t([0, 0.2], [0.54, 0.45], [1, 0.2]);
 
 export const lunge: Exercise = {
   slug: "lunge",
+  category: "Legs and hips",
   name: "Forward lunge",
   durationMs: 5600, // two lunges, one on each leg
   anchor: "free",
@@ -51,7 +52,8 @@ export const lunge: Exercise = {
     { id: "semimembranosus", name: "Semimembranosus", group: "Hamstrings", role: "synergist", note: "Hip extension and knee control on the front leg.", curve: STEADY },
     { id: "adductor-magnus", name: "Adductor magnus", group: "Adductors", role: "synergist", note: "Its hamstring-like part extends the hip; the rest steadies the thigh.", curve: STEADY },
     { id: "adductor-longus", name: "Adductor longus", group: "Adductors", role: "stabiliser", note: "Holds the thigh in line while the legs are split.", curve: BRACE },
-    { id: "gastrocnemius-medial", name: "Gastrocnemius", group: "Calf", role: "synergist", note: "Pushes off the front foot on the way back.", curve: CALF },
+    { id: "gastrocnemius-medial", name: "Gastrocnemius (medial)", group: "Calf", role: "synergist", note: "Pushes off the front foot on the way back.", curve: CALF },
+    { id: "gastrocnemius-lateral", name: "Gastrocnemius (lateral)", group: "Calf", role: "synergist", note: "Pushes off the front foot on the way back.", curve: CALF },
     { id: "soleus", name: "Soleus", group: "Calf", role: "stabiliser", note: "Steadies the ankle under the front knee.", curve: CALF },
     { id: "tibialis-anterior", name: "Tibialis anterior", group: "Calf", role: "stabiliser", note: "Controls the shin over the planted front foot.", curve: BRACE },
     { id: "erector-spinae", name: "Erector spinae", group: "Trunk", role: "stabiliser", note: "Keeps the trunk upright over the split stance.", curve: BRACE },

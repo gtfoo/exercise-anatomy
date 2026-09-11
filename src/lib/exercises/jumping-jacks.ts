@@ -20,6 +20,7 @@ const BRACE = t([0, 0.35], [0.5, 0.45], [1, 0.35]);
 
 export const jumpingJacks: Exercise = {
   slug: "jumping-jacks",
+  category: "Cardio",
   name: "Jumping jacks",
   durationMs: 1070, // the captured cycle at its real tempo
   anchor: "free",

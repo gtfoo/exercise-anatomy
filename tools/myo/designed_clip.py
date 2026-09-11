@@ -375,8 +375,198 @@ def stand_sample(t):
     return {"root": [0, 0, 0], "q": q}
 
 
+# ---------- helpers for the whole-body designs below ----------
+# Convention reminder (rx, world X axis): for a bone that rests pointing DOWN
+# (thigh, shin, foot, arm) a positive angle swings its far end BACKWARD; for
+# the trunk and head, which rest pointing UP, a positive angle tips the top
+# FORWARD. So: hip flexion is a negative thigh angle, trunk flexion positive.
+UP = np.array([0.0, 1.0, 0.0])
+DOWN = np.array([0.0, -1.0, 0.0])
+L_TRUNK = float(np.linalg.norm(rig["shoulder.l"] - rig["hip.l"]))  # hip to shoulder, roughly along the trunk
+SHOULDER_X = float(rig["shoulder.l"][0])
+HAND_LEN = float(np.linalg.norm(rig["mcp.l"] - rig["wrist.l"]))
+
+
+def all_ident():
+    q = {b: IDENT for b in ("pelvis", "spine", "neck", "head")}
+    for S in ("L", "R"):
+        for b in ("thigh", "shin", "foot", "upper_arm", "forearm", "hand", "fingers"):
+            q["%s.%s" % (b, S)] = IDENT
+    return q
+
+
+def set_legs(q, thigh, shin, foot, side="LR"):
+    for S in side:
+        q["thigh." + S], q["shin." + S], q["foot." + S] = rx(thigh), rx(shin), rx(foot)
+
+
+def set_arms(q, upper, fore, hand=None, side="LR", palm_down=False):
+    for S in side:
+        u, f, h = rx(upper), rx(fore), rx(hand if hand is not None else fore)
+        if palm_down:
+            f, h = qmul(f, PRONATE), qmul(h, PRONATE)
+        q["upper_arm." + S], q["forearm." + S], q["hand." + S], q["fingers." + S] = u, f, h, h
+
+
+def root_for_hip(hip_pos, trunk_q=IDENT):
+    """Root displacement that puts the hip joints' midpoint at hip_pos with the pelvis rotated by trunk_q."""
+    mid = (rig["hip.l"] + rig["hip.r"]) / 2
+    pelvis_pos = hip_pos - q_rot(trunk_q, mid - rig["pelvis"])
+    return pelvis_pos - rig["pelvis"], pelvis_pos
+
+
+def shoulder_from(pelvis_pos, trunk_q, side="l"):
+    return pelvis_pos + q_rot(trunk_q, rig["shoulder." + side] - rig["pelvis"])
+
+
+def hip_from(pelvis_pos, trunk_q, side="l"):
+    return pelvis_pos + q_rot(trunk_q, rig["hip." + side] - rig["pelvis"])
+
+
+# ---------- forearm plank (hold) ----------
+def plank_sample(t):
+    q = all_ident()
+    toe = rig["toe.r"]
+    body_len = L_TRUNK + L_THIGH + L_SHIN
+    foot_angle = 88 * DEG
+    ankle = toe - rot_x(foot_angle, FOOT)
+    h = L_UPPER + 0.02  # shoulders one upper-arm above the floor: elbows under them, forearms flat
+    beta = math.asin(max(-1.0, min(1.0, (h - ankle[1]) / body_len)))
+    a = math.pi / 2 - beta
+    body_dir = rot_x(a, DOWN)
+    knee = ankle - body_dir * L_SHIN
+    hip = knee - body_dir * L_THIGH
+    q["pelvis"], q["spine"] = rx(a), rx(a)
+    q["neck"], q["head"] = rx(a - 30 * DEG), rx(a - 30 * DEG)
+    set_legs(q, a, a, foot_angle)
+    set_arms(q, 0.0, -90 * DEG, palm_down=True)  # upper arm vertical, forearm forward along the floor
+    root = hip - rig["hip.r"]
+    return {"root": [round(float(v), 4) for v in root], "q": q}
+
+
+# ---------- cycling ----------
+# Seated on a drawn bike: pedal circle (bottom bracket) ahead of and below
+# the hips, cranks half a turn apart, legs by IK to the pedals, trunk leant
+# to the handlebar with the arms by IK. Scene.tsx draws the same bike.
+BIKE_BB = np.array([0.0, 0.30, 0.20])
+BIKE_CRANK = 0.17
+BIKE_SADDLE_Y = 0.92
+BIKE_BAR = np.array([0.0, 0.98, 0.55])
+
+
+def cycling_sample(t):
+    q = all_ident()
+    trunk = 42 * DEG
+    hip_mid = np.array([0.0, BIKE_SADDLE_Y, 0.0])
+    root, pelvis_pos = root_for_hip(hip_mid, rx(trunk))
+    q["pelvis"], q["spine"] = rx(trunk), rx(trunk)
+    q["neck"], q["head"] = rx(trunk - 35 * DEG), rx(trunk - 35 * DEG)
+    for S, side, phase in (("L", "l", 0.0), ("R", "r", math.pi)):
+        th = 2 * math.pi * t + phase
+        pedal = BIKE_BB + np.array([0.0, -BIKE_CRANK * math.cos(th), BIKE_CRANK * math.sin(th)])
+        ankle_target = pedal + np.array([0.0, 0.07, -0.04])
+        hip = hip_from(pelvis_pos, rx(trunk), side)
+        hip = np.array([rig["hip." + side][0], hip[1], hip[2]])
+        th_a, sh_a, _ = two_link(hip, ankle_target, L_THIGH, L_SHIN, bend_forward=True)
+        q["thigh." + S], q["shin." + S], q["foot." + S] = rx(th_a), rx(sh_a), rx(15 * DEG - 10 * DEG * math.cos(th))
+        shoulder = shoulder_from(pelvis_pos, rx(trunk), side)
+        hand = np.array([SHOULDER_X * (1 if side == "l" else -1), BIKE_BAR[1], BIKE_BAR[2]])
+        up_a, fo_a, _ = two_link(shoulder, hand, L_UPPER, L_FORE, bend_forward=False)
+        q["upper_arm." + S], q["forearm." + S] = rx(up_a), qmul(rx(fo_a), PRONATE)
+        q["hand." + S] = q["fingers." + S] = qmul(rx(fo_a - 20 * DEG), PRONATE)
+    return {"root": [round(float(v), 4) for v in root], "q": q}
+
+
+# ---------- yoga holds ----------
+def boat_sample(t):
+    """Navasana: seated, trunk leant back 30, legs straight up at 30 above horizontal, arms forward."""
+    q = all_ident()
+    trunk = -30 * DEG
+    root, _ = root_for_hip(np.array([0.0, 0.13, 0.0]), rx(trunk))
+    q["pelvis"], q["spine"] = rx(trunk), rx(trunk)
+    q["neck"], q["head"] = rx(trunk + 20 * DEG), rx(trunk + 20 * DEG)
+    set_legs(q, -120 * DEG, -120 * DEG, -120 * DEG + 30 * DEG)
+    set_arms(q, -90 * DEG, -90 * DEG, palm_down=False)
+    return {"root": [round(float(v), 4) for v in root], "q": q}
+
+
+def warrior3_sample(t):
+    """Virabhadrasana III: standing on the left leg, trunk and back leg horizontal, arms forward."""
+    q = all_ident()
+    trunk = 88 * DEG
+    hip_l = rig["hip.l"].copy()  # the standing hip stays put; the converter pins the left foot
+    root, _ = root_for_hip(np.array([0.0, hip_l[1], 0.0]), rx(trunk))
+    q["pelvis"], q["spine"] = rx(trunk), rx(trunk)
+    q["neck"], q["head"] = rx(trunk - 60 * DEG), rx(trunk - 60 * DEG)
+    set_legs(q, 3 * DEG, 3 * DEG, 0.0, side="L")
+    set_legs(q, 92 * DEG, 92 * DEG, 92 * DEG + 25 * DEG, side="R")
+    set_arms(q, -88 * DEG, -88 * DEG)
+    return {"root": [round(float(v), 4) for v in root], "q": q}
+
+
+def wheel_sample(t):
+    """Urdhva Dhanurasana: belly up on hands and feet, the trunk arched back until the head hangs toward the floor."""
+    q = all_ident()
+    trunk = -125 * DEG
+    knee_f, shin_a = -52 * DEG, 0.0  # thighs sloping forward-down from the lifted hips, shins vertical
+    hip_y = 0.09 + L_SHIN + L_THIGH * math.cos(knee_f)
+    root, pelvis_pos = root_for_hip(np.array([0.0, hip_y, 0.0]), rx(trunk))
+    q["pelvis"], q["spine"] = rx(trunk), rx(trunk)
+    q["neck"], q["head"] = rx(trunk - 20 * DEG), rx(trunk - 20 * DEG)
+    set_legs(q, knee_f, shin_a, 0.0)
+    for S, side in (("L", "l"), ("R", "r")):
+        shoulder = shoulder_from(pelvis_pos, rx(trunk), side)
+        hand = np.array([shoulder[0], 0.03, shoulder[2] - 0.12])
+        up_a, fo_a, _ = two_link(shoulder, hand, L_UPPER, L_FORE, bend_forward=False)
+        q["upper_arm." + S], q["forearm." + S] = rx(up_a), rx(fo_a)
+        q["hand." + S] = q["fingers." + S] = rx(fo_a - 90 * DEG)  # palms flat, fingers toward the feet
+    return {"root": [round(float(v), 4) for v in root], "q": q}
+
+
+def crow_sample(t):
+    """Bakasana: hands on the floor, elbows bent, knees on the backs of the upper arms, feet lifted behind."""
+    q = all_ident()
+    trunk = 108 * DEG
+    root, pelvis_pos = root_for_hip(np.array([0.0, 0.62, 0.0]), rx(trunk))
+    q["pelvis"], q["spine"] = rx(trunk), rx(trunk)
+    q["neck"], q["head"] = rx(trunk - 75 * DEG), rx(trunk - 75 * DEG)
+    set_legs(q, -60 * DEG, 108 * DEG, 108 * DEG + 25 * DEG)
+    for S, side in (("L", "l"), ("R", "r")):
+        shoulder = shoulder_from(pelvis_pos, rx(trunk), side)
+        hand = np.array([shoulder[0], 0.03, shoulder[2] + 0.12])
+        up_a, fo_a, _ = two_link(shoulder, hand, L_UPPER, L_FORE, bend_forward=False)
+        q["upper_arm." + S], q["forearm." + S] = rx(up_a), qmul(rx(fo_a), PRONATE)
+        q["hand." + S] = q["fingers." + S] = qmul(rx(fo_a - 90 * DEG), PRONATE)  # palms flat, fingers forward
+    return {"root": [round(float(v), 4) for v in root], "q": q}
+
+
+def side_plank_sample(t):
+    """Vasisthasana: on the left hand and the outside of the left foot, body straight and tilted up, top arm raised."""
+    tilt = 22 * DEG
+    roll = q_axis([0, 0, 1], -(90 * DEG - tilt))  # lying on the left side, head to +X, then lifted 22 degrees
+    q = {"pelvis": roll, "spine": roll, "neck": roll, "head": roll}
+    for S in ("L", "R"):
+        q["thigh." + S] = q["shin." + S] = q["foot." + S] = roll
+    for b in ("upper_arm", "forearm", "hand", "fingers"):
+        q[b + ".L"] = IDENT  # straight down to the floor
+        q[b + ".R"] = q_axis([0, 0, 1], 180 * DEG)  # straight up
+    # Root: the lower (left) foot on the floor, the body line rising toward the head.
+    body_dir = q_rot(roll, UP)
+    ankle_low = np.array([0.0, 0.06, 0.0])
+    hip_mid = ankle_low + body_dir * (L_SHIN + L_THIGH)
+    root, _ = root_for_hip(hip_mid, roll)
+    return {"root": [round(float(v), 4) for v in root], "q": q}
+
+
 CLIPS = {
     "stand": (stand_sample, "rest pose, tools/myo/designed_clip.py"),
+    "plank": (plank_sample, "designed forearm plank, tools/myo/designed_clip.py"),
+    "cycling": (cycling_sample, "designed cycling, tools/myo/designed_clip.py"),
+    "boat-pose": (boat_sample, "designed yoga hold, tools/myo/designed_clip.py"),
+    "warrior-3": (warrior3_sample, "designed yoga hold, tools/myo/designed_clip.py"),
+    "wheel-pose": (wheel_sample, "designed yoga hold, tools/myo/designed_clip.py"),
+    "crow-pose": (crow_sample, "designed yoga hold, tools/myo/designed_clip.py"),
+    "side-plank": (side_plank_sample, "designed yoga hold, tools/myo/designed_clip.py"),
     "pull-up": (pull_up_sample, "designed pose, src/lib/kinematics/pull-up.ts"),
     "lateral-raise": (lateral_raise_sample, "designed dumbbell lateral raise, tools/myo/designed_clip.py"),
     "clamshell": (clam_sample, "designed clamshell, tools/myo/designed_clip.py"),

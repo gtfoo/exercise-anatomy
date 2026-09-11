@@ -12,6 +12,7 @@ const BRACE = t([0, 0.3], [0.42, 0.5], [0.58, 0.5], [1, 0.3]);
 
 export const clamshell: Exercise = {
   slug: "clamshell",
+  category: "Legs and hips",
   name: "Clamshell",
   durationMs: 3000,
   anchor: "free",

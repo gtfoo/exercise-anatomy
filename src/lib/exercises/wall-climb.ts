@@ -16,12 +16,15 @@ const BRACE = t([0, 0.5], [0.25, 0.7], [0.5, 0.55], [0.75, 0.7], [1, 0.5]);
 
 export const wallClimb: Exercise = {
   slug: "wall-climb",
+  category: "Push and pull",
   name: "Wall climb",
   durationMs: 4000, // the two captured clips at their real tempo
   anchor: "free",
   credit: "Mixamo (Adobe)",
   // Ledge heights: where the hands and feet rest in the clips, scaled to the figure (the probe's --contacts).
-  scenery: { kind: "wall", height: 3.2, front: 0.22, ledges: [0.65, 0.88, 1.16, 1.21, 1.65, 1.78, 2.24, 2.76] },
+  // The hands and feet rest 0.20-0.25 m ahead of the hips; the ledges reach out to there and the face stays behind them,
+  // so nothing of the body sits inside the wall.
+  scenery: { kind: "wall", height: 3.2, front: 0.34, ledges: [0.65, 0.88, 1.16, 1.21, 1.65, 1.78, 2.24, 2.76] },
   native: { clip: "/models/clips/wall-climb.glb" },
   camera: { position: [3.2, 2.2, -2.6], target: [0, 1.6, 0] },
   disclaimer:
@@ -47,7 +50,8 @@ export const wallClimb: Exercise = {
     { id: "vastus-lateralis", name: "Vastus lateralis", group: "Legs", role: "prime-mover", note: "Straightens the stepping leg to drive up.", curve: LEGS },
     { id: "rectus-femoris", name: "Rectus femoris", group: "Legs", role: "synergist", note: "Lifts the knee to the foothold and extends it.", curve: LEGS },
     { id: "gluteus-maximus", name: "Gluteus maximus", group: "Legs", role: "prime-mover", note: "Extends the hip as the foot pushes on the wall.", curve: LEGS },
-    { id: "gastrocnemius-medial", name: "Gastrocnemius", group: "Legs", role: "synergist", note: "Pushes off the toes against the wall.", curve: LEGS },
+    { id: "gastrocnemius-medial", name: "Gastrocnemius (medial)", group: "Legs", role: "synergist", note: "Pushes off the toes against the wall.", curve: LEGS },
+    { id: "gastrocnemius-lateral", name: "Gastrocnemius (lateral)", group: "Legs", role: "synergist", note: "Pushes off the toes against the wall.", curve: LEGS },
     { id: "rectus-abdominis", name: "Rectus abdominis", group: "Trunk", role: "stabiliser", note: "Keeps the body tight to the wall.", curve: BRACE },
     { id: "erector-spinae", name: "Erector spinae", group: "Trunk", role: "stabiliser", note: "Holds the back through the pull and mantle.", curve: BRACE },
   ],

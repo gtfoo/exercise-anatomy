@@ -41,6 +41,23 @@ function attachProps(scene: THREE.Group, props: Exercise["props"]): () => void {
   if (!props) return () => {};
   const steel = new THREE.MeshStandardMaterial({ color: "#4a4744", roughness: 0.5, metalness: 0.6 });
   const added: THREE.Object3D[] = [];
+  if (props === "pedals") {
+    // A pedal platform under each foot, on the sole side (local +Z of the Mixamo foot bone is the top of the foot in its T-pose bind).
+    for (const side of ["Left", "Right"]) {
+      const foot = scene.getObjectByName(`mixamorig${side}Foot`);
+      if (!foot) continue;
+      const g = new THREE.Group();
+      g.position.set(0, 0.12, -0.06);
+      const pedal = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.02, 0.07), steel);
+      g.add(pedal);
+      foot.add(g);
+      added.push(g);
+    }
+    return () => {
+      for (const g of added) g.removeFromParent();
+      steel.dispose();
+    };
+  }
   if (props === "kettlebell") {
     // One bell held in both hands: parented to the left hand, offset toward the
     // right one, the handle across the palms and the bell hanging below them.

@@ -7,6 +7,7 @@ import { MUSCLES } from "@/lib/muscles";
  */
 export const atlas: Exercise = {
   slug: "atlas",
+  category: "Atlas",
   name: "All muscles",
   static: true,
   durationMs: 1000,

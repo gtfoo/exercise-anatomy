@@ -13,6 +13,7 @@ const BRACE = t([0, 0.6], [0.5, 0.65], [1, 0.6]);
 
 export const bicycleCrunch: Exercise = {
   slug: "bicycle-crunch",
+  category: "Core",
   name: "Bicycle crunch",
   durationMs: 1100, // the captured cycle at its real tempo
   anchor: "free",

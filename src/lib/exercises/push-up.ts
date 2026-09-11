@@ -15,6 +15,7 @@ const CUFF = t([0, 0.35], [0.5, 0.55], [1, 0.35]);
 
 export const pushUp: Exercise = {
   slug: "push-up",
+  category: "Push and pull",
   name: "Push-up",
   durationMs: 2400,
   anchor: "free",

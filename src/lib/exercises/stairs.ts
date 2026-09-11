@@ -14,6 +14,7 @@ const BRACE = t([0, 0.45], [0.5, 0.5], [1, 0.45]);
 
 export const stairs: Exercise = {
   slug: "stairs",
+  category: "Legs and hips",
   name: "Climbing stairs",
   durationMs: 2400, // the captured strides at their real tempo, twice
   anchor: "free",
@@ -39,7 +40,8 @@ export const stairs: Exercise = {
     { id: "gluteus-medius", name: "Gluteus medius", group: "Hip", role: "stabiliser", note: "Levels the pelvis on each single-leg step.", curve: FOUR(0.8, 0.35) },
     { id: "biceps-femoris", name: "Biceps femoris", group: "Hip", role: "synergist", note: "Helps extend the hip.", curve: FOUR(0.6, 0.3) },
     { id: "adductor-magnus", name: "Adductor magnus", group: "Hip", role: "synergist", note: "Its hamstring-like part adds hip extension.", curve: FOUR(0.55, 0.3) },
-    { id: "gastrocnemius-medial", name: "Gastrocnemius", group: "Ankle", role: "prime-mover", note: "Pushes off the trailing foot.", curve: PUSH },
+    { id: "gastrocnemius-medial", name: "Gastrocnemius (medial)", group: "Ankle", role: "prime-mover", note: "Pushes off the trailing foot.", curve: PUSH },
+    { id: "gastrocnemius-lateral", name: "Gastrocnemius (lateral)", group: "Ankle", role: "prime-mover", note: "Pushes off the trailing foot.", curve: PUSH },
     { id: "soleus", name: "Soleus", group: "Ankle", role: "synergist", note: "Push-off and ankle stiffness.", curve: PUSH },
     { id: "tibialis-anterior", name: "Tibialis anterior", group: "Ankle", role: "synergist", note: "Lifts the toes over the next step.", curve: SWING },
     { id: "erector-spinae", name: "Erector spinae", group: "Trunk", role: "stabiliser", note: "Holds the trunk upright on the lean.", curve: BRACE },

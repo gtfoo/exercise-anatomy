@@ -19,6 +19,7 @@ const BRACE = t([0, 0.35], [0.5, 0.45], [1, 0.35]);
 
 export const freestyle: Exercise = {
   slug: "freestyle",
+  category: "Swimming",
   name: "Freestyle swimming",
   durationMs: 2230, // the captured cycle at its real tempo
   anchor: "free",
@@ -186,10 +187,18 @@ export const freestyle: Exercise = {
     },
     {
       id: "gastrocnemius-medial",
-      name: "Gastrocnemius",
+      name: "Gastrocnemius (medial)",
       group: "Kick",
       role: "stabiliser",
       note: "Points the foot so the kick pushes water rather than dragging.",
+      curve: BRACE,
+    },
+    {
+      id: "gastrocnemius-lateral",
+      name: "Gastrocnemius (lateral)",
+      group: "Kick",
+      role: "stabiliser",
+      note: "Points the foot with the medial head.",
       curve: BRACE,
     },
   ],

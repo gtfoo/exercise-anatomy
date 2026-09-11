@@ -32,6 +32,7 @@ const BRACE: CurvePoint[] = [[0, 0.1], [0.5, 0.3], [1, 0.1]];
 // cross-check.
 const baseline: Exercise = {
   slug: "bodyweight-squat",
+  category: "Legs and hips",
   name: "Bodyweight squat",
   durationMs: 3200, // the estimate analyses the rep at this tempo; keep the two in step
   // One captured rep (tools/mocap). `motion` (four sagittal angles) feeds the
