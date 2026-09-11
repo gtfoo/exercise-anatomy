@@ -27,13 +27,14 @@ export const clamshell: Exercise = {
     { name: "close", t0: 0.58, t1: 1 },
   ],
   muscles: [
-    { id: "gluteus-medius", name: "Gluteus medius", group: "Gluteals", role: "prime-mover", note: "Abducts and externally rotates the top hip to open the knee; the muscle the exercise is for.", curve: OPEN },
-    { id: "gluteus-minimus", name: "Gluteus minimus", group: "Gluteals", role: "prime-mover", note: "Works under gluteus medius on the same movement.", curve: OPEN },
-    { id: "gluteus-maximus", name: "Gluteus maximus", group: "Gluteals", role: "synergist", note: "Its upper fibres help rotate the hip outward.", curve: t([0, 0.15], [0.42, 0.6], [0.58, 0.55], [1, 0.15]) },
+    // The top leg is the right one: the work is on the right side; the bottom (left) hip only rests on the floor.
+    { id: "gluteus-medius", name: "Gluteus medius", group: "Gluteals", role: "prime-mover", note: "Abducts and externally rotates the top (right) hip to open the knee; the muscle the exercise is for.", curve: t([0, 0.2], [1, 0.2]), right: OPEN },
+    { id: "gluteus-minimus", name: "Gluteus minimus", group: "Gluteals", role: "prime-mover", note: "Works under gluteus medius on the same movement, top side.", curve: t([0, 0.15], [1, 0.15]), right: OPEN },
+    { id: "gluteus-maximus", name: "Gluteus maximus", group: "Gluteals", role: "synergist", note: "Its upper fibres help rotate the top hip outward.", curve: t([0, 0.1], [1, 0.1]), right: t([0, 0.15], [0.42, 0.6], [0.58, 0.55], [1, 0.15]) },
     { id: "external-obliques", name: "External obliques", group: "Trunk", role: "stabiliser", note: "Keep the pelvis from rolling back as the knee opens.", curve: BRACE },
     { id: "rectus-abdominis", name: "Rectus abdominis", group: "Trunk", role: "stabiliser", note: "Braces the trunk with the obliques.", curve: BRACE },
     { id: "transversus-abdominis", name: "Transversus abdominis", group: "Trunk", role: "stabiliser", note: "Deep brace that holds the pelvis still.", curve: BRACE },
     { id: "erector-spinae", name: "Erector spinae", group: "Trunk", role: "stabiliser", note: "Keep the spine neutral on the side.", curve: BRACE },
-    { id: "adductor-longus", name: "Adductor longus", group: "Bottom leg", role: "stabiliser", note: "Holds the bottom leg still as a base.", curve: BRACE },
+    { id: "adductor-longus", name: "Adductor longus", group: "Bottom leg", role: "stabiliser", note: "Holds the bottom (left) leg still as a base.", curve: BRACE, right: t([0, 0.15], [1, 0.15]) },
   ],
 };

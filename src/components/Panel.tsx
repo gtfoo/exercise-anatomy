@@ -137,6 +137,18 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
             className="w-full accent-red-600"
             aria-label="Scrub through the rep"
           />
+          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-zinc-500">
+            <span className="flex items-center gap-1">
+              <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: rampCss(1) }} /> working
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: rampCss(0, 1) }} /> lengthened
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: rampCss(1, 1) }} /> both
+            </span>
+            {exercise.muscles.some((m) => m.right || m.stretchRight) && <span>· split dots: left | right</span>}
+          </p>
         </section>
       )}
 
@@ -168,6 +180,9 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
           <ul className="flex flex-col">
             {muscles.map((m) => {
               const level = levelAt(m.curve, t);
+              const levelRight = m.right ? levelAt(m.right, t) : null;
+              const stretch = m.stretch ? levelAt(m.stretch, t) : 0;
+              const stretchRight = m.stretchRight ? levelAt(m.stretchRight, t) : stretch;
               const active = hovered === m.id || selected === m.id;
               return (
                 <li key={m.id}>
@@ -180,12 +195,16 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
                       active ? "bg-zinc-100" : "hover:bg-zinc-50"
                     }`}
                   >
-                    {!exercise.static && (
-                      <span
-                        className="h-3 w-3 shrink-0 rounded-full ring-1 ring-zinc-300"
-                        style={{ background: rampCss(level) }}
-                      />
-                    )}
+                    {!exercise.static &&
+                      (levelRight === null && !m.stretchRight ? (
+                        <span className="h-3 w-3 shrink-0 rounded-full ring-1 ring-zinc-300" style={{ background: rampCss(level, stretch) }} />
+                      ) : (
+                        // Asymmetric movement: the left and right sides as two half-dots, left on the left.
+                        <span className="flex h-3 w-3 shrink-0 overflow-hidden rounded-full ring-1 ring-zinc-300" title="left · right">
+                          <span className="h-full w-1/2" style={{ background: rampCss(level, stretch) }} />
+                          <span className="h-full w-1/2" style={{ background: rampCss(levelRight ?? level, stretchRight) }} />
+                        </span>
+                      ))}
                     <span className="flex-1">{m.name}</span>
                     {!exercise.static && <span className="text-[10px] uppercase tracking-wide text-zinc-400">{ROLE_LABEL[m.role]}</span>}
                   </button>

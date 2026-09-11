@@ -462,7 +462,7 @@ def cycling_sample(t):
     q["pelvis"], q["spine"] = rx(trunk), rx(trunk)
     q["neck"], q["head"] = rx(trunk - 35 * DEG), rx(trunk - 35 * DEG)
     for S, side, phase in (("L", "l", 0.0), ("R", "r", math.pi)):
-        th = 2 * math.pi * t + phase
+        th = -2 * math.pi * t + phase  # negative: the foot goes forward over the top and down the front (pedalling forward)
         pedal = BIKE_BB + np.array([0.0, -BIKE_CRANK * math.cos(th), BIKE_CRANK * math.sin(th)])
         ankle_target = pedal + np.array([0.0, 0.07, -0.04])
         hip = hip_from(pelvis_pos, rx(trunk), side)

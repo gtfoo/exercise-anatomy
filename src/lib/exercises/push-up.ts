@@ -29,9 +29,9 @@ export const pushUp: Exercise = {
     { name: "push", t0: 0.5, t1: 1 },
   ],
   muscles: [
-    { id: "pectoralis-major", name: "Pectoralis major", group: "Chest", role: "prime-mover", note: "Presses the body up: brings the upper arms together and forward.", curve: PRESS },
-    { id: "anterior-deltoid", name: "Anterior deltoid", group: "Shoulder", role: "prime-mover", note: "Presses with the chest: brings the upper arm forward under the body.", curve: PRESS },
-    { id: "triceps-long-head", name: "Triceps, long head", group: "Arm", role: "prime-mover", note: "Straightens the elbows on the push.", curve: PRESS },
+    { id: "pectoralis-major", name: "Pectoralis major", group: "Chest", role: "prime-mover", note: "Presses the body up: brings the upper arms together and forward.", curve: PRESS, stretch: [[0, 0.1], [0.25, 0.5], [0.5, 0.9], [0.7, 0.4], [1, 0.1]] },
+    { id: "anterior-deltoid", name: "Anterior deltoid", group: "Shoulder", role: "prime-mover", note: "Presses with the chest: brings the upper arm forward under the body.", curve: PRESS, stretch: [[0, 0.1], [0.25, 0.45], [0.5, 0.8], [0.7, 0.35], [1, 0.1]] },
+    { id: "triceps-long-head", name: "Triceps, long head", group: "Arm", role: "prime-mover", note: "Straightens the elbows on the push.", curve: PRESS, stretch: [[0, 0.05], [0.25, 0.45], [0.5, 0.7], [0.65, 0.2], [1, 0.05]] },
     { id: "posterior-deltoid", name: "Posterior deltoid", group: "Shoulder", role: "stabiliser", note: "Steadies the shoulder from behind.", curve: CUFF },
     { id: "infraspinatus", name: "Infraspinatus", group: "Shoulder", role: "stabiliser", note: "Rotator cuff: keeps the humeral head centred under load.", curve: CUFF },
     { id: "teres-minor", name: "Teres minor", group: "Shoulder", role: "stabiliser", note: "Rotator cuff, with infraspinatus.", curve: CUFF },

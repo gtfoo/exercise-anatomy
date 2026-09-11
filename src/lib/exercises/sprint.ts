@@ -1,4 +1,5 @@
 import type { CurvePoint, Exercise } from "./types";
+import { shifted } from "./types";
 
 // One sprint stride cycle (both legs) from a Mixamo clip, converted bone for
 // bone and played in place. Each leg drives once per cycle, half a cycle
@@ -29,23 +30,23 @@ export const sprint: Exercise = {
     { name: "right drive", t0: 0.5, t1: 1 },
   ],
   muscles: [
-    { id: "gluteus-maximus", name: "Gluteus maximus", group: "Hip", role: "prime-mover", note: "Drives the hip through as the foot strikes.", curve: DRIVE },
-    { id: "biceps-femoris", name: "Biceps femoris", group: "Hip", role: "prime-mover", note: "Extends the hip and pulls the ground back; the sprinter's hamstring.", curve: DRIVE },
-    { id: "semitendinosus", name: "Semitendinosus", group: "Hip", role: "prime-mover", note: "Hip extension with biceps femoris.", curve: DRIVE },
-    { id: "semimembranosus", name: "Semimembranosus", group: "Hip", role: "prime-mover", note: "Hip extension with the other hamstrings.", curve: DRIVE },
-    { id: "rectus-femoris", name: "Rectus femoris", group: "Hip", role: "prime-mover", note: "Flexes the hip to swing the leg through, then extends the knee.", curve: SWING },
-    { id: "adductor-longus", name: "Adductor longus", group: "Hip", role: "synergist", note: "Helps bring the thigh forward on the swing.", curve: SWING },
-    { id: "gluteus-medius", name: "Gluteus medius", group: "Hip", role: "stabiliser", note: "Levels the pelvis on each single-leg stance.", curve: TWO(0.8, 0.35) },
-    { id: "vastus-lateralis", name: "Vastus lateralis", group: "Knee", role: "synergist", note: "Straightens the knee through stance.", curve: DRIVE },
-    { id: "vastus-medialis", name: "Vastus medialis", group: "Knee", role: "synergist", note: "Knee extension with the other vasti.", curve: DRIVE },
-    { id: "gastrocnemius-medial", name: "Gastrocnemius (medial)", group: "Ankle", role: "prime-mover", note: "The push-off from the ball of the foot.", curve: PUSH },
-    { id: "gastrocnemius-lateral", name: "Gastrocnemius (lateral)", group: "Ankle", role: "prime-mover", note: "Push-off with the medial head.", curve: PUSH },
-    { id: "soleus", name: "Soleus", group: "Ankle", role: "synergist", note: "Adds to the push-off and stiffens the ankle at contact.", curve: PUSH },
-    { id: "tibialis-anterior", name: "Tibialis anterior", group: "Ankle", role: "synergist", note: "Lifts the toes clear on the swing.", curve: SWING },
+    { id: "gluteus-maximus", name: "Gluteus maximus", group: "Hip", role: "prime-mover", note: "Drives the hip through as the foot strikes.", curve: DRIVE, right: shifted(DRIVE, 0.5) },
+    { id: "biceps-femoris", name: "Biceps femoris", group: "Hip", role: "prime-mover", note: "Extends the hip and pulls the ground back; the sprinter's hamstring.", curve: DRIVE, right: shifted(DRIVE, 0.5) },
+    { id: "semitendinosus", name: "Semitendinosus", group: "Hip", role: "prime-mover", note: "Hip extension with biceps femoris.", curve: DRIVE, right: shifted(DRIVE, 0.5) },
+    { id: "semimembranosus", name: "Semimembranosus", group: "Hip", role: "prime-mover", note: "Hip extension with the other hamstrings.", curve: DRIVE, right: shifted(DRIVE, 0.5) },
+    { id: "rectus-femoris", name: "Rectus femoris", group: "Hip", role: "prime-mover", note: "Flexes the hip to swing the leg through, then extends the knee.", curve: SWING, right: shifted(SWING, 0.5) },
+    { id: "adductor-longus", name: "Adductor longus", group: "Hip", role: "synergist", note: "Helps bring the thigh forward on the swing.", curve: SWING, right: shifted(SWING, 0.5) },
+    { id: "gluteus-medius", name: "Gluteus medius", group: "Hip", role: "stabiliser", note: "Levels the pelvis on each single-leg stance.", curve: TWO(0.8, 0.35), right: shifted(TWO(0.8, 0.35), 0.5) },
+    { id: "vastus-lateralis", name: "Vastus lateralis", group: "Knee", role: "synergist", note: "Straightens the knee through stance.", curve: DRIVE, right: shifted(DRIVE, 0.5) },
+    { id: "vastus-medialis", name: "Vastus medialis", group: "Knee", role: "synergist", note: "Knee extension with the other vasti.", curve: DRIVE, right: shifted(DRIVE, 0.5) },
+    { id: "gastrocnemius-medial", name: "Gastrocnemius (medial)", group: "Ankle", role: "prime-mover", note: "The push-off from the ball of the foot.", curve: PUSH, right: shifted(PUSH, 0.5) },
+    { id: "gastrocnemius-lateral", name: "Gastrocnemius (lateral)", group: "Ankle", role: "prime-mover", note: "Push-off with the medial head.", curve: PUSH, right: shifted(PUSH, 0.5) },
+    { id: "soleus", name: "Soleus", group: "Ankle", role: "synergist", note: "Adds to the push-off and stiffens the ankle at contact.", curve: PUSH, right: shifted(PUSH, 0.5) },
+    { id: "tibialis-anterior", name: "Tibialis anterior", group: "Ankle", role: "synergist", note: "Lifts the toes clear on the swing.", curve: SWING, right: shifted(SWING, 0.5) },
     { id: "rectus-abdominis", name: "Rectus abdominis", group: "Trunk", role: "stabiliser", note: "Keeps the trunk from folding under the leg drive.", curve: BRACE },
     { id: "external-obliques", name: "External obliques", group: "Trunk", role: "stabiliser", note: "Resist the twist of the arm and leg swing.", curve: BRACE },
     { id: "erector-spinae", name: "Erector spinae", group: "Trunk", role: "stabiliser", note: "Hold the trunk tall.", curve: BRACE },
-    { id: "anterior-deltoid", name: "Anterior deltoid", group: "Arms", role: "synergist", note: "Drives the arm forward.", curve: ARMS },
-    { id: "posterior-deltoid", name: "Posterior deltoid", group: "Arms", role: "synergist", note: "Drives the arm back.", curve: ARMS },
+    { id: "anterior-deltoid", name: "Anterior deltoid", group: "Arms", role: "synergist", note: "Drives the arm forward.", curve: ARMS, right: shifted(ARMS, 0.5) },
+    { id: "posterior-deltoid", name: "Posterior deltoid", group: "Arms", role: "synergist", note: "Drives the arm back.", curve: ARMS, right: shifted(ARMS, 0.5) },
   ],
 };

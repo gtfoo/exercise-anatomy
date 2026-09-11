@@ -65,7 +65,7 @@ const baseline: Exercise = {
       group: "Quadriceps",
       role: "prime-mover",
       note: "Outer thigh. Extends the knee; work rises with knee flexion and peaks through the bottom and early ascent.",
-      curve: KNEE_EXTENSOR,
+      curve: KNEE_EXTENSOR, stretch: [[0, 0.05], [0.42, 0.75], [0.58, 0.75], [0.8, 0.25], [1, 0.05]],
     },
     {
       id: "vastus-medialis",
@@ -73,7 +73,7 @@ const baseline: Exercise = {
       group: "Quadriceps",
       role: "prime-mover",
       note: "Inner thigh, low on the femur. Extends the knee; its oblique fibres also steer the kneecap as the knee straightens.",
-      curve: KNEE_EXTENSOR,
+      curve: KNEE_EXTENSOR, stretch: [[0, 0.05], [0.42, 0.75], [0.58, 0.75], [0.8, 0.25], [1, 0.05]],
     },
     {
       id: "vastus-intermedius",
@@ -81,7 +81,7 @@ const baseline: Exercise = {
       group: "Quadriceps",
       role: "prime-mover",
       note: "Deep, directly under rectus femoris. Extends the knee with the other vasti.",
-      curve: KNEE_EXTENSOR,
+      curve: KNEE_EXTENSOR, stretch: [[0, 0.05], [0.42, 0.75], [0.58, 0.75], [0.8, 0.25], [1, 0.05]],
     },
 
     // Gluteals
@@ -91,7 +91,7 @@ const baseline: Exercise = {
       group: "Gluteals",
       role: "prime-mover",
       note: "Extends the hip. Loaded most at the bottom and driving out of it; the deeper the squat, the larger its share.",
-      curve: HIP_EXTENSOR,
+      curve: HIP_EXTENSOR, stretch: [[0, 0.05], [0.42, 0.85], [0.58, 0.85], [0.8, 0.3], [1, 0.05]],
     },
     {
       id: "gluteus-medius",
@@ -151,7 +151,7 @@ const baseline: Exercise = {
       group: "Adductors",
       role: "stabiliser",
       note: "Front of the inner thigh. Controls the knee line and hip position; a minor contributor.",
-      curve: MINOR_ADDUCTOR,
+      curve: MINOR_ADDUCTOR, stretch: [[0, 0.05], [0.42, 0.7], [0.58, 0.7], [0.8, 0.2], [1, 0.05]],
     },
     {
       id: "adductor-brevis",
@@ -177,7 +177,7 @@ const baseline: Exercise = {
       group: "Lower leg",
       role: "stabiliser",
       note: "Crosses the knee as well as the ankle, so a bent knee slackens it and leaves the soleus to do the work.",
-      curve: TWO_JOINT_CALF,
+      curve: TWO_JOINT_CALF, stretch: [[0, 0.05], [0.42, 0.6], [0.58, 0.6], [1, 0.05]],
     },
     {
       id: "gastrocnemius-lateral",

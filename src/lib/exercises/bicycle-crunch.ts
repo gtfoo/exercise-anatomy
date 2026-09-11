@@ -1,4 +1,5 @@
 import type { CurvePoint, Exercise } from "./types";
+import { shifted } from "./types";
 
 // One bicycle-crunch cycle (both sides) from a Mixamo clip, converted bone for
 // bone: lying on the back, elbow to the opposite knee as the other leg
@@ -28,12 +29,12 @@ export const bicycleCrunch: Exercise = {
   ],
   muscles: [
     { id: "rectus-abdominis", name: "Rectus abdominis", group: "Trunk", role: "prime-mover", note: "Curls the trunk up off the floor on every rep.", curve: CRUNCH },
-    { id: "external-obliques", name: "External obliques", group: "Trunk", role: "prime-mover", note: "Twist the trunk to bring the elbow across to the opposite knee.", curve: TWIST },
+    { id: "external-obliques", name: "External obliques", group: "Trunk", role: "prime-mover", note: "Twist the trunk to bring the elbow across to the opposite knee.", curve: TWIST, right: shifted(TWIST, 0.5) },
     { id: "transversus-abdominis", name: "Transversus abdominis", group: "Trunk", role: "stabiliser", note: "Holds the lower back to the floor.", curve: BRACE },
-    { id: "rectus-femoris", name: "Rectus femoris", group: "Hip", role: "synergist", note: "Holds the legs up and draws each knee in.", curve: HIPFLEX },
-    { id: "adductor-longus", name: "Adductor longus", group: "Hip", role: "synergist", note: "Helps flex the hip on the knee that comes in.", curve: HIPFLEX },
-    { id: "vastus-lateralis", name: "Vastus lateralis", group: "Leg", role: "synergist", note: "Straightens the leg that extends out.", curve: TWO(0.8, 0.35) },
-    { id: "biceps-femoris", name: "Biceps femoris", group: "Leg", role: "synergist", note: "Bends the knee that comes in.", curve: TWO(0.7, 0.3) },
+    { id: "rectus-femoris", name: "Rectus femoris", group: "Hip", role: "synergist", note: "Holds the legs up and draws each knee in.", curve: HIPFLEX, right: shifted(HIPFLEX, 0.5) },
+    { id: "adductor-longus", name: "Adductor longus", group: "Hip", role: "synergist", note: "Helps flex the hip on the knee that comes in.", curve: HIPFLEX, right: shifted(HIPFLEX, 0.5) },
+    { id: "vastus-lateralis", name: "Vastus lateralis", group: "Leg", role: "synergist", note: "Straightens the leg that extends out.", curve: TWO(0.8, 0.35), right: shifted(TWO(0.8, 0.35), 0.5) },
+    { id: "biceps-femoris", name: "Biceps femoris", group: "Leg", role: "synergist", note: "Bends the knee that comes in.", curve: TWO(0.7, 0.3), right: shifted(TWO(0.7, 0.3), 0.5) },
     { id: "tibialis-anterior", name: "Tibialis anterior", group: "Leg", role: "stabiliser", note: "Holds the feet flexed.", curve: BRACE },
   ],
 };

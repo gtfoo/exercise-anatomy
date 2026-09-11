@@ -1,4 +1,5 @@
 import type { CurvePoint, Exercise } from "./types";
+import { shifted } from "./types";
 
 // Designed cycling (tools/myo/designed_clip.py): seated on a drawn bike,
 // trunk leant to the handlebar, the pedals a half turn apart. t = 0 is the
@@ -30,17 +31,17 @@ export const cycling: Exercise = {
     { name: "left push", t0: 0.5, t1: 1 },
   ],
   muscles: [
-    { id: "vastus-lateralis", name: "Vastus lateralis", group: "Knee", role: "prime-mover", note: "Straightens the knee through the down-stroke: the main pedalling force.", curve: PUSH },
-    { id: "vastus-medialis", name: "Vastus medialis", group: "Knee", role: "prime-mover", note: "Knee extension with the other vasti.", curve: PUSH },
-    { id: "vastus-intermedius", name: "Vastus intermedius", group: "Knee", role: "prime-mover", note: "Deep knee extensor.", curve: PUSH },
-    { id: "rectus-femoris", name: "Rectus femoris", group: "Knee", role: "synergist", note: "Extends the knee and lifts the thigh over the top of the stroke.", curve: HIPFLEX },
-    { id: "gluteus-maximus", name: "Gluteus maximus", group: "Hip", role: "prime-mover", note: "Extends the hip from the top of the stroke through the front.", curve: PUSH },
-    { id: "biceps-femoris", name: "Biceps femoris", group: "Hip", role: "synergist", note: "Pulls back through the bottom of the circle.", curve: t([0, 0.9], [0.15, 0.5], [0.35, 0.35], [0.5, 0.9], [0.65, 0.5], [0.85, 0.35], [1, 0.9]) },
-    { id: "semitendinosus", name: "Semitendinosus", group: "Hip", role: "synergist", note: "Pulls back through the bottom with biceps femoris.", curve: t([0, 0.85], [0.15, 0.5], [0.35, 0.35], [0.5, 0.85], [0.65, 0.5], [0.85, 0.35], [1, 0.85]) },
-    { id: "gastrocnemius-medial", name: "Gastrocnemius (medial)", group: "Ankle", role: "synergist", note: "Points the foot through the bottom of the stroke.", curve: CALF },
-    { id: "gastrocnemius-lateral", name: "Gastrocnemius (lateral)", group: "Ankle", role: "synergist", note: "Ankle push with the medial head.", curve: CALF },
-    { id: "soleus", name: "Soleus", group: "Ankle", role: "synergist", note: "Steadies the ankle on the pedal.", curve: CALF },
-    { id: "tibialis-anterior", name: "Tibialis anterior", group: "Ankle", role: "synergist", note: "Lifts the toes on the up-stroke.", curve: HIPFLEX },
+    { id: "vastus-lateralis", name: "Vastus lateralis", group: "Knee", role: "prime-mover", note: "Straightens the knee through the down-stroke: the main pedalling force.", curve: PUSH, right: shifted(PUSH, 0.5) },
+    { id: "vastus-medialis", name: "Vastus medialis", group: "Knee", role: "prime-mover", note: "Knee extension with the other vasti.", curve: PUSH, right: shifted(PUSH, 0.5) },
+    { id: "vastus-intermedius", name: "Vastus intermedius", group: "Knee", role: "prime-mover", note: "Deep knee extensor.", curve: PUSH, right: shifted(PUSH, 0.5) },
+    { id: "rectus-femoris", name: "Rectus femoris", group: "Knee", role: "synergist", note: "Extends the knee and lifts the thigh over the top of the stroke.", curve: HIPFLEX, right: shifted(HIPFLEX, 0.5) },
+    { id: "gluteus-maximus", name: "Gluteus maximus", group: "Hip", role: "prime-mover", note: "Extends the hip from the top of the stroke through the front.", curve: PUSH, right: shifted(PUSH, 0.5) },
+    { id: "biceps-femoris", name: "Biceps femoris", group: "Hip", role: "synergist", note: "Pulls back through the bottom of the circle.", curve: t([0, 0.9], [0.15, 0.5], [0.35, 0.35], [0.5, 0.9], [0.65, 0.5], [0.85, 0.35], [1, 0.9]), right: shifted(t([0, 0.9], [0.15, 0.5], [0.35, 0.35], [0.5, 0.9], [0.65, 0.5], [0.85, 0.35], [1, 0.9]), 0.5) },
+    { id: "semitendinosus", name: "Semitendinosus", group: "Hip", role: "synergist", note: "Pulls back through the bottom with biceps femoris.", curve: t([0, 0.85], [0.15, 0.5], [0.35, 0.35], [0.5, 0.85], [0.65, 0.5], [0.85, 0.35], [1, 0.85]), right: shifted(t([0, 0.85], [0.15, 0.5], [0.35, 0.35], [0.5, 0.85], [0.65, 0.5], [0.85, 0.35], [1, 0.85]), 0.5) },
+    { id: "gastrocnemius-medial", name: "Gastrocnemius (medial)", group: "Ankle", role: "synergist", note: "Points the foot through the bottom of the stroke.", curve: CALF, right: shifted(CALF, 0.5) },
+    { id: "gastrocnemius-lateral", name: "Gastrocnemius (lateral)", group: "Ankle", role: "synergist", note: "Ankle push with the medial head.", curve: CALF, right: shifted(CALF, 0.5) },
+    { id: "soleus", name: "Soleus", group: "Ankle", role: "synergist", note: "Steadies the ankle on the pedal.", curve: CALF, right: shifted(CALF, 0.5) },
+    { id: "tibialis-anterior", name: "Tibialis anterior", group: "Ankle", role: "synergist", note: "Lifts the toes on the up-stroke.", curve: HIPFLEX, right: shifted(HIPFLEX, 0.5) },
     { id: "erector-spinae", name: "Erector spinae", group: "Trunk", role: "stabiliser", note: "Holds the leant trunk.", curve: BRACE },
     { id: "rectus-abdominis", name: "Rectus abdominis", group: "Trunk", role: "stabiliser", note: "Braces the trunk against the leg drive.", curve: BRACE },
     { id: "triceps-long-head", name: "Triceps, long head", group: "Arms", role: "stabiliser", note: "Props the trunk on the handlebar.", curve: BRACE },

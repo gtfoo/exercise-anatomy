@@ -277,10 +277,20 @@ print("context muscles: %d meshes | skeleton: %d meshes" % (len(context_names), 
 # vertex groups through, and per-source-object weighting needs the original spans.
 built = []
 pending = []  # (obj, ranges, budget, rigid)
+# Each muscle becomes TWO meshes, "<id>_L" and "<id>_R" (underscores survive
+# three's node-name sanitiser; dots do not), so a page can colour the two
+# sides differently: a side plank works one side, a lunge one leg at a time.
+# A source with no side suffix goes to both halves' budget-neutral "_L".
 for mid, names in targets.items():
-    obj, ranges = merge(mid, [O[n] for n in names])
-    pending.append((obj, ranges, BUDGET_TARGET, False))
-    built.append(obj)
+    sides = {"L": [n for n in names if n.endswith(".l")], "R": [n for n in names if n.endswith(".r")]}
+    unsided = [n for n in names if not (n.endswith(".l") or n.endswith(".r"))]
+    sides["L"] += unsided
+    for side, side_names_ in sides.items():
+        if not side_names_:
+            continue
+        obj, ranges = merge("%s_%s" % (mid, side), [O[n] for n in side_names_])
+        pending.append((obj, ranges, BUDGET_TARGET // 2, False))
+        built.append(obj)
 ctx, ctx_ranges = merge("context-muscles", [O[n] for n in context_names])
 skel, skel_ranges = merge("skeleton", [O[n] for n in skeleton_names])
 pending += [(ctx, ctx_ranges, BUDGET_CONTEXT, False), (skel, skel_ranges, BUDGET_SKELETON, True)]

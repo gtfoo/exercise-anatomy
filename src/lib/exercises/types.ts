@@ -9,8 +9,19 @@ export type MuscleActivation = {
   /** Anatomical group the panel lists it under, e.g. "Quadriceps". Display order follows first appearance. */
   group: string;
   role: MuscleRole;
-  /** Relative activation across one rep. Linear between points, clamped at the ends. */
+  /** Relative activation across one rep. Linear between points, clamped at the ends. The left side, and the right unless `right` is given. */
   curve: readonly CurvePoint[];
+  /** The right side's curve when the movement is asymmetric (a side plank, a lunge one leg at a time). */
+  right?: readonly CurvePoint[];
+  /**
+   * How far the muscle is lengthened beyond its resting length, 0..1, across
+   * the rep: a hamstring in a forward fold, a hip flexor behind a lunge, or a
+   * muscle working while it lengthens (the glutes on the way down a squat).
+   * Drawn teal; with activation it reads purple. Absent means not tracked.
+   */
+  stretch?: readonly CurvePoint[];
+  /** The right side's stretch when asymmetric. */
+  stretchRight?: readonly CurvePoint[];
   /** What this muscle is doing in this exercise — one or two sentences. */
   note: string;
   /**
@@ -100,6 +111,27 @@ export function levelAt(curve: readonly CurvePoint[], t: number): number {
     }
   }
   return curve[curve.length - 1][1];
+}
+
+/** The same curve later in the cycle by `d` (0..1), wrapping: the other side of an alternating movement. */
+export function shifted(curve: readonly CurvePoint[], d: number, n = 24): CurvePoint[] {
+  const out: CurvePoint[] = [];
+  for (let i = 0; i <= n; i++) {
+    const x = i / n;
+    out.push([x, levelAt(curve, (((x - d) % 1) + 1) % 1)]);
+  }
+  return out;
+}
+
+/** A curve that plays `curve` compressed into one half of the cycle and rests at `rest` in the other. */
+export function inHalf(curve: readonly CurvePoint[], half: 0 | 1, rest: number, n = 24): CurvePoint[] {
+  const out: CurvePoint[] = [];
+  for (let i = 0; i <= n; i++) {
+    const x = i / n;
+    const own = half === 0 ? x < 0.5 : x >= 0.5;
+    out.push([x, own ? levelAt(curve, (x - half * 0.5) * 2) : rest]);
+  }
+  return out;
 }
 
 export function phaseAt(phases: readonly Phase[], t: number): Phase | undefined {

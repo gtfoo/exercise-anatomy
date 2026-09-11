@@ -1,4 +1,5 @@
 import type { CurvePoint, Exercise } from "./types";
+import { shifted } from "./types";
 import type { MotionClip3D } from "@/lib/kinematics/types";
 import motion3d from "@/lib/motion/freestyle-3d.json";
 
@@ -49,7 +50,7 @@ export const freestyle: Exercise = {
       group: "Back",
       role: "prime-mover",
       note: "The engine of the pull: brings the arm from extended in front to the hip against the water.",
-      curve: PULLER,
+      curve: PULLER, right: shifted(PULLER, 0.5),
     },
     {
       id: "teres-major",
@@ -57,7 +58,7 @@ export const freestyle: Exercise = {
       group: "Back",
       role: "synergist",
       note: "Pulls with the lat through the middle of the stroke.",
-      curve: PULLER,
+      curve: PULLER, right: shifted(PULLER, 0.5),
     },
     {
       id: "pectoralis-major",
@@ -65,7 +66,7 @@ export const freestyle: Exercise = {
       group: "Chest",
       role: "prime-mover",
       note: "Drives the early pull, sweeping the arm down and in from the catch.",
-      curve: PULLER,
+      curve: PULLER, right: shifted(PULLER, 0.5),
     },
     {
       id: "posterior-deltoid",
@@ -73,7 +74,7 @@ export const freestyle: Exercise = {
       group: "Shoulder",
       role: "synergist",
       note: "Lifts the elbow out of the water and leads the recovery.",
-      curve: RECOVERY,
+      curve: RECOVERY, right: shifted(RECOVERY, 0.5),
     },
     {
       id: "middle-trapezius",
@@ -81,7 +82,7 @@ export const freestyle: Exercise = {
       group: "Shoulder",
       role: "synergist",
       note: "Holds the shoulder blade back through the recovery and re-entry.",
-      curve: RECOVERY,
+      curve: RECOVERY, right: shifted(RECOVERY, 0.5),
     },
     {
       id: "rhomboids",
@@ -89,7 +90,7 @@ export const freestyle: Exercise = {
       group: "Shoulder",
       role: "synergist",
       note: "Retract the shoulder blade during recovery.",
-      curve: RECOVERY,
+      curve: RECOVERY, right: shifted(RECOVERY, 0.5),
     },
     {
       id: "infraspinatus",
@@ -97,7 +98,7 @@ export const freestyle: Exercise = {
       group: "Shoulder",
       role: "stabiliser",
       note: "Rotator cuff. Keeps the humeral head centred through the full circle of the stroke; the muscle most swimmers injure.",
-      curve: CUFF,
+      curve: CUFF, right: shifted(CUFF, 0.5),
     },
     {
       id: "teres-minor",
@@ -105,7 +106,7 @@ export const freestyle: Exercise = {
       group: "Shoulder",
       role: "stabiliser",
       note: "Rotator cuff, with infraspinatus.",
-      curve: CUFF,
+      curve: CUFF, right: shifted(CUFF, 0.5),
     },
 
     // Arm
@@ -115,7 +116,7 @@ export const freestyle: Exercise = {
       group: "Arm",
       role: "prime-mover",
       note: "Finishes the stroke: extends the elbow to push water past the hip.",
-      curve: FINISH,
+      curve: FINISH, right: shifted(FINISH, 0.5),
     },
     {
       id: "biceps-brachii",
@@ -123,7 +124,7 @@ export const freestyle: Exercise = {
       group: "Arm",
       role: "synergist",
       note: "Bends the elbow into the high-elbow catch, then relaxes.",
-      curve: t([0, 0.55], [0.1, 0.75], [0.25, 0.5], [0.5, 0.25], [0.6, 0.5], [0.75, 0.6], [1, 0.55]),
+      curve: t([0, 0.55], [0.1, 0.75], [0.25, 0.5], [0.5, 0.25], [0.6, 0.5], [0.75, 0.6], [1, 0.55]), right: shifted(t([0, 0.55], [0.1, 0.75], [0.25, 0.5], [0.5, 0.25], [0.6, 0.5], [0.75, 0.6], [1, 0.55]), 0.5),
     },
     {
       id: "forearm-flexors",
@@ -131,7 +132,7 @@ export const freestyle: Exercise = {
       group: "Arm",
       role: "stabiliser",
       note: "Hold the hand as a paddle against the water.",
-      curve: PULLER,
+      curve: PULLER, right: shifted(PULLER, 0.5),
     },
 
     // Trunk

@@ -1,4 +1,5 @@
 import type { CurvePoint, Exercise } from "./types";
+import { shifted } from "./types";
 
 // Four steps up a staircase from a Mixamo clip played twice with its travel
 // carried over, converted bone for bone: the figure climbs 0.88 m in four
@@ -32,18 +33,18 @@ export const stairs: Exercise = {
     { name: "right step", t0: 0.75, t1: 1 },
   ],
   muscles: [
-    { id: "vastus-lateralis", name: "Vastus lateralis", group: "Knee", role: "prime-mover", note: "Straightens the knee to lift the body onto the step.", curve: STEP_UP },
-    { id: "vastus-medialis", name: "Vastus medialis", group: "Knee", role: "prime-mover", note: "Knee extension with the other vasti.", curve: STEP_UP },
-    { id: "vastus-intermedius", name: "Vastus intermedius", group: "Knee", role: "prime-mover", note: "Deep knee extensor.", curve: STEP_UP },
-    { id: "rectus-femoris", name: "Rectus femoris", group: "Knee", role: "synergist", note: "Extends the knee and lifts the swinging leg to the next step.", curve: SWING },
-    { id: "gluteus-maximus", name: "Gluteus maximus", group: "Hip", role: "prime-mover", note: "Extends the hip to drive the body up each step.", curve: STEP_UP },
-    { id: "gluteus-medius", name: "Gluteus medius", group: "Hip", role: "stabiliser", note: "Levels the pelvis on each single-leg step.", curve: FOUR(0.8, 0.35) },
-    { id: "biceps-femoris", name: "Biceps femoris", group: "Hip", role: "synergist", note: "Helps extend the hip.", curve: FOUR(0.6, 0.3) },
-    { id: "adductor-magnus", name: "Adductor magnus", group: "Hip", role: "synergist", note: "Its hamstring-like part adds hip extension.", curve: FOUR(0.55, 0.3) },
-    { id: "gastrocnemius-medial", name: "Gastrocnemius (medial)", group: "Ankle", role: "prime-mover", note: "Pushes off the trailing foot.", curve: PUSH },
-    { id: "gastrocnemius-lateral", name: "Gastrocnemius (lateral)", group: "Ankle", role: "prime-mover", note: "Pushes off the trailing foot.", curve: PUSH },
-    { id: "soleus", name: "Soleus", group: "Ankle", role: "synergist", note: "Push-off and ankle stiffness.", curve: PUSH },
-    { id: "tibialis-anterior", name: "Tibialis anterior", group: "Ankle", role: "synergist", note: "Lifts the toes over the next step.", curve: SWING },
+    { id: "vastus-lateralis", name: "Vastus lateralis", group: "Knee", role: "prime-mover", note: "Straightens the knee to lift the body onto the step.", curve: STEP_UP, right: shifted(STEP_UP, 0.25) },
+    { id: "vastus-medialis", name: "Vastus medialis", group: "Knee", role: "prime-mover", note: "Knee extension with the other vasti.", curve: STEP_UP, right: shifted(STEP_UP, 0.25) },
+    { id: "vastus-intermedius", name: "Vastus intermedius", group: "Knee", role: "prime-mover", note: "Deep knee extensor.", curve: STEP_UP, right: shifted(STEP_UP, 0.25) },
+    { id: "rectus-femoris", name: "Rectus femoris", group: "Knee", role: "synergist", note: "Extends the knee and lifts the swinging leg to the next step.", curve: SWING, right: shifted(SWING, 0.25) },
+    { id: "gluteus-maximus", name: "Gluteus maximus", group: "Hip", role: "prime-mover", note: "Extends the hip to drive the body up each step.", curve: STEP_UP, right: shifted(STEP_UP, 0.25) },
+    { id: "gluteus-medius", name: "Gluteus medius", group: "Hip", role: "stabiliser", note: "Levels the pelvis on each single-leg step.", curve: FOUR(0.8, 0.35), right: shifted(FOUR(0.8, 0.35), 0.25) },
+    { id: "biceps-femoris", name: "Biceps femoris", group: "Hip", role: "synergist", note: "Helps extend the hip.", curve: FOUR(0.6, 0.3), right: shifted(FOUR(0.6, 0.3), 0.25) },
+    { id: "adductor-magnus", name: "Adductor magnus", group: "Hip", role: "synergist", note: "Its hamstring-like part adds hip extension.", curve: FOUR(0.55, 0.3), right: shifted(FOUR(0.55, 0.3), 0.25) },
+    { id: "gastrocnemius-medial", name: "Gastrocnemius (medial)", group: "Ankle", role: "prime-mover", note: "Pushes off the trailing foot.", curve: PUSH, right: shifted(PUSH, 0.25) },
+    { id: "gastrocnemius-lateral", name: "Gastrocnemius (lateral)", group: "Ankle", role: "prime-mover", note: "Pushes off the trailing foot.", curve: PUSH, right: shifted(PUSH, 0.25) },
+    { id: "soleus", name: "Soleus", group: "Ankle", role: "synergist", note: "Push-off and ankle stiffness.", curve: PUSH, right: shifted(PUSH, 0.25) },
+    { id: "tibialis-anterior", name: "Tibialis anterior", group: "Ankle", role: "synergist", note: "Lifts the toes over the next step.", curve: SWING, right: shifted(SWING, 0.25) },
     { id: "erector-spinae", name: "Erector spinae", group: "Trunk", role: "stabiliser", note: "Holds the trunk upright on the lean.", curve: BRACE },
     { id: "rectus-abdominis", name: "Rectus abdominis", group: "Trunk", role: "stabiliser", note: "Braces the trunk.", curve: BRACE },
   ],

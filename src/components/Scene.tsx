@@ -210,7 +210,8 @@ export default function Scene({ exercise }: { exercise: Exercise }) {
       {exercise.scenery && <Scenery scenery={exercise.scenery} />}
       {exercise.environment === "water" ? <Water level={exercise.waterLevel ?? 0.95} /> : exercise.anchor !== "hands" && <FloorShadow />}
 
-      <OrbitControls target={target} minDistance={1.2} maxDistance={7} maxPolarAngle={Math.PI / 2 - 0.02} enablePan={false} />
+      {/* A full sphere: the owner wants to look up at a plank from under the floor, so nothing stops the camera at the ground. */}
+      <OrbitControls target={target} minDistance={1.2} maxDistance={7} enablePan={false} />
     </Canvas>
   );
 }

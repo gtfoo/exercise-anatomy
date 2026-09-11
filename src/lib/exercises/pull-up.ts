@@ -47,7 +47,7 @@ const baseline: Exercise = {
       group: "Back",
       role: "prime-mover",
       note: "Pulls the upper arm down and back from overhead — the movement the pull-up is. Loaded most through the middle of the pull.",
-      curve: PRIME,
+      curve: PRIME, stretch: [[0, 0.9], [0.4, 0.15], [0.55, 0.15], [1, 0.9]],
     },
     {
       id: "teres-major",
@@ -55,7 +55,7 @@ const baseline: Exercise = {
       group: "Back",
       role: "synergist",
       note: "Works alongside the lat, pulling the arm down and in from overhead.",
-      curve: HELPER,
+      curve: HELPER, stretch: [[0, 0.8], [0.4, 0.15], [0.55, 0.15], [1, 0.8]],
     },
     {
       id: "lower-trapezius",
@@ -115,7 +115,7 @@ const baseline: Exercise = {
       group: "Arm",
       role: "prime-mover",
       note: "Flexes the elbow. Contributes most with a supinated (chin-up) grip, and plenty with an overhand one.",
-      curve: PRIME,
+      curve: PRIME, stretch: [[0, 0.3], [0.45, 0.05], [0.6, 0.4], [0.85, 0.7], [1, 0.3]],
     },
     {
       id: "brachialis",
@@ -123,7 +123,7 @@ const baseline: Exercise = {
       group: "Arm",
       role: "prime-mover",
       note: "Deep to the biceps, flexes the elbow regardless of grip. Often the harder-working of the two.",
-      curve: PRIME,
+      curve: PRIME, stretch: [[0, 0.3], [0.45, 0.05], [0.6, 0.4], [0.85, 0.7], [1, 0.3]],
     },
     {
       id: "brachioradialis",
