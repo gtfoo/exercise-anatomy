@@ -11,6 +11,7 @@
     blender --background --python convert_clip.py -- out/mixamo-rig.json out/clips/pull-up.glb \
         --clip3d ../myo/out/pull-up-3d.json --anchor hands --bar 2.3 --name pull-up
     # --arms rest holds the arms at the sides when the capture's arm motion is not the exercise
+    # --head level keeps the gaze forward; --head follow keeps the head in line with the trunk
 
 The GLB holds the armature (no meshes) and one animation whose tracks are
 named by bone; three.js binds them onto the figure's bones by name. The
@@ -40,6 +41,11 @@ ROOT_OFFSET = [float(argv[argv.index("--root-offset") + 1 + i]) for i in range(3
 # rest (hanging at the sides). For a capture whose performer did something with
 # the arms that is not the exercise (CMU's lunge subject threw punches).
 ARMS = opt("--arms", "clip")
+# --head level: neck and head stay upright (gaze forward) whatever the trunk does;
+# --head follow: neck and head keep their rest relation to the trunk (a swimmer
+# looking down the pool). The CMU conversions' head bone maps with a forward
+# droop that the Mixamo clips do not have; until that is understood, this.
+HEAD = opt("--head", "clip")
 if not (FBX or CLIP3D):
     raise SystemExit(__doc__)
 
@@ -160,6 +166,11 @@ else:
             q = s["q"].get(our)
             if ARMS == "rest" and our.split(".")[0] in ("upper_arm", "forearm", "hand", "fingers"):
                 q = [0, 0, 0, 1]  # our rest: arms down at the sides, whatever the trunk does
+            if our in ("neck", "head"):
+                if HEAD == "level":
+                    q = [0, 0, 0, 1]
+                elif HEAD == "follow":
+                    q = s["q"].get("spine", q)
             if q is None:
                 continue
             delta = q_app(q) @ cb_inv.get(our, Quaternion())

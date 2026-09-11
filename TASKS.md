@@ -66,6 +66,16 @@ letter and a one-line task strands the *why*.
       the parent repo, once the site is live. The parent's own rules apply.
       `from: gtfoo AGENTS.md · case studies`
 
+- [ ] **Why does the CMU head droop?** Every CMU conversion (lunge, jumping
+      jacks, swim) had the skull tilted forward; the Mixamo squat did not.
+      Masked with `convert_clip.py --head level|follow` (2026-09-11). The
+      cause is in `extract_pose3d.py`'s rest alignment of the `head` bone:
+      the CMU skeleton's head bone direction or its rest pose differs from
+      ours, and the shoulder-line roll reference cannot fix pitch. Compare
+      the CMU rest head bone (head -> tail) with ours (c7 -> skull) and add
+      a pitch reference (the neck-to-head line) if they differ.
+      `from: owner, 2026-09-11 · "the skull like dropping, like the neck is broken"`
+
 ## Done
 
 - [x] **A jumping jack that jumps** (2026-09-11): CMU subject 13's take was
