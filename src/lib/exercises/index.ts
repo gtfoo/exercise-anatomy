@@ -29,6 +29,8 @@ import { overheadSquat } from "./overhead-squat";
 import { muscleUp } from "./muscle-up";
 import { handstand } from "./handstand";
 import { dips } from "./dips";
+import { planche } from "./planche";
+import { frontLever } from "./front-lever";
 import { CATEGORIES } from "./types";
 
 /** Display order within a category. Routes are `/` for the atlas and `/<slug>` for the rest. */
@@ -46,6 +48,8 @@ export const exercises: readonly Exercise[] = [
   dips,
   muscleUp,
   handstand,
+  planche,
+  frontLever,
   wallClimb,
   pikeWalk,
   // Weights

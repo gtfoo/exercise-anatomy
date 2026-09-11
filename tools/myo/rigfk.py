@@ -17,8 +17,8 @@ RIG_JSON = os.path.join(HERE, "..", "mocap", "rig-joints.json")
 BONES = {
     "pelvis": ("pelvis", "l5", None),
     "spine": ("l5", "t1", "pelvis"),
-    "neck": ("t1", "c7", "spine"),
-    "head": ("c7", "skull", "neck"),
+    "neck": ("t1", "c1", "spine"),
+    "head": ("c1", "skull", "neck"),
 }
 for s, S in (("l", "L"), ("r", "R")):
     BONES["thigh." + S] = ("hip." + s, "knee." + s, "pelvis")

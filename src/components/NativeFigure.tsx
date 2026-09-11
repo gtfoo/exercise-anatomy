@@ -268,7 +268,19 @@ export default function NativeFigure({ exercise }: { exercise: Exercise }) {
   useEffect(() => {
     const materials = bindMaterials(scene, ids);
     const props = attachProps(scene, exercise.props);
-    const clip = animations[0];
+    // A converted clip carries position and scale tracks for every bone, baked
+    // from the rig it was converted against; only the rotations and the hips'
+    // travel are the movement. Applying the rest would pull the bones to that
+    // rig's joint positions (moving the neck-head joint to the atlas left the
+    // head floating over a gap, 2026-09-12), so the figure's own rest stands.
+    const raw = animations[0];
+    const clip = raw
+      ? new THREE.AnimationClip(
+          raw.name,
+          raw.duration,
+          raw.tracks.filter((tr) => tr.name.endsWith(".quaternion") || tr.name === "mixamorigHips.position"),
+        )
+      : undefined;
     if (!clip) {
       console.warn(`${clipUrl} has no animation clip`);
       live.current = null;

@@ -304,6 +304,77 @@ def lsit_sample(t):
     return {"root": [round(float(v), 4) for v in root], "q": q}
 
 
+# ---------- planche and front lever ----------
+def sequence(stages, t):
+    """Blend through (t, sample) stages with a smoothstep between neighbours, held at the ends."""
+    if t <= stages[0][0]:
+        return stages[0][1]
+    for (ta, a), (tb, b) in zip(stages, stages[1:]):
+        if t <= tb:
+            return blend_samples(a, b, smooth((t - ta) / (tb - ta)))
+    return stages[-1][1]
+
+
+def planche_stage(shoulder_y, shoulder_z, trunk_deg, thigh_deg, shin_deg, spread_deg, gaze_deg):
+    """Hands planted at z = 0; the shoulders placed, the trunk hung from them, the legs by angle. The straight
+    arms run from the shoulders to the hands, so the lean sets their angle."""
+    q = all_ident()
+    trunk = trunk_deg * DEG
+    shoulder_mid = np.array([0.0, shoulder_y, shoulder_z])
+    hip_mid = shoulder_mid - np.array([0.0, math.cos(trunk), math.sin(trunk)]) * L_TRUNK
+    root, pelvis_pos = root_for_hip(hip_mid, rx(trunk))
+    q["pelvis"], q["spine"] = rx(trunk), rx(trunk)
+    q["neck"], q["head"] = rx(trunk - gaze_deg * 0.5 * DEG), rx(trunk - gaze_deg * DEG)
+    for S, sgn in (("L", 1), ("R", -1)):
+        spread = q_axis([0, 0, 1], sgn * spread_deg * DEG)
+        q["thigh." + S] = qmul(rx(thigh_deg * DEG), spread)
+        q["shin." + S] = qmul(rx(shin_deg * DEG), spread)
+        q["foot." + S] = qmul(rx((shin_deg + POINT) * DEG), spread)
+    for S, side in (("L", "l"), ("R", "r")):
+        shoulder = shoulder_from(pelvis_pos, rx(trunk), side)
+        hand = np.array([shoulder[0], 0.03, 0.0])
+        d = hand - shoulder
+        a = angle_of(d / max(float(np.linalg.norm(d)), 1e-9))
+        q["upper_arm." + S], q["forearm." + S] = rx(a), qmul(rx(a), PRONATE)
+        q["hand." + S] = q["fingers." + S] = qmul(rx(-90 * DEG), PRONATE)  # palms flat, fingers forward
+    return {"root": [round(float(v), 4) for v in root], "q": q}
+
+
+def planche_sample(t):
+    """A full planche: from a crouch with the hands planted, lean forward into a tuck planche (feet off the floor,
+    knees to the chest), extend the legs to the full planche, hold, and back."""
+    crouch = planche_stage(0.45, -0.05, 70, -85, 62, 24, 60)
+    tuck = planche_stage(0.50, 0.18, 80, -60, 70, 10, 60)
+    full = planche_stage(0.46, 0.25, 90, 90, 90, 4, 60)
+    return sequence([(0, crouch), (0.22, tuck), (0.42, full), (0.68, full), (0.85, tuck), (1, crouch)], t)
+
+
+def lever_stage(trunk_deg, thigh_deg, shin_deg, gaze_deg):
+    """Hanging from the bar (the converter pins the wrists): the arms stay pointed at the bar while the body
+    pivots at the shoulders."""
+    q = all_ident()
+    trunk = trunk_deg * DEG
+    arm = -178 * DEG
+    twist = lambda r: qmul(r, PRONATE)
+    q["pelvis"], q["spine"] = rx(trunk), rx(trunk)
+    q["neck"], q["head"] = rx(trunk + gaze_deg * 0.5 * DEG), rx(trunk + gaze_deg * DEG)
+    for S in ("L", "R"):
+        q["thigh." + S], q["shin." + S], q["foot." + S] = rx(thigh_deg * DEG), rx(shin_deg * DEG), rx((shin_deg + POINT) * DEG)
+        q["upper_arm." + S], q["forearm." + S] = rx(arm), twist(rx(arm))
+        q["hand." + S] = twist(rx(arm + WRIST_FLEX * DEG))
+        q["fingers." + S] = twist(rx(arm + (WRIST_FLEX + FINGER_CURL) * DEG))
+    return {"root": [0, 0, 0], "q": q}
+
+
+def front_lever_sample(t):
+    """A front lever: from a dead hang, pull the body up into a tuck (face up, knees to the chest), extend the
+    legs to the full horizontal lever, hold, and back."""
+    hang = lever_stage(2, -2, 2, 0)
+    tuck = lever_stage(-80, -165, -70, 30)
+    full = lever_stage(-90, -90, -90, 30)
+    return sequence([(0, hang), (0.2, tuck), (0.4, full), (0.68, full), (0.85, tuck), (1, hang)], t)
+
+
 # ---------- dips on parallel bars ----------
 # Support on locked arms with the legs hanging (knees bent back), lower
 # until the upper arms are level with the elbows behind and the trunk leant
@@ -826,6 +897,8 @@ CLIPS = {
     "muscle-up": (muscle_up_sample, "designed bar muscle-up, tools/myo/designed_clip.py"),
     "handstand": (handstand_sample, "designed handstand kick-up, tools/myo/designed_clip.py"),
     "dips": (dips_sample, "designed parallel-bar dips, tools/myo/designed_clip.py"),
+    "planche": (planche_sample, "designed planche, tools/myo/designed_clip.py"),
+    "front-lever": (front_lever_sample, "designed front lever, tools/myo/designed_clip.py"),
     "side-plank": (side_plank_sample, "designed yoga hold, tools/myo/designed_clip.py"),
     "pull-up": (pull_up_sample, "designed pose, src/lib/kinematics/pull-up.ts"),
     "lateral-raise": (lateral_raise_sample, "designed dumbbell lateral raise, tools/myo/designed_clip.py"),

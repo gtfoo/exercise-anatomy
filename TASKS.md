@@ -128,6 +128,14 @@ letter and a one-line task strands the *why*.
       up behind, press) and the designed sequences interpolate their keys
       with a monotone cubic spline instead of a smoothstep that stopped at
       every key, which read as jerky.
+      Sixth round (2026-09-12): the skull looked stretched in a crow or a
+      warrior III because the neck bone ran only from T1 to C7 and the head
+      bone from C7 to the crown, so the whole cervical spine was welded to
+      the skull and every neck rotation acted on a two-centimetre stub. The
+      joint between neck and head now sits on the atlas (C1), the skull and
+      jaw are pinned to the head bone by name and the vertebrae C2-C7 to the
+      neck; figure rebuilt. Two more designed holds: a full planche (crouch,
+      tuck, full, back) and a front lever (hang, tuck, full, back).
       `from: owner, 2026-09-11 · from "for side plank, the muscle activation should be asymmetric right?" to "there seems to be a few missing frames between the end and the start"`
 
 - [x] **Cycling, plank, five yoga holds, categories** (2026-09-11): all

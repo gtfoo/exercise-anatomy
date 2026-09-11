@@ -106,8 +106,8 @@ for k in list(SEGMENTS):
 RIG_SEGMENTS = {
     "pelvis": ("pelvis", "l5", ("hip.l", "hip.r")),
     "spine": ("l5", "t1", ("shoulder.l", "shoulder.r")),
-    "neck": ("t1", "c7", ("shoulder.l", "shoulder.r")),
-    "head": ("c7", "skull", None),
+    "neck": ("t1", "c1", ("shoulder.l", "shoulder.r")),
+    "head": ("c1", "skull", None),
     "thigh.L": ("hip.l", "knee.l", None),
     "shin.L": ("knee.l", "ankle.l", None),
     "foot.L": ("ankle.l", "toe.l", None),

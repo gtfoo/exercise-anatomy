@@ -250,6 +250,11 @@ joints["pelvis"] = (joints["hip.l"] + joints["hip.r"]) / 2
 joints["l5"] = bbox_center(O["Vertebra L5"])
 joints["t1"] = bbox_center(O["Vertebra T1"])
 joints["c7"] = bbox_center(O["Vertebra C7"])
+# The head nods on the atlas, so that is where the neck bone ends and the head
+# bone begins. With the joint at C7 the whole cervical spine was welded to the
+# skull and every neck rotation acted on a two-centimetre stub, which is why
+# the skull looked stretched in a crow or a warrior III (owner, 2026-09-12).
+joints["c1"] = bbox_center(next(O[n] for n in ("Atlas (C1)", "Atlas", "Anterior arch of atlas") if n in O))
 occ = world_verts(O["Occipital bone"])
 joints["skull"] = Vector((0, joints["c7"].y - 0.02, inv["mesh_extent"]["max"][2]))
 for k, v in joints.items():
@@ -259,8 +264,8 @@ for k, v in joints.items():
 BONES = {
     "pelvis": ("pelvis", "l5", None),
     "spine": ("l5", "t1", "pelvis"),
-    "neck": ("t1", "c7", "spine"),
-    "head": ("c7", "skull", "neck"),
+    "neck": ("t1", "c1", "spine"),
+    "head": ("c1", "skull", "neck"),
 }
 for s, S in (("l", "L"), ("r", "R")):
     BONES["thigh." + S] = ("hip." + s, "knee." + s, "pelvis")
@@ -428,6 +433,10 @@ def eff_dist(P):
 # condyles, where following the tibia leaves it. The finger phalanges follow the
 # fingers bone so a hand can close; the thumb stays with the hand.
 RIGID_OVERRIDE = [
+    # Everything of the skull, the jaw and the hyoid rides on the head bone; the
+    # cervical vertebrae below the atlas and their discs on the neck bone.
+    (re.compile(r"cranium|skull|occipital|parietal|temporal bone|frontal bone|sphenoid|ethmoid|zygomatic|maxilla|nasal bone|palatine bone|lacrimal bone|vomer|mandib|hyoid|tooth|teeth|incisor|canine|molar|^atlas|arch of atlas|facet of atlas|tubercle of atlas", re.I), "head"),
+    (re.compile(r"^(vertebra c[2-7]|axis \(c2\)|dens axis|intervertebral disc c)", re.I), "neck"),
     (re.compile(r"^patella", re.I), "shin"),
     (re.compile(r"phalanx of (second|third|fourth|fifth) finger of hand", re.I), "fingers"),
     (re.compile(r"phalanx of first finger of hand", re.I), "hand"),
@@ -447,7 +456,9 @@ def assign_weights(obj, ranges, rigid, names=None):
             for rx, seg in RIGID_OVERRIDE:
                 if rx.search(name):
                     side = "L" if name.endswith(".l") else "R" if name.endswith(".r") else None
-                    if side:
+                    if seg in seg_names:  # an unsided bone: pelvis, spine, neck, head
+                        bone = seg_names.index(seg)
+                    elif side:
                         bone = seg_names.index("%s.%s" % (seg, side))
                     break
             order[start : start + count, 0] = bone
