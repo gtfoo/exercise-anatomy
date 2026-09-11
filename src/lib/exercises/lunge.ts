@@ -1,10 +1,11 @@
 import type { CurvePoint, Exercise } from "./types";
-import type { MotionClip3D } from "@/lib/kinematics/types";
-import motion3d from "@/lib/motion/lunge-3d.json";
 
-// One forward lunge from CMU subject 144 trial 17: standing, step and sink,
-// push back to standing. Bottom of the lunge at about t = 0.54. Activation is
-// qualitative: no estimate has been run for this movement.
+// A designed forward lunge (tools/myo/designed_clip.py): left leg steps,
+// front thigh horizontal and shin vertical at the bottom (t = 0.55), back
+// knee a hand above the floor, both legs in the sagittal plane, arms at the
+// sides. The only free capture (CMU subject 144, tried 2026-09-10) had a
+// wide martial-arts stance with the back thigh swung 28° out; the owner
+// chose textbook form. Activation is qualitative.
 
 const t = (...pts: [number, number][]): CurvePoint[] => pts;
 // Front-leg extensors: load builds through the descent, peaks on the drive back up.
@@ -18,17 +19,16 @@ const BRACE = t([0, 0.2], [0.54, 0.45], [1, 0.2]);
 export const lunge: Exercise = {
   slug: "lunge",
   name: "Forward lunge",
-  durationMs: 2800, // the captured cycle at its real tempo
+  durationMs: 2800,
   anchor: "free",
-  motion3d: motion3d as unknown as MotionClip3D,
   native: { clip: "/models/clips/lunge.glb" },
   camera: { position: [3.0, 1.25, 1.6], target: [0, 0.8, 0.3] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is designed to textbook form, not captured: the only free capture used a wide stance. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
   phases: [
     { name: "step", t0: 0, t1: 0.3 },
-    { name: "descent", t0: 0.3, t1: 0.54 },
-    { name: "drive", t0: 0.54, t1: 0.85 },
+    { name: "descent", t0: 0.3, t1: 0.55 },
+    { name: "drive", t0: 0.55, t1: 0.85 },
     { name: "recover", t0: 0.85, t1: 1 },
   ],
   muscles: [

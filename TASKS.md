@@ -78,6 +78,13 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Lunge to textbook form; push-up added** (2026-09-11). The captured
+      lunge's back thigh swung 28° out (measured through the clip; CMU
+      subject 144 is a punching performer and the only lunge source), so
+      the owner chose a designed lunge; `designed_clip.py` builds it by
+      kinematics with two-link IK for the front leg. The push-up is
+      designed the same way (body line pivoting on the toes, arms by IK).
+      `from: owner, 2026-09-11 · "textbook form" / "also add push up"`
 - [x] **A jumping jack that jumps** (2026-09-11): CMU subject 13's take was
       a step-jack (hips moved 2 mm). Subject 14 take 6 hops about 10 cm;
       frames 64-96 replace it. No synthetic hop was added: the page shows

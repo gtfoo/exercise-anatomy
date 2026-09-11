@@ -38,7 +38,8 @@ Cuts in use (CMU FBX from Hugging Face `gbionics/cmu-fbx`, 30 fps):
 |---|---|---|---|
 | pull-up | 01_12 | 117:213 | hands, bar 2.3 |
 | jumping jacks | 14_06 | 64:96 | free (13_29's jacks are a step-jack, hips move 2 mm) |
-| forward lunge | 144_17 | 168:252 | free |
+| forward lunge | (designed, `tools/myo/designed_clip.py`) | | 144_17 frames 168-252 was tried: back thigh 28° out |
+| push-up | (designed) | | no free floor push-up exists |
 | freestyle | 126_12 | 297:364 | free, root offset y 0.216 |
 
 Also on disk: 88_02 (acrobatics) holds handstand push-ups, not floor ones;
