@@ -22,15 +22,16 @@ export const pushUp: Exercise = {
   // The body lies from the toes at z = 0.2 to the hands at z = 1.6; look at its middle from the side, a little ahead.
   camera: { position: [3.7, 1.3, 1.7], target: [0, 0.3, 0.95] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is designed, not captured: no free motion capture of a floor push-up exists. The anterior deltoid, a main presser, is not modelled separately in the atlas. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is designed, not captured: no free motion capture of a floor push-up exists. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
   phases: [
     { name: "lower", t0: 0, t1: 0.5 },
     { name: "push", t0: 0.5, t1: 1 },
   ],
   muscles: [
     { id: "pectoralis-major", name: "Pectoralis major", group: "Chest", role: "prime-mover", note: "Presses the body up: brings the upper arms together and forward.", curve: PRESS },
+    { id: "anterior-deltoid", name: "Anterior deltoid", group: "Shoulder", role: "prime-mover", note: "Presses with the chest: brings the upper arm forward under the body.", curve: PRESS },
     { id: "triceps-long-head", name: "Triceps, long head", group: "Arm", role: "prime-mover", note: "Straightens the elbows on the push.", curve: PRESS },
-    { id: "posterior-deltoid", name: "Posterior deltoid", group: "Shoulder", role: "stabiliser", note: "Steadies the shoulder; the anterior deltoid, which presses, is not modelled separately.", curve: CUFF },
+    { id: "posterior-deltoid", name: "Posterior deltoid", group: "Shoulder", role: "stabiliser", note: "Steadies the shoulder from behind.", curve: CUFF },
     { id: "infraspinatus", name: "Infraspinatus", group: "Shoulder", role: "stabiliser", note: "Rotator cuff: keeps the humeral head centred under load.", curve: CUFF },
     { id: "teres-minor", name: "Teres minor", group: "Shoulder", role: "stabiliser", note: "Rotator cuff, with infraspinatus.", curve: CUFF },
     { id: "middle-trapezius", name: "Middle trapezius", group: "Shoulder", role: "stabiliser", note: "Holds the shoulder blades against the ribcage.", curve: SCAPULA },

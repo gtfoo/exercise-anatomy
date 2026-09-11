@@ -1,6 +1,6 @@
 import ExerciseViewer from "@/components/ExerciseViewer";
-import { squat } from "@/lib/exercises/squat";
+import { atlas } from "@/lib/exercises/atlas";
 
-export default function Home() {
-  return <ExerciseViewer exercise={squat} />;
+export default function HomePage() {
+  return <ExerciseViewer exercise={atlas} />;
 }

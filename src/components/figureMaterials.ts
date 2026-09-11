@@ -25,6 +25,8 @@ export function bindMaterials(scene: THREE.Group, ids: Set<string>): FigureMater
   const materials: FigureMaterials = {};
   for (const id of ids) materials[id] = new THREE.MeshStandardMaterial({ color: COLD, roughness: 0.62, transparent: true });
   materials["context-muscles"] = new THREE.MeshStandardMaterial({ color: COLD, roughness: 0.62, transparent: true });
+  // Opaque on purpose: in focus mode bone is the one thing allowed to hide a
+  // selected muscle (the owner's rule, 2026-09-11); other muscles never do.
   materials.skeleton = new THREE.MeshStandardMaterial({ color: BONE, roughness: 0.8 });
   scene.traverse((o) => {
     const mesh = o as THREE.SkinnedMesh;
@@ -61,7 +63,14 @@ export function paintMaterials(materials: FigureMaterials, exercise: Exercise, t
     const lit = hovered === m.id || selected === m.id;
     if (lit) mat.emissive.copy(highlight).multiplyScalar(0.35);
     else mat.emissive.copy(hot).multiplyScalar(level * 0.25);
-    mat.opacity = selected !== null && !lit ? 0.12 : 1;
+    const faded = selected !== null && !lit;
+    mat.opacity = faded ? 0.12 : 1;
+    // A faded muscle must not write depth: drawn before the selected one it
+    // would still hide it (a clamshell's bent thigh over the abdomen did
+    // exactly that). With depth off, a selected muscle is visible from every
+    // angle through every other muscle; only the opaque skeleton can hide it.
+    mat.depthWrite = !faded;
   }
   materials["context-muscles"].opacity = selected !== null ? 0.12 : 1;
+  materials["context-muscles"].depthWrite = selected === null;
 }

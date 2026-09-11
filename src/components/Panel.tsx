@@ -63,49 +63,54 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
         <p className="mt-1 line-clamp-3 text-xs leading-relaxed text-zinc-500 md:line-clamp-none">{exercise.disclaimer}</p>
       </header>
 
-      <section className="flex flex-col gap-2">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={togglePlaying}
-            className="rounded-md border border-zinc-300 px-3 py-1 text-sm hover:bg-zinc-50"
-            aria-label={playing ? "Pause" : "Play"}
-          >
-            {playing ? "Pause" : "Play"}
-          </button>
-          <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs uppercase tracking-wide text-zinc-600">
-            {phase?.name}
-          </span>
-          <span className="ml-auto font-mono text-xs text-zinc-400">{Math.round(t * 100)}%</span>
-        </div>
-        <input
-          type="range"
-          min={0}
-          max={1000}
-          value={Math.round(t * 1000)}
-          onPointerDown={() => setPlaying(false)}
-          onChange={(e) => setT(Number(e.target.value) / 1000)}
-          className="w-full accent-red-600"
-          aria-label="Scrub through the rep"
-        />
-      </section>
+      {!exercise.static && (
+        <section className="flex flex-col gap-2">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={togglePlaying}
+              className="rounded-md border border-zinc-300 px-3 py-1 text-sm hover:bg-zinc-50"
+              aria-label={playing ? "Pause" : "Play"}
+            >
+              {playing ? "Pause" : "Play"}
+            </button>
+            <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs uppercase tracking-wide text-zinc-600">
+              {phase?.name}
+            </span>
+            <span className="ml-auto font-mono text-xs text-zinc-400">{Math.round(t * 100)}%</span>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={1000}
+            value={Math.round(t * 1000)}
+            onPointerDown={() => setPlaying(false)}
+            onChange={(e) => setT(Number(e.target.value) / 1000)}
+            className="w-full accent-red-600"
+            aria-label="Scrub through the rep"
+          />
+        </section>
+      )}
 
       {detail && (
         <section className="rounded-md border border-zinc-200 bg-zinc-50 p-3 text-sm">
           <div className="flex items-baseline justify-between gap-2">
             <h3 className="font-medium text-zinc-900">{detail.name}</h3>
             <span className="text-right text-[10px] uppercase tracking-wide text-zinc-500">
-              {detail.group} · {ROLE_LABEL[detail.role]}
+              {detail.group}
+              {!exercise.static && <> · {ROLE_LABEL[detail.role]}</>}
             </span>
           </div>
           <p className="mt-1 leading-relaxed text-zinc-700">{detail.note}</p>
-          <p className="mt-2 text-xs text-zinc-500">
-            {!detail.source
-              ? "Qualitative — not measured."
-              : detail.source.measure === "estimated-activation"
-                ? `Estimated, not measured — ${detail.source.citation}`
-                : `${detail.source.measure} · ${detail.source.citation}`}
-          </p>
+          {!exercise.static && (
+            <p className="mt-2 text-xs text-zinc-500">
+              {!detail.source
+                ? "Qualitative — not measured."
+                : detail.source.measure === "estimated-activation"
+                  ? `Estimated, not measured — ${detail.source.citation}`
+                  : `${detail.source.measure} · ${detail.source.citation}`}
+            </p>
+          )}
         </section>
       )}
 
@@ -127,12 +132,14 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
                       active ? "bg-zinc-100" : "hover:bg-zinc-50"
                     }`}
                   >
-                    <span
-                      className="h-3 w-3 shrink-0 rounded-full ring-1 ring-zinc-300"
-                      style={{ background: rampCss(level) }}
-                    />
+                    {!exercise.static && (
+                      <span
+                        className="h-3 w-3 shrink-0 rounded-full ring-1 ring-zinc-300"
+                        style={{ background: rampCss(level) }}
+                      />
+                    )}
                     <span className="flex-1">{m.name}</span>
-                    <span className="text-[10px] uppercase tracking-wide text-zinc-400">{ROLE_LABEL[m.role]}</span>
+                    {!exercise.static && <span className="text-[10px] uppercase tracking-wide text-zinc-400">{ROLE_LABEL[m.role]}</span>}
                   </button>
                 </li>
               );
@@ -152,7 +159,9 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
           Z-Anatomy
         </a>{" "}
         — The libre 3D atlas of anatomy — CC-BY-SA 4.0. The adapted model is shared under the same licence.
-        {(exercise.motion3d?.credit ?? exercise.motion?.credit) && <> Movement captured from {exercise.motion3d?.credit ?? exercise.motion?.credit}.</>}
+        {(exercise.credit ?? exercise.motion3d?.credit ?? exercise.motion?.credit) && (
+          <> Movement captured from {exercise.credit ?? exercise.motion3d?.credit ?? exercise.motion?.credit}.</>
+        )}
       </footer>
     </aside>
   );

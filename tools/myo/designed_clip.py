@@ -286,38 +286,79 @@ def q_rot(q, v):
 
 
 def clam_sample(t):
-    roll = q_axis([0, 0, 1], 90 * DEG)  # upright -> lying on the right side, head to -X
+    # Upright -> lying on the LEFT side: a quarter turn about the forward axis
+    # the other way, so the head goes to +X and the belly stays toward +Z, the
+    # camera. The top leg is then the right one.
+    roll = q_axis([0, 0, 1], -90 * DEG)
     # Legs: hip flexion swings the thigh toward the belly (+Z), a turn about the world Y axis.
     thigh = qmul(q_axis([0, 1, 0], -CLAM_HIP_FLEX), roll)
     shin = qmul(q_axis([0, 1, 0], -CLAM_HIP_FLEX + CLAM_KNEE), roll)
     # Pelvis placed so the lower hip rests a thigh's thickness above the floor.
-    hip_r_target = np.array([0.0, 0.12, 0.0])
-    pelvis_pos = hip_r_target - q_rot(roll, rig["hip.r"] - rig["pelvis"])
+    hip_low_target = np.array([0.0, 0.12, 0.0])
+    pelvis_pos = hip_low_target - q_rot(roll, rig["hip.l"] - rig["pelvis"])
     root = pelvis_pos - rig["pelvis"]
-    hip_l = pelvis_pos + q_rot(roll, rig["hip.l"] - rig["pelvis"])
+    hip_top = pelvis_pos + q_rot(roll, rig["hip.r"] - rig["pelvis"])
     down = np.array([0.0, -1.0, 0.0])
-    knee_l = hip_l + q_rot(thigh, down) * L_THIGH
-    ankle_l = knee_l + q_rot(shin, down) * L_SHIN
+    knee_top = hip_top + q_rot(thigh, down) * L_THIGH
+    ankle_top = knee_top + q_rot(shin, down) * L_SHIN
     # Open the top leg about its hip-to-ankle line; the sign that lifts the knee is the one wanted.
-    axis = ankle_l - hip_l
+    axis = ankle_top - hip_top
     a = keyed(CLAM_OPEN, t) * DEG
     q_open = q_axis(axis, a)
-    if q_rot(q_open, knee_l - hip_l)[1] < (knee_l - hip_l)[1] - 1e-6:
+    if q_rot(q_open, knee_top - hip_top)[1] < (knee_top - hip_top)[1] - 1e-6:
         q_open = q_axis(axis, -a)
     q = {"pelvis": roll, "spine": roll, "neck": roll, "head": roll}
-    q["thigh.R"], q["shin.R"], q["foot.R"] = thigh, shin, shin
-    q["thigh.L"], q["shin.L"], q["foot.L"] = qmul(q_open, thigh), qmul(q_open, shin), qmul(q_open, shin)
-    # Lower arm overhead along the floor (-X); upper arm forward and down, hand on the floor in front.
-    under = q_axis([0, 0, 1], -90 * DEG)
-    front = q_axis([1, 0, 0], -60 * DEG)
+    q["thigh.L"], q["shin.L"], q["foot.L"] = thigh, shin, shin
+    q["thigh.R"], q["shin.R"], q["foot.R"] = qmul(q_open, thigh), qmul(q_open, shin), qmul(q_open, shin)
+    # Lower (left) arm overhead along the floor (+X, the head end). The top arm
+    # rests along the top of the body with the hand on the hip: the same roll
+    # as the trunk, so nothing lies across the belly.
+    under = q_axis([0, 0, 1], 90 * DEG)
     for b in ("upper_arm", "forearm", "hand", "fingers"):
-        q[b + ".R"] = under
-        q[b + ".L"] = front
+        q[b + ".L"] = under
+        q[b + ".R"] = roll
     return {"root": [round(float(v), 4) for v in root], "q": q}
 
 
+# ---------- dumbbell lateral raise ----------
+# Standing, a dumbbell in each hand at the sides with the palms facing the
+# thighs; the arms rise to shoulder height in the scapular plane (25 degrees
+# ahead of pure sideways), elbows nearly straight, palms ending face down,
+# and lower under control. The dumbbells are drawn by the viewer, attached
+# to the hand bones.
+RAISE = [(0, 0), (0.05, 0), (0.45, 88), (0.55, 88), (0.95, 0), (1, 0)]
+
+
+def lateral_raise_sample(t):
+    a = keyed(RAISE, t) * DEG
+    q = {"pelvis": IDENT, "spine": IDENT, "neck": IDENT, "head": IDENT}
+    for S in ("L", "R"):
+        q["thigh." + S], q["shin." + S], q["foot." + S] = IDENT, IDENT, IDENT
+    for S, sign in (("L", 1), ("R", -1)):
+        palm_in = q_axis([0, 1, 0], -sign * 90 * DEG)  # rest palm forward -> facing the thigh
+        raise_q = qmul(q_axis([0, 1, 0], -sign * 25 * DEG), q_axis([0, 0, 1], sign * a))  # out to the side, then a little forward
+        upper = qmul(raise_q, IDENT)
+        lower = qmul(qmul(q_axis([0, 1, 0], -sign * 25 * DEG), q_axis([0, 0, 1], sign * a * 0.92)), palm_in)  # 8% less: a soft elbow
+        q["upper_arm." + S] = upper
+        q["forearm." + S] = lower
+        q["hand." + S] = lower
+        q["fingers." + S] = qmul(lower, rx(-70 * DEG))  # wrapped round the handle
+    return {"root": [0, 0, 0], "q": q}
+
+
+def stand_sample(t):
+    """The figure's own rest: standing, arms at the sides. The atlas page."""
+    q = {b: IDENT for b in ("pelvis", "spine", "neck", "head")}
+    for S in ("L", "R"):
+        for b in ("thigh", "shin", "foot", "upper_arm", "forearm", "hand", "fingers"):
+            q["%s.%s" % (b, S)] = IDENT
+    return {"root": [0, 0, 0], "q": q}
+
+
 CLIPS = {
+    "stand": (stand_sample, "rest pose, tools/myo/designed_clip.py"),
     "pull-up": (pull_up_sample, "designed pose, src/lib/kinematics/pull-up.ts"),
+    "lateral-raise": (lateral_raise_sample, "designed dumbbell lateral raise, tools/myo/designed_clip.py"),
     "clamshell": (clam_sample, "designed clamshell, tools/myo/designed_clip.py"),
     "l-sit": (lsit_sample, "designed L-sit on parallel bars, tools/myo/designed_clip.py"),
     "lunge": (lunge_sample, "designed forward lunge, tools/myo/designed_clip.py"),

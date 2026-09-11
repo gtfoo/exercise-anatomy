@@ -26,8 +26,10 @@ the flow are in `~/Git/COMMS.md`, read when writing, not from memory.
 
 exercise-anatomy.gtfoo.com shows which muscles work, and when, through a
 movement: one rep of a bodyweight squat on a rigged écorché, scrubbable, with
-each of 21 muscles coloured by activation and a focus mode that fades all but
-the selected muscle and the skeleton. Educational; it says so on the page.
+each named muscle coloured by activation and a focus mode that fades all but
+the selected muscle and the skeleton. In focus mode faded muscles do not
+write depth, so the selected muscle is visible from every angle through
+every other muscle; only bone may hide it (owner's rule, 2026-09-11). Educational; it says so on the page.
 
 ## Three provenances, and the UI must never blur them
 

@@ -22,7 +22,7 @@ export default function ExerciseViewer({ exercise }: { exercise: Exercise }) {
       <div className="relative h-[52dvh] min-h-0 w-full shrink-0 md:h-auto md:min-w-0 md:flex-1">
         <Scene exercise={exercise} />
         <p className="pointer-events-none absolute right-4 bottom-3 hidden max-w-56 text-right text-xs text-zinc-400 md:block">
-          drag to orbit · scroll to zoom · space to play/pause · click a muscle
+          {exercise.static ? "drag to orbit · scroll to zoom · click a muscle" : "drag to orbit · scroll to zoom · space to play/pause · click a muscle"}
         </p>
       </div>
       <Panel exercise={exercise} />

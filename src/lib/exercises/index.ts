@@ -7,8 +7,11 @@ import { jumpingJacks } from "./jumping-jacks";
 import { pushUp } from "./push-up";
 import { lSit } from "./l-sit";
 import { clamshell } from "./clamshell";
+import { lateralRaise } from "./lateral-raise";
+import { breaststroke } from "./breaststroke";
+import { atlas } from "./atlas";
 
-/** Display order. Routes are `/` for the first and `/<slug>` for the rest. */
-export const exercises: readonly Exercise[] = [squat, lunge, jumpingJacks, pushUp, pullUp, lSit, clamshell, freestyle];
+/** Display order. Routes are `/` for the first (the resting atlas) and `/<slug>` for the rest. */
+export const exercises: readonly Exercise[] = [atlas, squat, lunge, jumpingJacks, pushUp, pullUp, lSit, clamshell, lateralRaise, freestyle, breaststroke];
 
 export const routeFor = (e: Exercise) => (e === exercises[0] ? "/" : `/${e.slug}`);

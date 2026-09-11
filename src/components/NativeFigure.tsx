@@ -30,6 +30,40 @@ export const FIGURE_URL = "/models/figure-mixamo.glb";
 
 type Live = { materials: FigureMaterials; mixer: THREE.AnimationMixer; action: THREE.AnimationAction; duration: number };
 
+/**
+ * Hand-held equipment, parented to the hand bones so it follows the clip.
+ * The Mixamo hand bone points along the fingers (local Y) with local Z out
+ * of the back of the hand and local X across the palm, so a dumbbell handle
+ * lies along X, a little way down the hand and just on the palm side.
+ * Returns the function that removes it again.
+ */
+function attachProps(scene: THREE.Group, props: Exercise["props"]): () => void {
+  if (props !== "dumbbells") return () => {};
+  const steel = new THREE.MeshStandardMaterial({ color: "#4a4744", roughness: 0.5, metalness: 0.6 });
+  const added: THREE.Object3D[] = [];
+  for (const side of ["Left", "Right"]) {
+    const hand = scene.getObjectByName(`mixamorig${side}Hand`);
+    if (!hand) continue;
+    const g = new THREE.Group();
+    g.position.set(0, 0.07, 0.03);
+    const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.17, 16), steel);
+    handle.rotation.z = Math.PI / 2;
+    g.add(handle);
+    for (const x of [-0.095, 0.095]) {
+      const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.035, 24), steel);
+      plate.rotation.z = Math.PI / 2;
+      plate.position.x = x;
+      g.add(plate);
+    }
+    hand.add(g);
+    added.push(g);
+  }
+  return () => {
+    for (const g of added) g.removeFromParent();
+    steel.dispose();
+  };
+}
+
 export default function NativeFigure({ exercise }: { exercise: Exercise }) {
   const figureUrl = versioned(exercise.native?.figure ?? FIGURE_URL);
   const clipUrl = versioned(exercise.native!.clip);
@@ -40,11 +74,13 @@ export default function NativeFigure({ exercise }: { exercise: Exercise }) {
 
   useEffect(() => {
     const materials = bindMaterials(scene, ids);
+    const props = attachProps(scene, exercise.props);
     const clip = animations[0];
     if (!clip) {
       console.warn(`${clipUrl} has no animation clip`);
       live.current = null;
       return () => {
+        props();
         for (const m of Object.values(materials)) m.dispose();
       };
     }
@@ -59,10 +95,11 @@ export default function NativeFigure({ exercise }: { exercise: Exercise }) {
     return () => {
       action.stop();
       mixer.uncacheRoot(scene);
+      props();
       for (const m of Object.values(materials)) m.dispose();
       live.current = null;
     };
-  }, [scene, animations, ids, clipUrl]);
+  }, [scene, animations, ids, clipUrl, exercise.props]);
 
   const setHovered = useViewer((s) => s.setHovered);
   const setSelected = useViewer((s) => s.setSelected);

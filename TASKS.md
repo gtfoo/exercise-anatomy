@@ -78,6 +78,25 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Home page is the resting atlas; breaststroke added** (2026-09-11).
+      `/` shows the figure standing (a one-frame "stand" clip) and lists all
+      39 named muscles with no transport; the squat lives at
+      `/bodyweight-squat/`. Breaststroke is the owner's Mixamo clip, frames
+      61-121, converted bone for bone. The clamshell's top arm moved to the
+      hip after the owner could not see the rectus abdominis: the arm's
+      bones lay across the belly and the skeleton stays opaque in focus mode.
+      `from: owner, 2026-09-11 · "show the model being stationary and list all the muscles"`
+- [x] **Dumbbell lateral raise** (2026-09-11), designed, with the figure
+      rebuilt to carry the middle and anterior deltoid, upper trapezius and
+      supraspinatus as named muscles (the atlas had them; the figure did not).
+      The viewer parents a dumbbell to each hand bone (`props: "dumbbells"`).
+      Push-up and jumping jacks picked up the new deltoid parts.
+      `from: owner, 2026-09-11 · "can we also add dumbbell lateral raise?"`
+- [x] **Pull-up hung 0.44 m off the bar's centre** (found 2026-09-11 when
+      the owner said "the body is still at the side of the bar" and a
+      straight-on camera showed it): `convert_clip.py` pinned the wrist at
+      the T-posed rig's LeftHand x instead of the standing wrist x. Fixed;
+      the camera stays straight on.
 - [x] **Clamshell** (2026-09-11), designed side-lying: the top leg rotates
       about its hip-to-ankle line so the feet stay together. Lunge retuned
       again on the owner's note: back leg in place with a slight bend, both

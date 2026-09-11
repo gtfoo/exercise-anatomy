@@ -54,6 +54,12 @@ export type Exercise = {
   barHeight?: number;
   /** Half the distance between parallel bars, metres: where the hands rest. */
   barSpacing?: number;
+  /** Hand-held equipment the viewer attaches to the hand bones. */
+  props?: "dumbbells";
+  /** Who captured the movement, when the clip came straight from a source file rather than through `motion`/`motion3d`. */
+  credit?: string;
+  /** A resting figure and a plain muscle list: no transport, no roles, no provenance line. */
+  static?: boolean;
   /** Added to the root when free: where to put a body the clip does not place (a swimmer at the surface). */
   rootOffset?: [number, number, number];
   /** Floor by default; water draws a surface at `waterLevel` and no floor shadow. */

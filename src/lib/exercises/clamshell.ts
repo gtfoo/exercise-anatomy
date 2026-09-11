@@ -1,9 +1,9 @@
 import type { CurvePoint, Exercise } from "./types";
 
-// A designed clamshell (tools/myo/designed_clip.py): lying on the right side,
-// hips bent 45 and knees 90 with the feet together, the top knee opens 40
-// degrees and closes while the pelvis stays still. Designed because no free
-// capture exists. Activation is qualitative.
+// A designed clamshell (tools/myo/designed_clip.py): lying on the left side,
+// hips bent 45 and knees 90 with the feet together, the top (right) knee
+// opens 40 degrees and closes while the pelvis stays still. Designed because
+// no free capture exists. Activation is qualitative.
 
 const t = (...pts: [number, number][]): CurvePoint[] => pts;
 // Abductors and external rotators: work through the opening, hold, and control the close.
@@ -16,8 +16,8 @@ export const clamshell: Exercise = {
   durationMs: 3000,
   anchor: "free",
   native: { clip: "/models/clips/clamshell.glb" },
-  // The body lies along X from the head at about -0.7 to the feet at +0.6; look at it from the front, slightly above.
-  camera: { position: [0.3, 0.9, 3.0], target: [0, 0.3, 0] },
+  // The body lies along X, head toward +X; look at it from the front, a little above.
+  camera: { position: [-0.3, 0.9, 3.0], target: [0, 0.3, 0] },
   disclaimer:
     "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is designed, not captured. The tensor fasciae latae and the deep rotators (piriformis and the gemelli) are not modelled in the atlas. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
   phases: [

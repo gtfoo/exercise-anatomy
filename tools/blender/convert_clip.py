@@ -105,10 +105,22 @@ if FBX:
     bpy.ops.import_scene.fbx(filepath=os.path.abspath(FBX), use_anim=True, automatic_bone_orientation=False)
     mx = next(o for o in bpy.data.objects if o.type == "ARMATURE" and o != arm)
     f0, f1 = mx.animation_data.action.frame_range
-    frames = list(range(int(f0), int(math.ceil(f1)) + 1))
+    RANGE = opt("--range", None)  # START:END frames of the FBX to keep (a cycle of a multi-rep take); keyed from 0
+    if RANGE:
+        a, b = (int(v) for v in RANGE.split(":"))
+        frames = list(range(a, b + 1))
+    else:
+        frames = list(range(int(f0), int(math.ceil(f1)) + 1))
     for pb in mx.pose.bones:
         pb.rotation_mode = "QUATERNION"
     hip_scale = rig["leg_scale"] * mx.matrix_world.to_scale().x
+    # --root-motion vertical keeps only the hips' up-and-down and holds the
+    # travel of the first frame (a swimmer or walker stays in the camera's
+    # view); full copies the clip's travel. Mixamo's Hips bone rests with its
+    # local Y up, so "vertical" is the local Y component.
+    ROOT_MOTION = opt("--root-motion", "full")
+    hips_z = []
+    first_loc = None
     for f in frames:
         scene.frame_set(f)
         for pb in arm.pose.bones:
@@ -117,13 +129,20 @@ if FBX:
                 continue
             pb.rotation_quaternion = src.rotation_quaternion.copy()
             if pb.name == "mixamorig:Hips":
-                pb.location = src.location * hip_scale
-        key_all(f)
-    scene.frame_start, scene.frame_end = frames[0], frames[-1]
+                loc = src.location * hip_scale
+                if first_loc is None:
+                    first_loc = loc.copy()
+                if ROOT_MOTION == "vertical":
+                    loc = Vector((0.0, loc.y, 0.0))  # the hips stay over the origin; a cut from mid-take is otherwise a stride away
+                pb.location = loc
+        key_all(f - frames[0])
+        bpy.context.view_layer.update()
+        hips_z.append((arm.pose.bones["mixamorig:Hips"].head).z)
+    scene.frame_start, scene.frame_end = 0, frames[-1] - frames[0]
     mx_action = mx.animation_data.action
     bpy.data.objects.remove(mx, do_unlink=True)
     bpy.data.actions.remove(mx_action)
-    print("copied %d frames from %s" % (len(frames), os.path.basename(FBX)))
+    print("copied %d frames (%d-%d) from %s; hips height %.2f..%.2f m" % (len(frames), frames[0], frames[-1], os.path.basename(FBX), min(hips_z), max(hips_z)))
 
 # ---------- B. MotionClip3D for our rig ----------
 else:

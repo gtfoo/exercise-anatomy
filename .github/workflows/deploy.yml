@@ -77,6 +77,7 @@ jobs:
           code() { curl -s -o /dev/null -w '%{http_code}' "https://exercise-anatomy.gtfoo.com$1"; }
           echo "/ -> $(code /)"
           echo "/pull-up/ -> $(code /pull-up/)"
+          echo "/bodyweight-squat/ -> $(code /bodyweight-squat/)"
           echo "/freestyle/ -> $(code /freestyle/)"
           echo "/models/figure-mixamo.glb -> $(code /models/figure-mixamo.glb)"
           echo "/models/clips/pull-up.glb -> $(code /models/clips/pull-up.glb)"
