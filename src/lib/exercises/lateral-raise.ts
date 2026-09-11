@@ -14,7 +14,7 @@ const BRACE = t([0, 0.35], [0.45, 0.5], [0.55, 0.5], [1, 0.35]);
 
 export const lateralRaise: Exercise = {
   slug: "lateral-raise",
-  category: "Push and pull",
+  category: "Weights",
   name: "Dumbbell lateral raise",
   durationMs: 3000,
   anchor: "free",

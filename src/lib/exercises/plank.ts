@@ -1,24 +1,31 @@
 import type { CurvePoint, Exercise } from "./types";
 
-// A designed forearm plank (tools/myo/designed_clip.py): a hold, elbows under
-// the shoulders, body straight from the heels to the head. Designed because
-// no free capture exists. Activation is qualitative and steady: nothing
-// moves, everything listed is working the whole time.
+// Two Mixamo clips played in sequence: getting down from standing, through
+// kneeling, into a straight-arm plank (4.9 s), then the plank held (3.0 s).
+// They replaced a designed forearm hold on 2026-09-11. Activation is
+// qualitative: nothing much works until the body is straight, then
+// everything listed holds steadily.
 
 const t = (...pts: [number, number][]): CurvePoint[] => pts;
-const HOLD = (v: number) => t([0, v], [1, v]);
+const DOWN = 0.62; // where the hold begins
+// Rises through the last part of getting down, then holds at v.
+const HOLD = (v: number) => t([0, 0.1], [0.4, 0.2], [0.55, v * 0.8], [DOWN, v], [1, v]);
 
 export const plank: Exercise = {
   slug: "plank",
   category: "Core",
   name: "Plank",
-  durationMs: 4000,
+  durationMs: 7930, // both captured clips at their real tempo
   anchor: "free",
+  credit: "Mixamo (Adobe)",
   native: { clip: "/models/clips/plank.glb" },
-  camera: { position: [3.4, 1.2, 1.5], target: [0, 0.3, 0.85] },
+  camera: { position: [3.4, 1.3, 1.6], target: [0, 0.45, 0.2] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The position is designed, not captured, and held; nothing here is estimated or measured. Educational illustration, not training or medical advice.",
-  phases: [{ name: "hold", t0: 0, t1: 1 }],
+    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is two motion-capture clips, getting down and then holding. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+  phases: [
+    { name: "get down", t0: 0, t1: DOWN },
+    { name: "hold", t0: DOWN, t1: 1 },
+  ],
   muscles: [
     { id: "rectus-abdominis", name: "Rectus abdominis", group: "Trunk", role: "prime-mover", note: "Holds the hips up: the plank is this muscle's isometric.", curve: HOLD(0.85) },
     { id: "transversus-abdominis", name: "Transversus abdominis", group: "Trunk", role: "prime-mover", note: "Deep brace that keeps the trunk a single rigid piece.", curve: HOLD(0.8) },
@@ -27,9 +34,12 @@ export const plank: Exercise = {
     { id: "gluteus-maximus", name: "Gluteus maximus", group: "Hip", role: "synergist", note: "Keeps the hips extended in line with the trunk.", curve: HOLD(0.55) },
     { id: "rectus-femoris", name: "Rectus femoris", group: "Leg", role: "stabiliser", note: "Keeps the knees straight.", curve: HOLD(0.45) },
     { id: "vastus-lateralis", name: "Vastus lateralis", group: "Leg", role: "stabiliser", note: "Knee extension with rectus femoris.", curve: HOLD(0.4) },
-    { id: "anterior-deltoid", name: "Anterior deltoid", group: "Shoulder", role: "synergist", note: "Holds the shoulders over the elbows.", curve: HOLD(0.6) },
-    { id: "pectoralis-major", name: "Pectoralis major", group: "Shoulder", role: "stabiliser", note: "Steadies the shoulder girdle.", curve: HOLD(0.4) },
-    { id: "middle-trapezius", name: "Middle trapezius", group: "Shoulder", role: "stabiliser", note: "Holds the shoulder blades flat.", curve: HOLD(0.45) },
-    { id: "triceps-long-head", name: "Triceps, long head", group: "Arm", role: "stabiliser", note: "Steadies the elbow on the floor.", curve: HOLD(0.35) },
+    { id: "anterior-deltoid", name: "Anterior deltoid", group: "Shoulder", role: "synergist", note: "Holds the shoulders over the hands.", curve: HOLD(0.6) },
+    { id: "pectoralis-major", name: "Pectoralis major", group: "Chest", role: "stabiliser", note: "Steadies the straight arms under the shoulders.", curve: HOLD(0.45) },
+    { id: "triceps-long-head", name: "Triceps, long head", group: "Arm", role: "stabiliser", note: "Keeps the elbows locked.", curve: HOLD(0.5) },
+    { id: "middle-trapezius", name: "Middle trapezius", group: "Shoulder", role: "stabiliser", note: "Keeps the shoulder blades flat on the ribcage.", curve: HOLD(0.45) },
+    { id: "rhomboids", name: "Rhomboids", group: "Shoulder", role: "stabiliser", note: "Shoulder blade control with the middle trapezius.", curve: HOLD(0.4) },
+    { id: "forearm-flexors", name: "Forearm flexors", group: "Arm", role: "stabiliser", note: "Hold the wrists as the hands take the weight.", curve: HOLD(0.5) },
+    { id: "tibialis-anterior", name: "Tibialis anterior", group: "Leg", role: "stabiliser", note: "Holds the ankles dorsiflexed on the toes.", curve: HOLD(0.4) },
   ],
 };

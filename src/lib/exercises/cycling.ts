@@ -3,15 +3,17 @@ import { shifted } from "./types";
 
 // Designed cycling (tools/myo/designed_clip.py): seated on a drawn bike,
 // trunk leant to the handlebar, the pedals a half turn apart. t = 0 is the
-// left pedal at the bottom of its circle; each leg pushes from the top of
-// the stroke (t about 0.5 for the left, 0 for the right). Both sides are
-// one mesh, so the curves carry two pushes per turn. Activation is qualitative.
+// left pedal at the bottom of its circle: the left leg lifts through the
+// first half of the turn and pushes down through the second, the right leg
+// the other way round. Each side follows its own pedal (`right` is the left
+// curve shifted by half a turn). Activation is qualitative.
 
 const t = (...pts: [number, number][]): CurvePoint[] => pts;
-// Down-stroke: the pushing leg works from the top of the circle to the bottom.
-const PUSH = t([0, 0.55], [0.1, 0.35], [0.25, 0.9], [0.4, 1], [0.5, 0.55], [0.6, 0.35], [0.75, 0.9], [0.9, 1], [1, 0.55]);
-const HIPFLEX = t([0, 0.4], [0.15, 0.85], [0.3, 0.5], [0.5, 0.4], [0.65, 0.85], [0.8, 0.5], [1, 0.4]);
-const CALF = t([0, 0.5], [0.3, 0.85], [0.45, 0.7], [0.5, 0.5], [0.8, 0.85], [0.95, 0.7], [1, 0.5]);
+// The left down-stroke: from the top of the circle (t = 0.5) to the bottom.
+const PUSH = t([0, 0.55], [0.1, 0.35], [0.5, 0.35], [0.6, 0.45], [0.75, 0.9], [0.9, 1], [1, 0.55]);
+const HIPFLEX = t([0, 0.4], [0.15, 0.85], [0.3, 0.5], [0.5, 0.4], [1, 0.4]); // lifting the thigh through the up-stroke
+const CALF = t([0, 0.5], [0.5, 0.5], [0.8, 0.85], [0.95, 0.7], [1, 0.5]);
+const HAMSTRING = t([0, 0.9], [0.15, 0.5], [0.35, 0.35], [0.85, 0.35], [1, 0.9]); // pulling back through the bottom of the circle
 const BRACE = t([0, 0.4], [1, 0.4]);
 
 export const cycling: Exercise = {
@@ -36,8 +38,8 @@ export const cycling: Exercise = {
     { id: "vastus-intermedius", name: "Vastus intermedius", group: "Knee", role: "prime-mover", note: "Deep knee extensor.", curve: PUSH, right: shifted(PUSH, 0.5) },
     { id: "rectus-femoris", name: "Rectus femoris", group: "Knee", role: "synergist", note: "Extends the knee and lifts the thigh over the top of the stroke.", curve: HIPFLEX, right: shifted(HIPFLEX, 0.5) },
     { id: "gluteus-maximus", name: "Gluteus maximus", group: "Hip", role: "prime-mover", note: "Extends the hip from the top of the stroke through the front.", curve: PUSH, right: shifted(PUSH, 0.5) },
-    { id: "biceps-femoris", name: "Biceps femoris", group: "Hip", role: "synergist", note: "Pulls back through the bottom of the circle.", curve: t([0, 0.9], [0.15, 0.5], [0.35, 0.35], [0.5, 0.9], [0.65, 0.5], [0.85, 0.35], [1, 0.9]), right: shifted(t([0, 0.9], [0.15, 0.5], [0.35, 0.35], [0.5, 0.9], [0.65, 0.5], [0.85, 0.35], [1, 0.9]), 0.5) },
-    { id: "semitendinosus", name: "Semitendinosus", group: "Hip", role: "synergist", note: "Pulls back through the bottom with biceps femoris.", curve: t([0, 0.85], [0.15, 0.5], [0.35, 0.35], [0.5, 0.85], [0.65, 0.5], [0.85, 0.35], [1, 0.85]), right: shifted(t([0, 0.85], [0.15, 0.5], [0.35, 0.35], [0.5, 0.85], [0.65, 0.5], [0.85, 0.35], [1, 0.85]), 0.5) },
+    { id: "biceps-femoris", name: "Biceps femoris", group: "Hip", role: "synergist", note: "Pulls back through the bottom of the circle.", curve: HAMSTRING, right: shifted(HAMSTRING, 0.5) },
+    { id: "semitendinosus", name: "Semitendinosus", group: "Hip", role: "synergist", note: "Pulls back through the bottom with biceps femoris.", curve: HAMSTRING, right: shifted(HAMSTRING, 0.5) },
     { id: "gastrocnemius-medial", name: "Gastrocnemius (medial)", group: "Ankle", role: "synergist", note: "Points the foot through the bottom of the stroke.", curve: CALF, right: shifted(CALF, 0.5) },
     { id: "gastrocnemius-lateral", name: "Gastrocnemius (lateral)", group: "Ankle", role: "synergist", note: "Ankle push with the medial head.", curve: CALF, right: shifted(CALF, 0.5) },
     { id: "soleus", name: "Soleus", group: "Ankle", role: "synergist", note: "Steadies the ankle on the pedal.", curve: CALF, right: shifted(CALF, 0.5) },

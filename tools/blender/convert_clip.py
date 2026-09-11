@@ -46,6 +46,10 @@ ARMS = opt("--arms", "clip")
 # looking down the pool). The CMU conversions' head bone maps with a forward
 # droop that the Mixamo clips do not have; until that is understood, this.
 HEAD = opt("--head", "clip")
+# --loop-blend N: append N frames that ease from the last pose back to the
+# first, so a clip cut from a longer take does not snap when it repeats (the
+# swims: the owner saw missing frames between the end and the start).
+LOOP_BLEND = int(opt("--loop-blend", "0"))
 if not (FBX or CLIP3D):
     raise SystemExit(__doc__)
 
@@ -100,6 +104,23 @@ def key_all(frame):
     arm.pose.bones["mixamorig:Hips"].keyframe_insert("location", frame=frame)
 
 
+def capture_pose():
+    return {pb.name: pb.rotation_quaternion.copy() for pb in arm.pose.bones}, arm.pose.bones["mixamorig:Hips"].location.copy()
+
+
+def blend_to(first, last, n, frame):
+    """Key n frames easing from pose `last` to pose `first`, starting at `frame`; returns the next free frame."""
+    for k in range(1, n + 1):
+        f = k / (n + 1)
+        f = f * f * (3 - 2 * f)
+        for pb in arm.pose.bones:
+            pb.rotation_quaternion = last[0][pb.name].slerp(first[0][pb.name], f)
+        arm.pose.bones["mixamorig:Hips"].location = last[1].lerp(first[1], f)
+        key_all(frame)
+        frame += 1
+    return frame
+
+
 # ---------- A. Mixamo FBX: bone for bone ----------
 if FBX:
     # Several files, comma-separated, play one after another (a climb up then
@@ -151,6 +172,8 @@ if FBX:
                         pb.location = loc
                         last_loc = loc.copy()
                 key_all(out_frame)
+                if out_frame == 0:
+                    first_pose = capture_pose()
                 out_frame += 1
                 bpy.context.view_layer.update()
                 hips_z.append((arm.pose.bones["mixamorig:Hips"].head).z)
@@ -158,8 +181,10 @@ if FBX:
             mx_action = mx.animation_data.action
             bpy.data.objects.remove(mx, do_unlink=True)
             bpy.data.actions.remove(mx_action)
+    if LOOP_BLEND:
+        out_frame = blend_to(first_pose, capture_pose(), LOOP_BLEND, out_frame)
     scene.frame_start, scene.frame_end = 0, out_frame - 1
-    print("copied %d frames from %s x%d; hips height %.2f..%.2f m" % (out_frame, ", ".join(os.path.basename(p) for p in files), REPEAT, min(hips_z), max(hips_z)))
+    print("copied %d frames from %s x%d (loop blend %d); hips height %.2f..%.2f m" % (out_frame, ", ".join(os.path.basename(p) for p in files), REPEAT, LOOP_BLEND, min(hips_z), max(hips_z)))
 
 # ---------- B. MotionClip3D for our rig ----------
 else:
@@ -200,7 +225,9 @@ else:
     standing = json.load(open(joints_path))
     wrist_rest = Vector(standing["wrist.l"])
     shifts = []
-    for i in range(N + 1):
+    # Frame N repeats sample 0 so the loop closes; with a loop blend the eased
+    # frames close it instead.
+    for i in range(N if LOOP_BLEND else N + 1):
         s = samples[i % N]
         for pb in arm.pose.bones:
             pb.rotation_quaternion = Quaternion()
@@ -233,7 +260,12 @@ else:
         hips.location = hips_rest.inverted() @ shift
         shifts.append(shift)
         key_all(i)
-    scene.frame_start, scene.frame_end = 0, N
+        if i == 0:
+            first_pose = capture_pose()
+    last_frame = N
+    if LOOP_BLEND:
+        last_frame = blend_to(first_pose, capture_pose(), LOOP_BLEND, N) - 1
+    scene.frame_start, scene.frame_end = 0, last_frame
     zs = [v.z for v in shifts]
     print("converted %d samples (%.3f s) from %s; anchor %s, hips shift z %.3f..%.3f" % (N, seconds, os.path.basename(CLIP3D), ANCHOR, min(zs), max(zs)))
 

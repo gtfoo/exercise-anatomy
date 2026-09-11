@@ -1,37 +1,39 @@
 import type { CurvePoint, Exercise } from "./types";
 
-// A designed push-up (tools/myo/designed_clip.py): body straight from toes to
-// shoulders pivoting on the toes, hands under the shoulders, elbows bending
-// straight back to about 100° at the bottom (t = 0.5). No free capture of a
-// floor push-up exists (CMU's "vertical pushups" are handstand push-ups).
-// Activation is qualitative.
+// One push-up from a Mixamo clip, converted bone for bone: t = 0 is the
+// bottom with the chest just off the floor, t = 0.5 the top with the arms
+// straight, t = 1 the bottom again. It replaced a designed movement on
+// 2026-09-11 when the owner supplied the clip. Activation is qualitative.
 
 const t = (...pts: [number, number][]): CurvePoint[] => pts;
-// Pressers work eccentrically on the way down, hardest on the push back up.
-const PRESS = t([0, 0.35], [0.25, 0.55], [0.5, 0.8], [0.65, 1], [0.85, 0.6], [1, 0.35]);
-const BRACE = t([0, 0.5], [0.5, 0.65], [1, 0.5]);
-const SCAPULA = t([0, 0.4], [0.5, 0.7], [0.7, 0.6], [1, 0.4]);
-const CUFF = t([0, 0.35], [0.5, 0.55], [1, 0.35]);
+// Pressers: hardest driving out of the bottom, easing at the top, working eccentrically on the way back down.
+const PRESS = t([0, 0.8], [0.12, 1], [0.35, 0.65], [0.5, 0.35], [0.7, 0.5], [0.9, 0.75], [1, 0.8]);
+// The chest and front of the shoulder are open at the bottom: on stretch, and working at the same time.
+const OPEN = t([0, 0.9], [0.25, 0.45], [0.5, 0.1], [0.75, 0.45], [1, 0.9]);
+const BRACE = t([0, 0.65], [0.5, 0.5], [1, 0.65]);
+const SCAPULA = t([0, 0.7], [0.3, 0.6], [0.5, 0.4], [0.7, 0.6], [1, 0.7]);
+const CUFF = t([0, 0.55], [0.5, 0.35], [1, 0.55]);
 
 export const pushUp: Exercise = {
   slug: "push-up",
   category: "Push and pull",
   name: "Push-up",
-  durationMs: 2400,
+  durationMs: 1500, // the captured rep at its real tempo
   anchor: "free",
+  credit: "Mixamo (Adobe)",
   native: { clip: "/models/clips/push-up.glb" },
-  // The body lies from the toes at z = 0.2 to the hands at z = 1.6; look at its middle from the side, a little ahead.
-  camera: { position: [3.7, 1.3, 1.7], target: [0, 0.3, 0.95] },
+  // The body lies along z with the hands ahead of the shoulders; look at its middle from the side, a little ahead.
+  camera: { position: [3.5, 1.3, 1.5], target: [0, 0.3, 0.2] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is designed, not captured: no free motion capture of a floor push-up exists. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is a motion-capture clip. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
   phases: [
-    { name: "lower", t0: 0, t1: 0.5 },
-    { name: "push", t0: 0.5, t1: 1 },
+    { name: "push", t0: 0, t1: 0.5 },
+    { name: "lower", t0: 0.5, t1: 1 },
   ],
   muscles: [
-    { id: "pectoralis-major", name: "Pectoralis major", group: "Chest", role: "prime-mover", note: "Presses the body up: brings the upper arms together and forward.", curve: PRESS, stretch: [[0, 0.1], [0.25, 0.5], [0.5, 0.9], [0.7, 0.4], [1, 0.1]] },
-    { id: "anterior-deltoid", name: "Anterior deltoid", group: "Shoulder", role: "prime-mover", note: "Presses with the chest: brings the upper arm forward under the body.", curve: PRESS, stretch: [[0, 0.1], [0.25, 0.45], [0.5, 0.8], [0.7, 0.35], [1, 0.1]] },
-    { id: "triceps-long-head", name: "Triceps, long head", group: "Arm", role: "prime-mover", note: "Straightens the elbows on the push.", curve: PRESS, stretch: [[0, 0.05], [0.25, 0.45], [0.5, 0.7], [0.65, 0.2], [1, 0.05]] },
+    { id: "pectoralis-major", name: "Pectoralis major", group: "Chest", role: "prime-mover", note: "Presses the body up: brings the upper arms together and forward. Open and loaded at the bottom.", curve: PRESS, stretch: OPEN },
+    { id: "anterior-deltoid", name: "Anterior deltoid", group: "Shoulder", role: "prime-mover", note: "Presses with the chest: brings the upper arm forward under the body.", curve: PRESS, stretch: t([0, 0.8], [0.25, 0.4], [0.5, 0.1], [0.75, 0.4], [1, 0.8]) },
+    { id: "triceps-long-head", name: "Triceps, long head", group: "Arm", role: "prime-mover", note: "Straightens the elbows on the push.", curve: PRESS, stretch: t([0, 0.7], [0.25, 0.3], [0.5, 0.05], [0.75, 0.3], [1, 0.7]) },
     { id: "posterior-deltoid", name: "Posterior deltoid", group: "Shoulder", role: "stabiliser", note: "Steadies the shoulder from behind.", curve: CUFF },
     { id: "infraspinatus", name: "Infraspinatus", group: "Shoulder", role: "stabiliser", note: "Rotator cuff: keeps the humeral head centred under load.", curve: CUFF },
     { id: "teres-minor", name: "Teres minor", group: "Shoulder", role: "stabiliser", note: "Rotator cuff, with infraspinatus.", curve: CUFF },

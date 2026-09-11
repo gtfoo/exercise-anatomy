@@ -44,9 +44,18 @@ Cuts in use (CMU FBX from Hugging Face `gbionics/cmu-fbx`, 30 fps):
 
 Mixamo clips (owner's downloads, converted straight from the FBX with
 `convert_clip.py --fbx`): Air Squat, Swimming breaststroke (61:121, root
-vertical), Kettlebell Swing, Sprint, Bicycle Crunch (all root vertical),
-Climbing Up Wall and Walking Up The Stairs (full root motion; the viewer
-draws a wall or a staircase to match).
+vertical), Kettlebell Swing, Sprint, Bicycle Crunch, Bicep Curl (all root
+vertical), Climbing Up Wall + Climbing Down Wall and Walking Up The Stairs
+(full root motion; the viewer draws a wall with holds or a staircase to
+match), and from 2026-09-11: Push Up, Start Plank + Plank, Burpee, Situps,
+Pistol (the whole take: left leg, then right, and it closes on itself at
+frame 122; root vertical), Pike Walk, Clean And Jerk (103:505, the walk to
+and from the bar cut), Snatch, and Overhead Squat (2) + Overhead Squat +
+Overhead Squat (1) (pick up, squat, set down). Push Up and Plank replaced
+designed movements. `probe_clip.py` prints each clip's timeline; the cut
+frames above came from it. A cycle cut from a longer take rarely closes:
+`convert_clip.py --loop-blend N` appends N eased frames from the last pose
+back to the first (breaststroke 8, freestyle 6) so the repeat is continuous.
 
 Also on disk: 88_02 (acrobatics) holds handstand push-ups, not floor ones;
 13_29 frames 1041-1121 is a deep bodyweight squat, unused since the Mixamo

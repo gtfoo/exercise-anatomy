@@ -2,8 +2,8 @@ import type { CurvePoint, Exercise } from "./types";
 
 // A wall climb up and back down from two Mixamo clips played in sequence:
 // from the ground, pull, step and climb 1.2 m up the wall, then reverse it.
-// The clips climb in place, so the wall is drawn as a face with ledges at
-// the heights the hands and feet land in the capture. The first half is the
+// The clips climb in place, so the wall is drawn as a face with climbing
+// holds wherever a hand or foot rests still in the capture. The first half is the
 // climb (concentric), the second the descent (the same muscles, lowering).
 // Activation is qualitative.
 
@@ -21,14 +21,14 @@ export const wallClimb: Exercise = {
   durationMs: 4000, // the two captured clips at their real tempo
   anchor: "free",
   credit: "Mixamo (Adobe)",
-  // Ledge heights: where the hands and feet rest in the clips, scaled to the figure (the probe's --contacts).
-  // The hands and feet rest 0.20-0.25 m ahead of the hips; the ledges reach out to there and the face stays behind them,
-  // so nothing of the body sits inside the wall.
-  scenery: { kind: "wall", height: 3.2, front: 0.34, ledges: [0.65, 0.88, 1.16, 1.21, 1.65, 1.78, 2.24, 2.76] },
+  // The face stays behind every contact (the feet push on it at z 0.5, the hands reach over its top at z 0.2), so nothing
+  // of the body sits inside the wall. The holds are found from the clip, wherever a hand or foot rests still
+  // (NativeFigure's findHolds), each on a volume out from the face.
+  scenery: { kind: "wall", height: 3.2, front: 0.58, holds: true },
   native: { clip: "/models/clips/wall-climb.glb" },
   camera: { position: [3.2, 2.2, -2.6], target: [0, 1.6, 0] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is two motion-capture clips, up and then down; the wall and its ledges are drawn to where the hands and feet land, not modelled. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is two motion-capture clips, up and then down; the wall and its holds are drawn to where the hands and feet rest, not modelled. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
   phases: [
     { name: "pull", t0: 0, t1: 0.2 },
     { name: "mantle", t0: 0.2, t1: 0.38 },

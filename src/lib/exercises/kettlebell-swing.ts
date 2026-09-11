@@ -14,7 +14,7 @@ const ARMS = t([0, 0.3], [0.15, 0.6], [0.5, 0.5], [0.8, 0.6], [1, 0.3]);
 
 export const kettlebellSwing: Exercise = {
   slug: "kettlebell-swing",
-  category: "Legs and hips",
+  category: "Weights",
   name: "Kettlebell swing",
   durationMs: 2000, // the captured cycle at its real tempo
   anchor: "free",

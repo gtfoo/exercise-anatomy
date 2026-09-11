@@ -78,6 +78,24 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Sides, stretch, ten more Mixamo clips, holds, barbell** (2026-09-11).
+      The figure is one mesh per muscle per side, so a side plank or a pistol
+      squat colours left and right apart; a `stretch` channel (teal, purple
+      when also working) marks lengthened muscles. Cycling pedals forward;
+      the orbit reaches under the floor. From the owner's new FBX files:
+      push-up and plank (replacing designed ones), bicep curl, burpee,
+      sit-up, pistol squat, pike walk, clean and jerk, snatch, overhead
+      squat; a "Weights" category holds the loaded lifts. The wall climb's
+      ledges became holds found from the clip at run time (NativeFigure's
+      findHolds, feet included); a barbell is drawn between the hands each
+      frame. Second round the same evening: sprint and cycling carry one
+      peak per side (the old two-peak curves shifted onto themselves); the
+      crow's legs spread outside the arms; the wheel's palms are pronated
+      onto the floor; the pistol squat plays both legs (the clip closes on
+      itself at frame 122); `convert_clip.py --loop-blend N` eases the last
+      pose back to the first, used on both swims, whose cut cycles snapped.
+      `from: owner, 2026-09-11 · from "for side plank, the muscle activation should be asymmetric right?" to "there seems to be a few missing frames between the end and the start"`
+
 - [x] **Cycling, plank, five yoga holds, categories** (2026-09-11): all
       designed in `designed_clip.py`; the bike is drawn to the same
       constants (`BIKE_*`); the switcher is grouped by `category`; muscle

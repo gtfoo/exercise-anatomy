@@ -36,7 +36,7 @@ export type MuscleActivation = {
 export type Phase = { name: string; t0: number; t1: number };
 
 /** Switcher groups, in display order. */
-export const CATEGORIES = ["Atlas", "Legs and hips", "Push and pull", "Core", "Cardio", "Swimming", "Yoga"] as const;
+export const CATEGORIES = ["Atlas", "Legs and hips", "Push and pull", "Weights", "Core", "Cardio", "Swimming", "Yoga"] as const;
 export type ExerciseCategory = (typeof CATEGORIES)[number];
 
 import type { MotionClip, MotionClip3D } from "@/lib/kinematics/types";
@@ -69,11 +69,19 @@ export type Exercise = {
   barHeight?: number;
   /** Half the distance between parallel bars, metres: where the hands rest. */
   barSpacing?: number;
-  /** Equipment the viewer attaches to bones: to the hands, or pedals to the feet. */
-  props?: "dumbbells" | "kettlebell" | "pedals";
+  /** Equipment the viewer attaches to bones: to the hands, pedals to the feet, or a barbell drawn between the hands each frame. */
+  props?: "dumbbells" | "kettlebell" | "pedals" | "barbell";
   /** Fixed scenery besides the floor: a wall to climb, a staircase, or a bicycle (drawn to tools/myo/designed_clip.py's BIKE_* constants). */
   scenery?:
-    | { kind: "wall"; height: number; front: number; ledges?: number[] }
+    | {
+        kind: "wall";
+        height: number;
+        front: number;
+        /** Full-width ledges at these heights. */
+        ledges?: number[];
+        /** Climbing holds found from the clip itself: wherever a hand or foot rests still against the wall. */
+        holds?: boolean;
+      }
     | { kind: "stairs"; rise: number; run: number; count: number; first: number }
     | { kind: "bike" };
   /** Where the switcher lists it. */

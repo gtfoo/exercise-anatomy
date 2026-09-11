@@ -18,6 +18,14 @@ import { wallClimb } from "./wall-climb";
 import { plank } from "./plank";
 import { cycling } from "./cycling";
 import { boatPose, crowPose, sidePlank, warrior3, wheelPose } from "./yoga";
+import { bicepCurl } from "./bicep-curl";
+import { burpee } from "./burpee";
+import { sitUp } from "./sit-up";
+import { pistolSquat } from "./pistol-squat";
+import { pikeWalk } from "./pike-walk";
+import { cleanAndJerk } from "./clean-and-jerk";
+import { snatch } from "./snatch";
+import { overheadSquat } from "./overhead-squat";
 import { CATEGORIES } from "./types";
 
 /** Display order within a category. Routes are `/` for the atlas and `/<slug>` for the rest. */
@@ -26,19 +34,28 @@ export const exercises: readonly Exercise[] = [
   // Legs and hips
   squat,
   lunge,
+  pistolSquat,
   stairs,
-  kettlebellSwing,
   clamshell,
   // Push and pull
   pushUp,
   pullUp,
-  lateralRaise,
   wallClimb,
+  pikeWalk,
+  // Weights
+  bicepCurl,
+  lateralRaise,
+  kettlebellSwing,
+  overheadSquat,
+  snatch,
+  cleanAndJerk,
   // Core
   plank,
+  sitUp,
   lSit,
   bicycleCrunch,
   // Cardio
+  burpee,
   sprint,
   jumpingJacks,
   cycling,

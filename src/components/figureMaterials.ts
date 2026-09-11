@@ -76,7 +76,10 @@ export function paintMaterials(materials: FigureMaterials, exercise: Exercise, t
       const [r, g, b] = muscleRgb(level, stretch);
       mat.color.setRGB(r, g, b, THREE.SRGBColorSpace);
       const lit = hovered === m.id || selected === m.id;
-      if (lit) mat.emissive.copy(highlight).multiplyScalar(0.35);
+      // A selected muscle keeps its activation colour (the owner wants to read it in focus mode, 2026-09-11): it only
+      // glows a little in its own colour. The orange tint is for hovering, a passing cue.
+      if (selected === m.id) mat.emissive.copy(mat.color).multiplyScalar(0.2);
+      else if (lit) mat.emissive.copy(highlight).multiplyScalar(0.35);
       else mat.emissive.copy(hot).multiplyScalar(level * 0.25);
       const faded = selected !== null && !lit;
       mat.opacity = faded ? 0.12 : 1;

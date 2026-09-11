@@ -518,22 +518,27 @@ def wheel_sample(t):
         shoulder = shoulder_from(pelvis_pos, rx(trunk), side)
         hand = np.array([shoulder[0], 0.03, shoulder[2] - 0.12])
         up_a, fo_a, _ = two_link(shoulder, hand, L_UPPER, L_FORE, bend_forward=False)
-        q["upper_arm." + S], q["forearm." + S] = rx(up_a), rx(fo_a)
-        q["hand." + S] = q["fingers." + S] = rx(fo_a - 90 * DEG)  # palms flat, fingers toward the feet
+        q["upper_arm." + S], q["forearm." + S] = rx(up_a), qmul(rx(fo_a), PRONATE)
+        q["hand." + S] = q["fingers." + S] = qmul(rx(fo_a - 90 * DEG), PRONATE)  # palms flat on the floor, fingers toward the feet
     return {"root": [round(float(v), 4) for v in root], "q": q}
 
 
 def crow_sample(t):
-    """Bakasana: hands on the floor, elbows bent, knees on the backs of the upper arms, feet lifted behind."""
+    """Bakasana: hands on the floor, elbows bent, knees on the backs of the upper arms, feet lifted behind.
+    The legs spread 32 degrees so the knees sit outside the arms, not through them (owner, 2026-09-11)."""
     q = all_ident()
-    trunk = 108 * DEG
-    root, pelvis_pos = root_for_hip(np.array([0.0, 0.62, 0.0]), rx(trunk))
+    trunk = 108 * DEG  # chest leant forward past the hands; the elbows bend about 90 degrees under it
+    root, pelvis_pos = root_for_hip(np.array([0.0, 0.55, 0.0]), rx(trunk))
     q["pelvis"], q["spine"] = rx(trunk), rx(trunk)
-    q["neck"], q["head"] = rx(trunk - 75 * DEG), rx(trunk - 75 * DEG)
-    set_legs(q, -60 * DEG, 108 * DEG, 108 * DEG + 25 * DEG)
+    q["neck"], q["head"] = rx(trunk - 100 * DEG), rx(trunk - 100 * DEG)  # gaze forward
+    for S, sgn in (("L", 1), ("R", -1)):
+        spread = q_axis([0, 0, 1], sgn * 28 * DEG)  # about the forward axis: the far end of a hanging bone swings outward
+        q["thigh." + S] = qmul(rx(-55 * DEG), spread)  # knees forward, up and out, onto the backs of the upper arms
+        q["shin." + S] = qmul(rx(95 * DEG), spread)  # feet tucked back under the buttocks
+        q["foot." + S] = qmul(rx(125 * DEG), spread)
     for S, side in (("L", "l"), ("R", "r")):
         shoulder = shoulder_from(pelvis_pos, rx(trunk), side)
-        hand = np.array([shoulder[0], 0.03, shoulder[2] + 0.12])
+        hand = np.array([shoulder[0], 0.03, shoulder[2] - 0.12])  # the hands behind the shoulders: the elbows point back under the knees
         up_a, fo_a, _ = two_link(shoulder, hand, L_UPPER, L_FORE, bend_forward=False)
         q["upper_arm." + S], q["forearm." + S] = rx(up_a), qmul(rx(fo_a), PRONATE)
         q["hand." + S] = q["fingers." + S] = qmul(rx(fo_a - 90 * DEG), PRONATE)  # palms flat, fingers forward
