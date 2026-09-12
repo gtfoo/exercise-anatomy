@@ -7,7 +7,7 @@
   "/models/clips/burpee.glb": "365f06ca36",
   "/models/clips/clamshell.glb": "ba407c9dc8",
   "/models/clips/clean-and-jerk.glb": "c2fca01f8d",
-  "/models/clips/crow-pose.glb": "75b6fc753d",
+  "/models/clips/crow-pose.glb": "65c3833cbc",
   "/models/clips/cycling.glb": "1914d54da3",
   "/models/clips/dips.glb": "eb9adb253c",
   "/models/clips/freestyle.glb": "bc9ce75cd1",
@@ -35,5 +35,5 @@
   "/models/clips/wall-climb.glb": "eee3068d22",
   "/models/clips/warrior-3.glb": "58b1e66454",
   "/models/clips/wheel-pose.glb": "192e9d6591",
-  "/models/figure-mixamo.glb": "6d2e6091ee"
+  "/models/figure-mixamo.glb": "5e8eb6185c"
 }

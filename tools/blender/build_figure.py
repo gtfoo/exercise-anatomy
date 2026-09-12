@@ -132,7 +132,7 @@ BLEND_WIDTH = 0.08  # metres of effective distance over which muscle weights ble
 # the bone. The torso bones are fat because ribs, abdomen and lats sit 10-15 cm
 # from the spine, while the upper-arm bones hang only 5-8 cm from the same
 # vertices; plain nearest-segment weighting handed the chest to the arms.
-ENVELOPE = {"pelvis": 0.13, "spine": 0.13, "neck": 0.06, "head": 0.10, "thigh": 0.07, "shin": 0.05, "foot": 0.04, "upper_arm": 0.045, "forearm": 0.04, "hand": 0.035, "fingers": 0.025}
+ENVELOPE = {"pelvis": 0.13, "spine": 0.13, "neck": 0.08, "head": 0.10, "thigh": 0.07, "shin": 0.05, "foot": 0.04, "upper_arm": 0.045, "forearm": 0.04, "hand": 0.035, "fingers": 0.025}
 
 # ---------- helpers ----------
 
@@ -383,6 +383,8 @@ HIP_Z = joints["hip.l"].z
 KNEE_Z = joints["knee.l"].z
 ANKLE_Z = joints["ankle.l"].z
 SHOULDER_Z = joints["shoulder.l"].z
+T1_Z = joints["t1"].z
+C1_Z = joints["c1"].z
 FAR = 1e3
 
 
@@ -422,8 +424,18 @@ def eff_dist(P):
                 d[:, i] += ramp(z - HIP_Z)  # fades out above the hip joint line
         elif base == "pelvis":
             d[:, i] += ramp((HIP_Z - 0.03) - z)  # fades out below the hip joint line
-        else:  # spine, neck, head
+        elif base == "spine":
             d[:, i] += ramp(x - 0.22)
+            # Above T1 the neck muscles belong to the neck bone: the trunk's wide envelope
+            # had claimed them, and the cervical column swung out of a trapezius that
+            # stayed behind (owner, 2026-09-12, cycling and warrior III).
+            d[:, i] += ramp(z - (T1_Z + 0.01))
+        elif base == "neck":
+            d[:, i] += ramp(x - 0.22)
+            d[:, i] += ramp((T1_Z - 0.04) - z)  # and the neck does not reach down into the back
+        else:  # head
+            d[:, i] += ramp(x - 0.22)
+            d[:, i] += ramp((C1_Z - 0.02) - z)  # the skull's bone stops at the atlas; below it is neck
     return d
 
 

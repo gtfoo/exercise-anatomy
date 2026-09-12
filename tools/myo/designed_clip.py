@@ -756,12 +756,13 @@ def crow_hold():
     """Bakasana: hands on the floor, elbows bent, knees on the backs of the upper arms, feet lifted behind.
     The legs spread so the knees sit outside the arms, not through them (owner, 2026-09-11)."""
     q = all_ident()
-    trunk = 100 * DEG  # chest leant forward past the hands; the elbows bend about 90 degrees under it
+    trunk = 95 * DEG  # chest just past the hands, near level; the elbows bend about 90 degrees under it
     root, pelvis_pos = root_for_hip(np.array([0.0, 0.55, 0.0]), rx(trunk))
     q["pelvis"], q["spine"] = rx(trunk), rx(trunk)
-    # The neck extends hard so the face looks forward (the crown pointed at the floor before, 2026-09-11): the
-    # neck bone takes half the extension, the head the rest, ending ten degrees short of upright.
-    q["neck"], q["head"] = rx(trunk - 50 * DEG), rx(trunk - 90 * DEG)
+    # The neck extends 70 degrees in all, what a neck can do, split between the neck bone and the head: the gaze
+    # ends 25 degrees below horizontal, at the floor a little ahead, as in a real crow. Asking for 90 degrees
+    # (2026-09-11) pivoted the whole cervical column out of the trapezius on our one neck bone.
+    q["neck"], q["head"] = rx(trunk - 40 * DEG), rx(trunk - 70 * DEG)
     for S, sgn in (("L", 1), ("R", -1)):
         spread = q_axis([0, 0, 1], sgn * 28 * DEG)  # about the forward axis: the far end of a hanging bone swings outward
         q["thigh." + S] = qmul(rx(-55 * DEG), spread)  # knees forward, up and out, onto the backs of the upper arms
