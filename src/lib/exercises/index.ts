@@ -31,6 +31,8 @@ import { handstand } from "./handstand";
 import { dips } from "./dips";
 import { planche } from "./planche";
 import { frontLever } from "./front-lever";
+import { foamRolling } from "./foam-rolling";
+import { standingLegRaise } from "./standing-leg-raise";
 import { CATEGORIES } from "./types";
 
 /** Display order within a category. Routes are `/` for the atlas and `/<slug>` for the rest. */
@@ -42,6 +44,7 @@ export const exercises: readonly Exercise[] = [
   pistolSquat,
   stairs,
   clamshell,
+  foamRolling,
   // Push and pull
   pushUp,
   pullUp,
@@ -75,6 +78,7 @@ export const exercises: readonly Exercise[] = [
   // Yoga
   boatPose,
   warrior3,
+  standingLegRaise,
   wheelPose,
   crowPose,
   sidePlank,

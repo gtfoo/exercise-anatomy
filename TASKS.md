@@ -139,6 +139,13 @@ letter and a one-line task strands the *why*.
       jaw are pinned to the head bone by name and the vertebrae C2-C7 to the
       neck; figure rebuilt. Two more designed holds: a full planche (crouch,
       tuck, full, back) and a front lever (hang, tuck, full, back).
+      Seventh round (2026-09-13): foam rolling the right glute on a drawn
+      roller (the rolled muscle shown lengthened, the arms and the pushing leg
+      working) and the standing leg raise, Utthita Hasta Padangusthasana in
+      its hands-free variation. Walking down stairs and jogging wait on a
+      Mixamo clip each (`tools/mocap/in/`): a designed gait would read worse
+      than any capture, and jogging is different enough from the sprint
+      (upright, heel strike, low knees) to deserve its own page.
       `from: owner, 2026-09-11 · from "for side plank, the muscle activation should be asymmetric right?" to "there seems to be a few missing frames between the end and the start"`
 
 - [x] **Cycling, plank, five yoga holds, categories** (2026-09-11): all

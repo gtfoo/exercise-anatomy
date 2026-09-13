@@ -158,6 +158,14 @@ function Scenery({ scenery }: { scenery: NonNullable<Exercise["scenery"]> }) {
     );
   }
   if (scenery.kind === "bike") return <Bike />;
+  if (scenery.kind === "roller") {
+    return (
+      <mesh position={[0, scenery.radius, scenery.z]} rotation-z={Math.PI / 2}>
+        <cylinderGeometry args={[scenery.radius, scenery.radius, 0.9, 32]} />
+        <meshStandardMaterial color="#3f3b38" roughness={0.9} />
+      </mesh>
+    );
+  }
   const { rise, run, count, first } = scenery;
   return (
     <group>

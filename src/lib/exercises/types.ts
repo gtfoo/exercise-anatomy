@@ -83,7 +83,9 @@ export type Exercise = {
         holds?: boolean;
       }
     | { kind: "stairs"; rise: number; run: number; count: number; first: number }
-    | { kind: "bike" };
+    | { kind: "bike" }
+    /** A foam roller lying across the figure's path (axis along x) at z, drawn to tools/myo/designed_clip.py's ROLLER_R. */
+    | { kind: "roller"; radius: number; z: number };
   /** Where the switcher lists it. */
   category: ExerciseCategory;
   /** Who captured the movement, when the clip came straight from a source file rather than through `motion`/`motion3d`. */

@@ -375,6 +375,66 @@ def front_lever_sample(t):
     return sequence([(0, hang), (0.2, tuck), (0.4, full), (0.68, full), (0.85, tuck), (1, hang)], t)
 
 
+# ---------- foam rolling the glute ----------
+# Sitting on a roller (axis along X at z = 0, radius ROLLER_R) with the right
+# buttock on it: the trunk leant back on straight arms and tipped to the right,
+# the right ankle crossed over the left knee so the right glute is on stretch
+# under the roller, the left foot on the floor ahead. The body pushes itself
+# back and forth over the roller; the roller stays, the left leg does the
+# pushing. Scene.tsx draws the roller from these constants.
+ROLLER_R = 0.075
+ROLL_TRAVEL = 0.12
+
+
+def foam_roll_sample(t):
+    q = all_ident()
+    shift = ROLL_TRAVEL * math.sin(2 * math.pi * t)  # back and forth over the roller
+    lean = rx(-32 * DEG)  # leant back on the hands
+    tip = q_axis([0, 0, 1], 12 * DEG)  # tipped onto the right buttock
+    trunk = qmul(tip, lean)
+    hip_mid = np.array([0.0, 2 * ROLLER_R + 0.06, shift])
+    root, pelvis_pos = root_for_hip(hip_mid, trunk)
+    q["pelvis"], q["spine"] = trunk, trunk
+    q["neck"], q["head"] = tip, tip  # looking ahead
+    push = 8 * DEG * math.sin(2 * math.pi * t)  # the pushing leg bends and straightens with the roll
+    # Left leg: out ahead, the foot on the floor, the knee slightly bent, pushing.
+    q["thigh.L"], q["shin.L"], q["foot.L"] = rx(-78 * DEG + push), rx(-70 * DEG - push), rx(-40 * DEG)
+    # Right leg: the figure-4, thigh turned out and the ankle resting on the left knee.
+    out = q_axis([0, 0, 1], -45 * DEG)
+    q["thigh.R"] = qmul(rx(-75 * DEG), out)
+    q["shin.R"] = q["foot.R"] = qmul(rx(-20 * DEG), q_axis([0, 0, 1], 70 * DEG))
+    for S, side in (("L", "l"), ("R", "r")):
+        shoulder = shoulder_from(pelvis_pos, trunk, side)
+        hand = np.array([shoulder[0], 0.03, shoulder[2] - 0.22])  # planted on the floor behind
+        d = hand - shoulder
+        a = angle_of(d / max(float(np.linalg.norm(d)), 1e-9))
+        q["upper_arm." + S], q["forearm." + S] = rx(a), qmul(rx(a), PRONATE)
+        q["hand." + S] = q["fingers." + S] = qmul(rx(90 * DEG), PRONATE)  # flat, fingers pointing back
+    return {"root": [round(float(v), 4) for v in root], "q": q}
+
+
+# ---------- standing leg raise (Utthita Hasta Padangusthasana without the toe hold) ----------
+def leg_raise_stage(thigh_deg, knee_deg, arms_deg):
+    """Standing on the left leg (the converter pins the left foot), the right leg by angle, arms out for balance."""
+    q = all_ident()
+    q["thigh.L"], q["shin.L"] = rx(3 * DEG), rx(3 * DEG)
+    thigh = thigh_deg * DEG
+    q["thigh.R"], q["shin.R"], q["foot.R"] = rx(thigh), rx(thigh + knee_deg * DEG), rx(thigh + knee_deg * DEG - 15 * DEG)  # the foot flexed
+    for S, sgn in (("L", 1), ("R", -1)):
+        for b in ("upper_arm", "forearm", "hand", "fingers"):
+            q[b + "." + S] = q_axis([0, 0, 1], sgn * arms_deg * DEG)
+    return {"root": [0, 0, 0], "q": q}
+
+
+def leg_raise_sample(t):
+    """From standing: the right knee lifts to the chest, the knee straightens to hold the leg out level, held,
+    then the same way down. Arms out to the sides for balance, as in the hands-free variation."""
+    stand = leg_raise_stage(0, 0, 0)
+    knee_up = leg_raise_stage(-100, 100, 45)
+    out = leg_raise_stage(-85, 0, 60)
+    return sequence([(0, stand), (0.22, knee_up), (0.42, out), (0.68, out), (0.85, knee_up), (1, stand)], t)
+
+
 # ---------- dips on parallel bars ----------
 # Support on locked arms with the legs hanging (knees bent back), lower
 # until the upper arms are level with the elbows behind and the trunk leant
@@ -900,6 +960,8 @@ CLIPS = {
     "dips": (dips_sample, "designed parallel-bar dips, tools/myo/designed_clip.py"),
     "planche": (planche_sample, "designed planche, tools/myo/designed_clip.py"),
     "front-lever": (front_lever_sample, "designed front lever, tools/myo/designed_clip.py"),
+    "foam-rolling": (foam_roll_sample, "designed foam rolling, tools/myo/designed_clip.py"),
+    "standing-leg-raise": (leg_raise_sample, "designed standing leg raise, tools/myo/designed_clip.py"),
     "side-plank": (side_plank_sample, "designed yoga hold, tools/myo/designed_clip.py"),
     "pull-up": (pull_up_sample, "designed pose, src/lib/kinematics/pull-up.ts"),
     "lateral-raise": (lateral_raise_sample, "designed dumbbell lateral raise, tools/myo/designed_clip.py"),
