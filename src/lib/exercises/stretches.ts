@@ -89,8 +89,8 @@ export const quadStretch = stretch(
 export const calfStretch = stretch(
   "calf-stretch",
   "Calf stretch",
-  "Hands on a wall, the right leg back straight with the heel down, leaning in.",
-  { position: [3.2, 1.2, 0.1], target: [0, 0.8, 0.15] }, // level with the figure: the wall stands ahead of it, not between it and the camera
+  "The right leg back straight with the heel down, the left knee bent, the hands on the front thigh, leaning in.",
+  { position: [1.6, 1.2, 3.0], target: [0, 0.75, 0.1] },
   [
     st(m("gastrocnemius-medial", "Gastrocnemius (medial)", "Back leg", "stabiliser", 0.1, "Right: the target, lengthened over the straight knee and the dropped heel.", 0.1), 0.05, 0.9),
     st(m("gastrocnemius-lateral", "Gastrocnemius (lateral)", "Back leg", "stabiliser", 0.1, "Right: lengthened with the medial head.", 0.1), 0.05, 0.9),
@@ -99,13 +99,11 @@ export const calfStretch = stretch(
     m("tibialis-anterior", "Tibialis anterior", "Back leg", "synergist", 0.2, "Right: pulls the shin forward over the planted heel.", 0.5),
     m("vastus-lateralis", "Vastus lateralis", "Back leg", "synergist", 0.3, "Right: locks the back knee straight. Left: the bent front knee.", 0.45),
     m("gluteus-maximus", "Gluteus maximus", "Back leg", "synergist", 0.2, "Right: extends the back hip as the body leans in.", 0.45),
-    m("anterior-deltoid", "Anterior deltoid", "Arms", "synergist", 0.35, "Presses the hands into the wall."),
-    m("pectoralis-major", "Pectoralis major", "Arms", "synergist", 0.35, "Pushes against the wall with the shoulders."),
-    m("triceps-long-head", "Triceps, long head", "Arms", "stabiliser", 0.35, "Keeps the arms braced against the wall."),
+    m("anterior-deltoid", "Anterior deltoid", "Arms", "stabiliser", 0.2, "Rests the hands on the front thigh."),
+    m("triceps-long-head", "Triceps, long head", "Arms", "stabiliser", 0.25, "Props a little of the lean on the front thigh."),
     m("rectus-abdominis", "Rectus abdominis", "Trunk", "stabiliser", 0.4, "Holds the body in one line from the heel to the head."),
     m("erector-spinae", "Erector spinae", "Trunk", "stabiliser", 0.35, "Keeps the back straight through the lean."),
   ],
-  { scenery: { kind: "wall", height: 2.2, front: 0.7 } },
 );
 
 export const hamstringStretch = stretch(

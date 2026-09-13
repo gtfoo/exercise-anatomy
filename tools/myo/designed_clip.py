@@ -724,9 +724,9 @@ def quad_stretch_sample(t):
 
 
 def calf_stretch_sample(t):
-    """Calf stretch at a wall: hands on the wall, the right leg stepped back straight with the heel down, the left
-    knee bent, leaning in."""
-    def stage(hip_y, trunk_deg, back_deg, front_thigh_deg, front_shin_deg):
+    """Calf stretch: the right leg stepped back straight with the heel down, the left knee bent, the hands on the
+    front thigh, leaning in."""
+    def stage(hip_y, trunk_deg, back_deg, front_thigh_deg, front_shin_deg, hand_y, hand_z):
         q = all_ident()
         trunk = rx(trunk_deg * DEG)
         root, pelvis_pos = root_for_hip(np.array([0.0, hip_y, 0.05]), trunk)
@@ -735,13 +735,14 @@ def calf_stretch_sample(t):
         q["thigh.R"], q["shin.R"], q["foot.R"] = rx(back_deg * DEG), rx(back_deg * DEG), IDENT  # heel down
         q["thigh.L"], q["shin.L"], q["foot.L"] = rx(front_thigh_deg * DEG), rx(front_shin_deg * DEG), IDENT
         for S, side in (("L", "l"), ("R", "r")):
+            # The hands rest on the front thigh (no wall, so the front view is clear: owner, 2026-09-13).
             shoulder = shoulder_from(pelvis_pos, trunk, side)
-            hand = np.array([shoulder[0], 1.25, 0.68])  # flat on the wall at CALF_WALL
+            hand = np.array([shoulder[0] * 0.7, hand_y, hand_z])
             up_a, fo_a, _ = two_link(shoulder, hand, L_UPPER, L_FORE, bend_forward=False)
             q["upper_arm." + S], q["forearm." + S] = rx(up_a), qmul(rx(fo_a), PRONATE)
-            q["hand." + S] = q["fingers." + S] = qmul(rx(fo_a - 90 * DEG), PRONATE)  # fingers up the wall
+            q["hand." + S] = q["fingers." + S] = qmul(rx(fo_a - 50 * DEG), PRONATE)  # palms down on the thigh
         return {"root": [round(float(v), 4) for v in root], "q": q}
-    return entered(stage(0.92, 6, 0, 0, 0), stage(0.78, 20, 31, -25, -36), t)
+    return entered(stage(0.92, 6, 0, 0, 0, 0.85, 0.12), stage(0.78, 20, 31, -35, -8, 0.62, 0.26), t)  # the front knee bent about 30 degrees
 
 
 CALF_WALL = 0.70

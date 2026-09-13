@@ -142,7 +142,9 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
             <span className="flex items-center gap-1">
               <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: rampCss(1, 1) }} /> both
             </span>
-            {exercise.muscles.some((m) => m.right || m.stretchRight) && <span>· split dots: left | right</span>}
+            {exercise.muscles.some((m) => m.right || m.stretchRight) && (
+              <span title="This movement works the two sides differently">· a dot split in two: left half is the left side, right half the right</span>
+            )}
           </p>
         </section>
       )}
