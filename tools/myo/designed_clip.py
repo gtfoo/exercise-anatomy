@@ -664,12 +664,17 @@ def childs_pose_sample(t):
     kneel = {"root": [round(float(v), 4) for v in root], "q": kneel}
 
     child = all_ident()
-    trunk = rx(110 * DEG)
-    root, _ = root_for_hip(np.array([0.0, 0.25, 0.0]), trunk)
+    trunk = rx(116 * DEG)
+    root, _ = root_for_hip(np.array([0.0, 0.24, 0.0]), trunk)
     child["pelvis"], child["spine"] = trunk, trunk
-    child["neck"], child["head"] = rx(115 * DEG), rx(120 * DEG)  # forehead to the floor
-    for S in ("L", "R"):
-        child["thigh." + S], child["shin." + S], child["foot." + S] = rx(-61 * DEG), rx(90 * DEG), rx(120 * DEG)
+    child["neck"], child["head"] = rx(120 * DEG), rx(124 * DEG)  # forehead to the floor
+    # The knees wide, so the trunk folds down between the thighs rather than through them (owner, 2026-09-13); the
+    # shins angle in a little so the feet stay near each other.
+    for S, sgn in (("L", 1), ("R", -1)):
+        spread = q_axis([0, 0, 1], sgn * 32 * DEG)
+        child["thigh." + S] = qmul(rx(-61 * DEG), spread)
+        child["shin." + S] = qmul(rx(90 * DEG), q_axis([0, 0, 1], sgn * 12 * DEG))
+        child["foot." + S] = qmul(rx(120 * DEG), q_axis([0, 0, 1], sgn * 12 * DEG))
         child["upper_arm." + S], child["forearm." + S] = rx(-82 * DEG), qmul(rx(-82 * DEG), PRONATE)  # reaching along the floor
         child["hand." + S] = child["fingers." + S] = qmul(rx(-90 * DEG), PRONATE)
     child = {"root": [round(float(v), 4) for v in root], "q": child}
