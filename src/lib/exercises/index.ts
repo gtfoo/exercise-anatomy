@@ -91,10 +91,14 @@ export const exercises: readonly Exercise[] = [
   sidePlank,
 ];
 
-/** The switcher's groups, in CATEGORIES order, each with its exercises in display order. */
-export const grouped: readonly { category: string; items: readonly Exercise[] }[] = CATEGORIES.map((category) => ({
-  category,
-  items: exercises.filter((e) => e.category === category),
-})).filter((g) => g.items.length > 0);
+/** The switcher's groups, categories and exercises both in alphabetical order (owner, 2026-09-13). */
+const byName = (a: string, b: string) => a.localeCompare(b, "en", { sensitivity: "base" });
+export const grouped: readonly { category: string; items: readonly Exercise[] }[] = [...CATEGORIES]
+  .sort(byName)
+  .map((category) => ({
+    category,
+    items: exercises.filter((e) => e.category === category).sort((a, b) => byName(a.name, b.name)),
+  }))
+  .filter((g) => g.items.length > 0);
 
 export const routeFor = (e: Exercise) => (e === exercises[0] ? "/" : `/${e.slug}`);
