@@ -62,9 +62,12 @@ letter and a one-line task strands the *why*.
       out. Any FBX/BVH goes through `extract_pose3d.py` then `convert_clip.py`.
       `from: owner, 2026-09-10 · "browse those sites and check ... free models for now"`
 
-- [ ] **Case study on gtfoo.com** — `/products/exercise-anatomy`, three edits in
-      the parent repo, once the site is live. The parent's own rules apply.
-      `from: gtfoo AGENTS.md · case studies`
+- [ ] **Case study on gtfoo.com** — `/products/exercise-anatomy`. The copy is
+      written and delivered to the gtfoo agent (letter of 2026-09-13, carbon
+      copy in MAIL-ARCHIVE.md): what is different, the idea, v1, three points
+      along the way, three trade-offs with the bugs folded in, where it is
+      now. The gtfoo agent publishes; tick this when the page is up.
+      `from: gtfoo AGENTS.md · case studies · owner 2026-09-13 "do a write up for yourself"`
 
 - [ ] **Why does the CMU head droop?** Every CMU conversion (lunge, jumping
       jacks, swim) had the skull tilted forward; the Mixamo squat did not.
