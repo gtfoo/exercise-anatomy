@@ -149,3 +149,52 @@ export const pigeonPose = yoga("pigeon-pose", "Pigeon pose", "Eka Pada Rajakapot
   m("anterior-deltoid", "Anterior deltoid", "Arms", "stabiliser", 0.4, "The hands on the floor take some of the trunk's weight."),
   m("triceps-long-head", "Triceps, long head", "Arms", "stabiliser", 0.4, "Props the trunk on the hands."),
 ]);
+
+export const downwardDog = yoga("downward-dog", "Downward dog", "Adho Mukha Svanasana, from all fours", { position: [3.2, 1.3, 1.6], target: [0, 0.55, 0.1] }, [
+  m("anterior-deltoid", "Anterior deltoid", "Arms", "prime-mover", 0.65, "Presses the floor away with the arms overhead in line with the trunk."),
+  m("triceps-long-head", "Triceps, long head", "Arms", "synergist", 0.55, "Keeps the arms straight."),
+  m("serratus-anterior", "Serratus anterior", "Arms", "synergist", 0.6, "Pins the shoulder blades to the ribs with the arms overhead."),
+  m("upper-trapezius", "Upper trapezius", "Arms", "synergist", 0.4, "Rotates the shoulder blades up."),
+  st(m("latissimus-dorsi", "Latissimus dorsi", "Arms", "stabiliser", 0.3, "Lengthened with the arms fully overhead and the trunk pressed back."), 0.7),
+  m("forearm-flexors", "Forearm flexors", "Arms", "stabiliser", 0.5, "Spread the fingers and press the hands down."),
+  m("rectus-femoris", "Rectus femoris", "Hips", "prime-mover", 0.6, "Flexes the hips into the fold and locks the knees."),
+  m("vastus-lateralis", "Vastus lateralis", "Hips", "synergist", 0.5, "Presses the knees straight."),
+  st(m("biceps-femoris", "Biceps femoris", "Hips", "stabiliser", 0.1, "Lengthened over the straight legs by the deep hip fold."), 0.85),
+  st(m("semitendinosus", "Semitendinosus", "Hips", "stabiliser", 0.1, "Lengthened with biceps femoris."), 0.85),
+  st(m("semimembranosus", "Semimembranosus", "Hips", "stabiliser", 0.1, "Lengthened with the other hamstrings."), 0.85),
+  st(m("gastrocnemius-medial", "Gastrocnemius (medial)", "Lower leg", "stabiliser", 0.1, "Lengthened as the heels press toward the floor."), 0.8),
+  st(m("gastrocnemius-lateral", "Gastrocnemius (lateral)", "Lower leg", "stabiliser", 0.1, "Lengthened with the medial head."), 0.8),
+  st(m("soleus", "Soleus", "Lower leg", "stabiliser", 0.1, "Lengthened by the dropped heels."), 0.6),
+  m("erector-spinae", "Erector spinae", "Trunk", "stabiliser", 0.45, "Keeps the back long from the hands to the hips."),
+  m("rectus-abdominis", "Rectus abdominis", "Trunk", "stabiliser", 0.35, "Draws the ribs in under the lifted hips."),
+]);
+
+export const cobraPose = yoga("cobra-pose", "Cobra pose", "Bhujangasana, from lying prone", { position: [3.0, 1.1, 1.8], target: [0, 0.35, 0.2] }, [
+  m("erector-spinae", "Erector spinae", "Back", "prime-mover", 0.85, "Lifts and arches the spine off the floor: the pose's muscle."),
+  m("gluteus-maximus", "Gluteus maximus", "Back", "synergist", 0.4, "Keeps the hips pressed down and the legs long."),
+  m("biceps-femoris", "Biceps femoris", "Back", "synergist", 0.25, "Holds the legs down along the floor."),
+  m("posterior-deltoid", "Posterior deltoid", "Shoulders", "synergist", 0.5, "Draws the shoulders back and opens the chest."),
+  m("middle-trapezius", "Middle trapezius", "Shoulders", "synergist", 0.55, "Pulls the shoulder blades together."),
+  m("rhomboids", "Rhomboids", "Shoulders", "synergist", 0.5, "Retraction with the middle trapezius."),
+  m("latissimus-dorsi", "Latissimus dorsi", "Shoulders", "synergist", 0.4, "Draws the shoulders down away from the ears."),
+  m("triceps-long-head", "Triceps, long head", "Arms", "synergist", 0.5, "Presses partly through the hands; the back does the lifting."),
+  st(m("rectus-abdominis", "Rectus abdominis", "Front", "stabiliser", 0.15, "Lengthened over the arched trunk."), 0.85),
+  st(m("external-obliques", "External obliques", "Front", "stabiliser", 0.15, "Lengthened with rectus abdominis."), 0.5),
+  st(m("rectus-femoris", "Rectus femoris", "Front", "stabiliser", 0.1, "Lengthened over the extended hips."), 0.5),
+  st(m("pectoralis-major", "Pectoralis major", "Front", "stabiliser", 0.2, "Lengthened as the chest opens."), 0.5),
+  st(m("pectoralis-minor", "Pectoralis minor", "Front", "stabiliser", 0.1, "Lengthened with the shoulders drawn back."), 0.5),
+]);
+
+export const childsPose = yoga("childs-pose", "Child's pose", "Balasana, from kneeling", { position: [3.0, 1.1, 1.8], target: [0, 0.3, 0.2] }, [
+  st(m("erector-spinae", "Erector spinae", "Back", "stabiliser", 0.1, "Lengthened along the whole rounded back."), 0.7),
+  st(m("latissimus-dorsi", "Latissimus dorsi", "Back", "stabiliser", 0.1, "Lengthened by the arms reaching along the floor."), 0.7),
+  st(m("gluteus-maximus", "Gluteus maximus", "Hips", "stabiliser", 0.1, "Lengthened by the deep hip fold onto the heels."), 0.65),
+  st(m("gluteus-medius", "Gluteus medius", "Hips", "stabiliser", 0.1, "Lengthened with the maximus."), 0.4),
+  st(m("vastus-lateralis", "Vastus lateralis", "Legs", "stabiliser", 0.1, "Lengthened over the fully bent knees."), 0.6),
+  st(m("vastus-medialis", "Vastus medialis", "Legs", "stabiliser", 0.1, "Lengthened with the other vasti."), 0.6),
+  st(m("rectus-femoris", "Rectus femoris", "Legs", "stabiliser", 0.1, "Lengthened over the bent knees; the flexed hips slacken it in part."), 0.4),
+  st(m("tibialis-anterior", "Tibialis anterior", "Legs", "stabiliser", 0.1, "Lengthened with the tops of the feet on the floor."), 0.5),
+  m("anterior-deltoid", "Anterior deltoid", "Arms", "stabiliser", 0.2, "Reaches the arms forward along the floor; otherwise the pose rests."),
+  m("rectus-abdominis", "Rectus abdominis", "Trunk", "stabiliser", 0.15, "Barely working: this is a resting pose."),
+]);
+

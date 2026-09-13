@@ -36,7 +36,7 @@ export type MuscleActivation = {
 export type Phase = { name: string; t0: number; t1: number };
 
 /** Switcher groups, in display order. */
-export const CATEGORIES = ["Atlas", "Legs and hips", "Push and pull", "Weights", "Core", "Cardio", "Swimming", "Yoga"] as const;
+export const CATEGORIES = ["Atlas", "Legs and hips", "Push and pull", "Weights", "Core", "Cardio", "Swimming", "Yoga", "Stretches"] as const;
 export type ExerciseCategory = (typeof CATEGORIES)[number];
 
 import type { MotionClip, MotionClip3D } from "@/lib/kinematics/types";

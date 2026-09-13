@@ -614,6 +614,150 @@ def pigeon_sample(t):
     return sequence([(0, table), (0.4, pigeon), (0.75, pigeon), (1, table)], t)
 
 
+# ---------- downward dog, cobra, child's pose ----------
+def downward_dog_sample(t):
+    """Adho Mukha Svanasana from all fours: the hips lift and press back until the body is an inverted V, the
+    arms in line with the trunk, the heels toward the floor."""
+    table, _ = pigeon_stages()
+    dog = all_ident()
+    trunk = rx(148 * DEG)
+    root, _ = root_for_hip(np.array([0.0, 0.85, 0.05]), trunk)
+    dog["pelvis"], dog["spine"] = trunk, trunk
+    dog["neck"], dog["head"] = rx(138 * DEG), rx(130 * DEG)  # looking back at the feet
+    for S in ("L", "R"):
+        dog["thigh." + S], dog["shin." + S], dog["foot." + S] = rx(25 * DEG), rx(25 * DEG), IDENT  # heels down
+        dog["upper_arm." + S], dog["forearm." + S] = rx(-31 * DEG), qmul(rx(-31 * DEG), PRONATE)  # in line with the trunk
+        dog["hand." + S] = dog["fingers." + S] = qmul(rx(-90 * DEG), PRONATE)
+    dog = {"root": [round(float(v), 4) for v in root], "q": dog}
+    return entered(table, dog, t)
+
+
+def cobra_sample(t):
+    """Bhujangasana from lying prone with the hands under the shoulders: the chest lifts on partly bent arms, the
+    hips stay on the floor."""
+    def stage(trunk_deg, gaze_deg):
+        q = all_ident()
+        trunk = rx(trunk_deg * DEG)
+        root, pelvis_pos = root_for_hip(np.array([0.0, 0.12, 0.0]), trunk)
+        q["pelvis"], q["spine"] = trunk, trunk
+        q["neck"], q["head"] = rx((trunk_deg - gaze_deg * 0.5) * DEG), rx((trunk_deg - gaze_deg) * DEG)
+        for S in ("L", "R"):
+            q["thigh." + S], q["shin." + S], q["foot." + S] = rx(92 * DEG), rx(92 * DEG), rx(125 * DEG)  # legs back along the floor
+        for S, side in (("L", "l"), ("R", "r")):
+            shoulder = shoulder_from(pelvis_pos, trunk, side)
+            hand = np.array([shoulder[0], 0.03, 0.50])  # under the shoulders as they lie; the hands stay put
+            up_a, fo_a, _ = two_link(shoulder, hand, L_UPPER, L_FORE, bend_forward=False)
+            q["upper_arm." + S], q["forearm." + S] = rx(up_a), qmul(rx(fo_a), PRONATE)
+            q["hand." + S] = q["fingers." + S] = qmul(rx(-90 * DEG), PRONATE)
+        return {"root": [round(float(v), 4) for v in root], "q": q}
+    return entered(stage(90, 0), stage(55, 60), t)
+
+
+def childs_pose_sample(t):
+    """Balasana from kneeling upright: the hips sit back onto the heels, the trunk folds over the thighs, the arms
+    reach forward along the floor and the forehead rests down."""
+    kneel = all_ident()
+    root, _ = root_for_hip(np.array([0.0, 0.48, 0.0]), IDENT)
+    for S in ("L", "R"):
+        kneel["thigh." + S], kneel["shin." + S], kneel["foot." + S] = IDENT, rx(90 * DEG), rx(120 * DEG)
+    set_arms(kneel, 8 * DEG, 8 * DEG)
+    kneel = {"root": [round(float(v), 4) for v in root], "q": kneel}
+
+    child = all_ident()
+    trunk = rx(110 * DEG)
+    root, _ = root_for_hip(np.array([0.0, 0.25, 0.0]), trunk)
+    child["pelvis"], child["spine"] = trunk, trunk
+    child["neck"], child["head"] = rx(115 * DEG), rx(120 * DEG)  # forehead to the floor
+    for S in ("L", "R"):
+        child["thigh." + S], child["shin." + S], child["foot." + S] = rx(-61 * DEG), rx(90 * DEG), rx(120 * DEG)
+        child["upper_arm." + S], child["forearm." + S] = rx(-82 * DEG), qmul(rx(-82 * DEG), PRONATE)  # reaching along the floor
+        child["hand." + S] = child["fingers." + S] = qmul(rx(-90 * DEG), PRONATE)
+    child = {"root": [round(float(v), 4) for v in root], "q": child}
+    return entered(kneel, child, t)
+
+
+# ---------- stretches ----------
+def hip_flexor_stretch_sample(t):
+    """Kneeling hip flexor stretch: from kneeling upright, the left foot steps forward to a right angle and the
+    hips press forward over the kneeling right leg, the trunk tall."""
+    kneel = all_ident()
+    root, _ = root_for_hip(np.array([0.0, 0.48, 0.0]), IDENT)
+    for S in ("L", "R"):
+        kneel["thigh." + S], kneel["shin." + S], kneel["foot." + S] = IDENT, rx(90 * DEG), rx(120 * DEG)
+    set_arms(kneel, 8 * DEG, 8 * DEG)
+    kneel = {"root": [round(float(v), 4) for v in root], "q": kneel}
+
+    lunge = all_ident()
+    trunk = rx(-3 * DEG)
+    root, _ = root_for_hip(np.array([0.0, 0.44, 0.0]), trunk)
+    lunge["pelvis"], lunge["spine"] = trunk, trunk
+    lunge["thigh.L"], lunge["shin.L"], lunge["foot.L"] = rx(-90 * DEG), rx(0.0), IDENT  # the front knee at a right angle
+    lunge["thigh.R"], lunge["shin.R"], lunge["foot.R"] = rx(27 * DEG), rx(90 * DEG), rx(120 * DEG)  # kneeling, the hip pressed forward
+    set_arms(lunge, 12 * DEG, 12 * DEG)
+    lunge = {"root": [round(float(v), 4) for v in root], "q": lunge}
+    return entered(kneel, lunge, t)
+
+
+def quad_stretch_sample(t):
+    """Standing quad stretch on the left leg: the right heel drawn up to the buttock and held by the right hand,
+    the left arm out for balance."""
+    def stage(shin_deg, reach, balance_deg):
+        q = all_ident()
+        q["thigh.R"], q["shin.R"], q["foot.R"] = rx(10 * DEG), rx(shin_deg * DEG), rx((shin_deg + 25) * DEG)
+        for b in ("upper_arm", "forearm", "hand", "fingers"):
+            q[b + ".L"] = q_axis([0, 0, 1], balance_deg * DEG)
+        # The right hand reaches down and back to where the foot is; the shoulder is the standing figure's.
+        shoulder = rig["shoulder.r"]
+        foot = np.array([float(shoulder[0]), 0.88, -0.21])
+        hanging = shoulder + np.array([0.0, -(L_UPPER + L_FORE), 0.0])
+        target = hanging + (foot - hanging) * reach  # from hanging at the side to the foot
+        up_a, fo_a, _ = two_link(shoulder, target, L_UPPER, L_FORE, bend_forward=False)
+        q["upper_arm.R"], q["forearm.R"] = rx(up_a), rx(fo_a)
+        q["hand.R"] = q["fingers.R"] = rx(fo_a + 40 * DEG * reach)  # the hand curls round the foot
+        return {"root": [0, 0, 0], "q": q}
+    return entered(stage(10, 0.0, 0), stage(160, 1.0, 55), t)
+
+
+def calf_stretch_sample(t):
+    """Calf stretch at a wall: hands on the wall, the right leg stepped back straight with the heel down, the left
+    knee bent, leaning in."""
+    def stage(hip_y, trunk_deg, back_deg, front_thigh_deg, front_shin_deg):
+        q = all_ident()
+        trunk = rx(trunk_deg * DEG)
+        root, pelvis_pos = root_for_hip(np.array([0.0, hip_y, 0.05]), trunk)
+        q["pelvis"], q["spine"] = trunk, trunk
+        q["neck"], q["head"] = rx(trunk_deg * 0.5 * DEG), rx(trunk_deg * 0.3 * DEG)
+        q["thigh.R"], q["shin.R"], q["foot.R"] = rx(back_deg * DEG), rx(back_deg * DEG), IDENT  # heel down
+        q["thigh.L"], q["shin.L"], q["foot.L"] = rx(front_thigh_deg * DEG), rx(front_shin_deg * DEG), IDENT
+        for S, side in (("L", "l"), ("R", "r")):
+            shoulder = shoulder_from(pelvis_pos, trunk, side)
+            hand = np.array([shoulder[0], 1.25, 0.68])  # flat on the wall at CALF_WALL
+            up_a, fo_a, _ = two_link(shoulder, hand, L_UPPER, L_FORE, bend_forward=False)
+            q["upper_arm." + S], q["forearm." + S] = rx(up_a), qmul(rx(fo_a), PRONATE)
+            q["hand." + S] = q["fingers." + S] = qmul(rx(fo_a - 90 * DEG), PRONATE)  # fingers up the wall
+        return {"root": [round(float(v), 4) for v in root], "q": q}
+    return entered(stage(0.92, 6, 0, 0, 0), stage(0.78, 20, 31, -25, -36), t)
+
+
+CALF_WALL = 0.70
+
+
+def hamstring_fold_sample(t):
+    """Seated hamstring stretch: sitting with the legs straight out and the feet flexed, folding the trunk forward
+    over the legs with the arms reaching for the feet."""
+    def stage(trunk_deg, arm_deg):
+        q = all_ident()
+        trunk = rx(trunk_deg * DEG)
+        root, _ = root_for_hip(np.array([0.0, 0.10, 0.0]), trunk)
+        q["pelvis"], q["spine"] = trunk, trunk
+        q["neck"], q["head"] = rx((trunk_deg - 10) * DEG), rx((trunk_deg - 20) * DEG)
+        for S in ("L", "R"):
+            q["thigh." + S], q["shin." + S], q["foot." + S] = rx(-86 * DEG), rx(-86 * DEG), rx(-116 * DEG)  # legs out, feet flexed
+        set_arms(q, arm_deg * DEG, arm_deg * DEG)
+        return {"root": [round(float(v), 4) for v in root], "q": q}
+    return entered(stage(2, -30), stage(62, -72), t)
+
+
 # ---------- dips on parallel bars ----------
 # Support on locked arms with the legs hanging (knees bent back), lower
 # until the upper arms are level with the elbows behind and the trunk leant
@@ -1147,6 +1291,13 @@ CLIPS = {
     "scale-pose": (scale_sample, "designed yoga hold, tools/myo/designed_clip.py"),
     "headstand": (headstand_sample, "designed yoga hold, tools/myo/designed_clip.py"),
     "pigeon-pose": (pigeon_sample, "designed yoga hold, tools/myo/designed_clip.py"),
+    "downward-dog": (downward_dog_sample, "designed yoga hold, tools/myo/designed_clip.py"),
+    "cobra-pose": (cobra_sample, "designed yoga hold, tools/myo/designed_clip.py"),
+    "childs-pose": (childs_pose_sample, "designed yoga hold, tools/myo/designed_clip.py"),
+    "hip-flexor-stretch": (hip_flexor_stretch_sample, "designed stretch, tools/myo/designed_clip.py"),
+    "quad-stretch": (quad_stretch_sample, "designed stretch, tools/myo/designed_clip.py"),
+    "calf-stretch": (calf_stretch_sample, "designed stretch, tools/myo/designed_clip.py"),
+    "hamstring-stretch": (hamstring_fold_sample, "designed stretch, tools/myo/designed_clip.py"),
     "side-plank": (side_plank_sample, "designed yoga hold, tools/myo/designed_clip.py"),
     "pull-up": (pull_up_sample, "designed pose, src/lib/kinematics/pull-up.ts"),
     "lateral-raise": (lateral_raise_sample, "designed dumbbell lateral raise, tools/myo/designed_clip.py"),

@@ -33,7 +33,8 @@ import { planche } from "./planche";
 import { frontLever } from "./front-lever";
 import { foamRolling } from "./foam-rolling";
 import { standingLegRaise } from "./standing-leg-raise";
-import { warrior1, warrior2, halfMoon, scalePose, headstand, pigeonPose } from "./yoga-more";
+import { warrior1, warrior2, halfMoon, scalePose, headstand, pigeonPose, downwardDog, cobraPose, childsPose } from "./yoga-more";
+import { hipFlexorStretch, quadStretch, calfStretch, hamstringStretch } from "./stretches";
 import { CATEGORIES } from "./types";
 
 /** Display order within a category. Routes are `/` for the atlas and `/<slug>` for the rest. */
@@ -86,9 +87,17 @@ export const exercises: readonly Exercise[] = [
   pigeonPose,
   scalePose,
   headstand,
+  downwardDog,
+  cobraPose,
+  childsPose,
   wheelPose,
   crowPose,
   sidePlank,
+  // Stretches
+  hipFlexorStretch,
+  quadStretch,
+  calfStretch,
+  hamstringStretch,
 ];
 
 /** The switcher's groups, categories and exercises both in alphabetical order (owner, 2026-09-13). */

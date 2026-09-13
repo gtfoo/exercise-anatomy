@@ -150,6 +150,10 @@ letter and a one-line task strands the *why*.
       half moon from standing, scale pose from sitting cross-legged, a
       supported headstand from kneeling with the head down (pike, tuck,
       up), and the upright pigeon from all fours. Twelve yoga pages now.
+      Then a Stretches category (kneeling hip flexor stretch, standing quad
+      stretch holding the foot, calf stretch at a drawn wall, seated
+      hamstring fold), and downward dog, cobra and child's pose under Yoga.
+      The switcher sorts categories and exercises alphabetically.
       `from: owner, 2026-09-11 · from "for side plank, the muscle activation should be asymmetric right?" to "there seems to be a few missing frames between the end and the start"`
 
 - [x] **Cycling, plank, five yoga holds, categories** (2026-09-11): all
