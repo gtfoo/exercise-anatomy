@@ -90,7 +90,7 @@ export const calfStretch = stretch(
   "calf-stretch",
   "Calf stretch",
   "Hands on a wall, the right leg back straight with the heel down, leaning in.",
-  { position: [3.0, 1.3, 1.4], target: [0, 0.8, 0.15] },
+  { position: [3.2, 1.2, 0.1], target: [0, 0.8, 0.15] }, // level with the figure: the wall stands ahead of it, not between it and the camera
   [
     st(m("gastrocnemius-medial", "Gastrocnemius (medial)", "Back leg", "stabiliser", 0.1, "Right: the target, lengthened over the straight knee and the dropped heel.", 0.1), 0.05, 0.9),
     st(m("gastrocnemius-lateral", "Gastrocnemius (lateral)", "Back leg", "stabiliser", 0.1, "Right: lengthened with the medial head.", 0.1), 0.05, 0.9),
