@@ -435,6 +435,185 @@ def leg_raise_sample(t):
     return sequence([(0, stand), (0.22, knee_up), (0.42, out), (0.68, out), (0.85, knee_up), (1, stand)], t)
 
 
+# ---------- six more yoga holds ----------
+def flat_foot_turned(deg):
+    """A foot flat on the floor, its toes turned about the vertical by deg (positive toward +X, the left)."""
+    return q_axis([0, 1, 0], deg * DEG)
+
+
+def warrior1_hold():
+    """Virabhadrasana I: the left foot forward with the knee bent, the right leg straight behind with the foot
+    turned out, hips square, trunk upright, arms overhead."""
+    q = all_ident()
+    hip = np.array([0.0, 0.59, 0.10])
+    root, _ = root_for_hip(hip, rx(4 * DEG))
+    q["pelvis"], q["spine"] = rx(4 * DEG), rx(4 * DEG)
+    q["thigh.L"], q["shin.L"], q["foot.L"] = rx(-75 * DEG), rx(-5 * DEG), IDENT
+    q["thigh.R"], q["shin.R"], q["foot.R"] = rx(51 * DEG), rx(51 * DEG), flat_foot_turned(-45)
+    set_arms(q, -175 * DEG, -175 * DEG)
+    return {"root": [round(float(v), 4) for v in root], "q": q}
+
+
+def warrior1_sample(t):
+    step = all_ident()
+    hip = np.array([0.0, 0.8, 0.05])
+    r, _ = root_for_hip(hip, rx(4 * DEG))
+    step["thigh.L"], step["shin.L"], step["foot.L"] = rx(-45 * DEG), rx(-10 * DEG), rx(-20 * DEG)  # the front foot reaching
+    step["thigh.R"], step["shin.R"], step["foot.R"] = rx(25 * DEG), rx(25 * DEG), flat_foot_turned(-30)
+    set_arms(step, -90 * DEG, -90 * DEG)
+    step["root"] = [round(float(v), 4) for v in r]
+    step = {"root": step.pop("root"), "q": step}
+    return sequence([(0, stand_sample(0)), (0.22, step), (0.4, warrior1_hold()), (0.75, warrior1_hold()), (0.88, step), (1, stand_sample(0))], t)
+
+
+def warrior2_hold():
+    """Virabhadrasana II: a wide stance along x, the left knee bent over its foot, the right leg straight, both
+    arms out level along the stance, the gaze over the front hand."""
+    q = all_ident()
+    root, _ = root_for_hip(np.array([0.0, 0.62, 0.0]), IDENT)
+    q["thigh.L"], q["shin.L"], q["foot.L"] = q_axis([0, 0, 1], 70 * DEG), IDENT, flat_foot_turned(90)
+    q["thigh.R"], q["shin.R"], q["foot.R"] = q_axis([0, 0, 1], -48 * DEG), q_axis([0, 0, 1], -48 * DEG), flat_foot_turned(15)
+    for S, sgn in (("L", 1), ("R", -1)):
+        for b in ("upper_arm", "forearm", "hand", "fingers"):
+            q[b + "." + S] = q_axis([0, 0, 1], sgn * 90 * DEG)
+    q["neck"], q["head"] = q_axis([0, 1, 0], 30 * DEG), q_axis([0, 1, 0], 65 * DEG)
+    return {"root": [round(float(v), 4) for v in root], "q": q}
+
+
+def warrior2_sample(t):
+    wide = all_ident()  # the legs stepped wide before the knee bends
+    r, _ = root_for_hip(np.array([0.0, 0.80, 0.0]), IDENT)
+    wide["thigh.L"] = wide["shin.L"] = q_axis([0, 0, 1], 30 * DEG)
+    wide["thigh.R"] = wide["shin.R"] = q_axis([0, 0, 1], -30 * DEG)
+    wide["foot.L"], wide["foot.R"] = flat_foot_turned(60), flat_foot_turned(10)
+    for S, sgn in (("L", 1), ("R", -1)):
+        for b in ("upper_arm", "forearm", "hand", "fingers"):
+            wide[b + "." + S] = q_axis([0, 0, 1], sgn * 45 * DEG)
+    wide = {"root": [round(float(v), 4) for v in r], "q": wide}
+    return sequence([(0, stand_sample(0)), (0.2, wide), (0.4, warrior2_hold()), (0.75, warrior2_hold()), (0.9, wide), (1, stand_sample(0))], t)
+
+
+def half_moon_hold():
+    """Ardha Chandrasana: standing on the left leg, the trunk tipped over it toward +X and 30 degrees below level,
+    the left hand on the floor ahead of the foot, the right leg lifted level to -X, the right arm straight up."""
+    q = all_ident()
+    roll = q_axis([0, 0, 1], -120 * DEG)
+    root, _ = root_for_hip(np.array([0.0, 0.84, 0.05]), roll)
+    q["pelvis"], q["spine"], q["neck"], q["head"] = roll, roll, roll, roll
+    q["thigh.L"], q["shin.L"], q["foot.L"] = rx(2 * DEG), rx(2 * DEG), IDENT
+    q["thigh.R"], q["shin.R"], q["foot.R"] = q_axis([0, 0, 1], -90 * DEG), q_axis([0, 0, 1], -90 * DEG), q_axis([0, 0, 1], -90 * DEG)
+    for b in ("upper_arm", "forearm", "hand", "fingers"):
+        q[b + ".L"] = IDENT  # straight down to the floor
+        q[b + ".R"] = q_axis([0, 0, 1], 180 * DEG)  # straight up
+    return {"root": [round(float(v), 4) for v in root], "q": q}
+
+
+def half_moon_sample(t):
+    tip = all_ident()  # tipping: the trunk leant to the left, the right leg starting to lift, arms out
+    roll = q_axis([0, 0, 1], -50 * DEG)
+    r, _ = root_for_hip(np.array([0.0, 0.86, 0.02]), roll)
+    tip["pelvis"], tip["spine"], tip["neck"], tip["head"] = roll, roll, roll, roll
+    tip["thigh.R"] = tip["shin.R"] = tip["foot.R"] = q_axis([0, 0, 1], -40 * DEG)
+    for b in ("upper_arm", "forearm", "hand", "fingers"):
+        tip[b + ".L"], tip[b + ".R"] = q_axis([0, 0, 1], 40 * DEG), q_axis([0, 0, 1], -140 * DEG)
+    tip = {"root": [round(float(v), 4) for v in r], "q": tip}
+    return sequence([(0, stand_sample(0)), (0.2, tip), (0.4, half_moon_hold()), (0.75, half_moon_hold()), (0.9, tip), (1, stand_sample(0))], t)
+
+
+def scale_stage(hip_y, trunk_deg):
+    """Sitting cross-legged with the hands on the floor beside the hips; lifted when hip_y is above the floor.
+    The hands stay where they are planted, so sitting with the trunk leant forward bends the elbows and the lift
+    straightens them (owner, 2026-09-13)."""
+    q = all_ident()
+    trunk = rx(trunk_deg * DEG)
+    root, pelvis_pos = root_for_hip(np.array([0.0, hip_y, 0.0]), trunk)
+    q["pelvis"], q["spine"] = trunk, trunk
+    for S, sgn in (("L", 1), ("R", -1)):
+        q["thigh." + S] = qmul(rx(-100 * DEG), q_axis([0, 0, 1], sgn * 50 * DEG))  # knees out and forward
+        q["shin." + S] = q["foot." + S] = qmul(rx(-30 * DEG), q_axis([0, 0, 1], -sgn * 75 * DEG))  # shins crossing in front
+    for S, side in (("L", "l"), ("R", "r")):
+        shoulder = shoulder_from(pelvis_pos, trunk, side)
+        hand = np.array([shoulder[0], 0.03, 0.06])  # planted beside the hips, the same spot in both stages
+        up_a, fo_a, _ = two_link(shoulder, hand, L_UPPER, L_FORE, bend_forward=False)
+        q["upper_arm." + S], q["forearm." + S] = rx(up_a), qmul(rx(fo_a), PRONATE)
+        q["hand." + S] = q["fingers." + S] = qmul(rx(-90 * DEG), PRONATE)
+    return {"root": [round(float(v), 4) for v in root], "q": q}
+
+
+def scale_sample(t):
+    """Tolasana: sitting cross-legged with the elbows bent, press through the hands until the arms are straight
+    and the whole body is off the floor, hold, and lower."""
+    return entered(scale_stage(0.08, 25), scale_stage(0.21, 6), t)
+
+
+def headstand_stage(trunk_deg, thigh_deg, knee_deg, point):
+    """Supported headstand: the crown on the floor, the forearms down in a triangle with the hands clasped behind
+    the head; the body placed from the shoulders, which stay put."""
+    q = all_ident()
+    trunk = trunk_deg * DEG
+    shoulder_mid = np.array([0.0, 0.33, 0.0])
+    hip_mid = shoulder_mid - np.array([0.0, math.cos(trunk), math.sin(trunk)]) * L_TRUNK
+    root, _ = root_for_hip(hip_mid, rx(trunk))
+    q["pelvis"], q["spine"] = rx(trunk), rx(trunk)
+    q["neck"], q["head"] = rx(180 * DEG), rx(180 * DEG)  # crown down on the floor
+    thigh = thigh_deg * DEG
+    for S in ("L", "R"):
+        q["thigh." + S], q["shin." + S] = rx(thigh), rx(thigh + knee_deg * DEG)
+        q["foot." + S] = rx(thigh + knee_deg * DEG + (POINT * DEG if point else 0.0))
+        q["upper_arm." + S] = IDENT  # down to the elbows on the floor
+    q["forearm.L"] = q["hand.L"] = q["fingers.L"] = qmul(q_axis([0, 1, 0], 55 * DEG), rx(90 * DEG))
+    q["forearm.R"] = q["hand.R"] = q["fingers.R"] = qmul(q_axis([0, 1, 0], -55 * DEG), rx(90 * DEG))
+    return {"root": [round(float(v), 4) for v in root], "q": q}
+
+
+def headstand_sample(t):
+    kneel = headstand_stage(106, 24, 66, False)  # kneeling, head down, shins along the floor
+    pike = headstand_stage(159, 35, 0, False)  # hips up, legs straight, toes on the floor
+    tuck = headstand_stage(180, -35, 145, True)  # knees drawn in over the chest
+    full = headstand_stage(180, 180, 0, True)
+    return sequence([(0, kneel), (0.15, pike), (0.28, tuck), (0.4, full), (0.75, full), (0.85, tuck), (0.93, pike), (1, kneel)], t)
+
+
+def pigeon_stages():
+    table = all_ident()  # hands and knees
+    trunk = rx(88 * DEG)
+    root, pelvis_pos = root_for_hip(np.array([0.0, 0.47, 0.0]), trunk)
+    table["pelvis"], table["spine"] = trunk, trunk
+    table["neck"], table["head"] = rx(30 * DEG), rx(20 * DEG)
+    for S in ("L", "R"):
+        table["thigh." + S], table["shin." + S], table["foot." + S] = IDENT, rx(90 * DEG), rx(120 * DEG)
+    for S, side in (("L", "l"), ("R", "r")):
+        shoulder = shoulder_from(pelvis_pos, trunk, side)
+        hand = np.array([shoulder[0], 0.03, shoulder[2]])
+        up_a, fo_a, _ = two_link(shoulder, hand, L_UPPER, L_FORE, bend_forward=False)
+        table["upper_arm." + S], table["forearm." + S] = rx(up_a), qmul(rx(fo_a), PRONATE)
+        table["hand." + S] = table["fingers." + S] = qmul(rx(-90 * DEG), PRONATE)
+    table = {"root": [round(float(v), 4) for v in root], "q": table}
+
+    pigeon = all_ident()  # the left shin across in front, the right leg back along the floor, trunk upright
+    trunk = rx(12 * DEG)
+    root, pelvis_pos = root_for_hip(np.array([0.0, 0.20, 0.0]), trunk)
+    pigeon["pelvis"], pigeon["spine"] = trunk, trunk
+    pigeon["thigh.L"] = qmul(rx(-70 * DEG), q_axis([0, 0, 1], 55 * DEG))
+    pigeon["shin.L"] = pigeon["foot.L"] = q_axis([0, 0, 1], -85 * DEG)
+    pigeon["thigh.R"], pigeon["shin.R"], pigeon["foot.R"] = rx(95 * DEG), rx(95 * DEG), rx(130 * DEG)
+    for S, side in (("L", "l"), ("R", "r")):
+        shoulder = shoulder_from(pelvis_pos, trunk, side)
+        hand = np.array([shoulder[0], 0.03, shoulder[2] + 0.12])
+        up_a, fo_a, _ = two_link(shoulder, hand, L_UPPER, L_FORE, bend_forward=False)
+        pigeon["upper_arm." + S], pigeon["forearm." + S] = rx(up_a), qmul(rx(fo_a), PRONATE)
+        pigeon["hand." + S] = pigeon["fingers." + S] = qmul(rx(-90 * DEG), PRONATE)
+    pigeon = {"root": [round(float(v), 4) for v in root], "q": pigeon}
+    return table, pigeon
+
+
+def pigeon_sample(t):
+    """Eka Pada Rajakapotasana, the upright preparation: from all fours, the left shin comes across in front and
+    the right leg slides back until the hips settle to the floor; held; back to all fours."""
+    table, pigeon = pigeon_stages()
+    return sequence([(0, table), (0.4, pigeon), (0.75, pigeon), (1, table)], t)
+
+
 # ---------- dips on parallel bars ----------
 # Support on locked arms with the legs hanging (knees bent back), lower
 # until the upper arms are level with the elbows behind and the trunk leant
@@ -962,6 +1141,12 @@ CLIPS = {
     "front-lever": (front_lever_sample, "designed front lever, tools/myo/designed_clip.py"),
     "foam-rolling": (foam_roll_sample, "designed foam rolling, tools/myo/designed_clip.py"),
     "standing-leg-raise": (leg_raise_sample, "designed standing leg raise, tools/myo/designed_clip.py"),
+    "warrior-1": (warrior1_sample, "designed yoga hold, tools/myo/designed_clip.py"),
+    "warrior-2": (warrior2_sample, "designed yoga hold, tools/myo/designed_clip.py"),
+    "half-moon": (half_moon_sample, "designed yoga hold, tools/myo/designed_clip.py"),
+    "scale-pose": (scale_sample, "designed yoga hold, tools/myo/designed_clip.py"),
+    "headstand": (headstand_sample, "designed yoga hold, tools/myo/designed_clip.py"),
+    "pigeon-pose": (pigeon_sample, "designed yoga hold, tools/myo/designed_clip.py"),
     "side-plank": (side_plank_sample, "designed yoga hold, tools/myo/designed_clip.py"),
     "pull-up": (pull_up_sample, "designed pose, src/lib/kinematics/pull-up.ts"),
     "lateral-raise": (lateral_raise_sample, "designed dumbbell lateral raise, tools/myo/designed_clip.py"),

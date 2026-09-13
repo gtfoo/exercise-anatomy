@@ -146,6 +146,10 @@ letter and a one-line task strands the *why*.
       Mixamo clip each (`tools/mocap/in/`): a designed gait would read worse
       than any capture, and jogging is different enough from the sprint
       (upright, heel strike, low knees) to deserve its own page.
+      Six more yoga holds the same day: warrior I and II from standing,
+      half moon from standing, scale pose from sitting cross-legged, a
+      supported headstand from kneeling with the head down (pike, tuck,
+      up), and the upright pigeon from all fours. Twelve yoga pages now.
       `from: owner, 2026-09-11 · from "for side plank, the muscle activation should be asymmetric right?" to "there seems to be a few missing frames between the end and the start"`
 
 - [x] **Cycling, plank, five yoga holds, categories** (2026-09-11): all
