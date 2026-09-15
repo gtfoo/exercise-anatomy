@@ -15,3 +15,5 @@ append; only this agent deletes.
 ---
 
 *Empty — the elision withdrawal (nothing owed back) archived, 2026-09-08.*
+
+---

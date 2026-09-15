@@ -62,7 +62,7 @@ letter and a one-line task strands the *why*.
       out. Any FBX/BVH goes through `extract_pose3d.py` then `convert_clip.py`.
       `from: owner, 2026-09-10 · "browse those sites and check ... free models for now"`
 
-- [ ] **Case study on gtfoo.com** — `/products/exercise-anatomy`. The copy is
+- [x] **Case study on gtfoo.com** — live at https://gtfoo.com/products/exercise-anatomy since 2026-09-13 (gtfoo agent, `4bb8a0f`), published essentially as written. Their reply also asked about a dev port at 3901 inside the gtfoo block: stale on their side, this app binds 3960 and INFRA.md's table already carries the 3960-69 row, so nothing to raise with the droplet. The copy is
       written and delivered to the gtfoo agent (letter of 2026-09-13, carbon
       copy in MAIL-ARCHIVE.md): what is different, the idea, v1, three points
       along the way, three trade-offs with the bugs folded in, where it is
