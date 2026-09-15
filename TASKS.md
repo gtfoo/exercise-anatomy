@@ -81,6 +81,22 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Barbell lifts, bridges, two core holds, a sun salutation and five
+      more poses** (2026-09-15). Deadlift, Romanian deadlift, bench press,
+      overhead press and barbell row in Weights, all designed
+      (`tools/myo/designed_clip.py`) with the bar drawn between the hands
+      and a drawn bench (`scenery: bench`) under the bench press and the hip
+      thrust; glute bridge, hip thrust, hanging leg raise (wrists pinned on
+      the 2.3 m bar) and a hollow hold in Core; Surya Namaskar as one
+      fourteen-second sequence (mountain, arms up, fold, plank, cobra, dog,
+      fold, arms up, mountain, the feet sliding where a practitioner steps);
+      tree, chair, triangle, bridge and seated twist in Yoga. Two traps
+      found on the way: the forward chain from the feet needs a positive
+      shin angle for a knee ahead of the ankle, and `two_link`'s
+      `bend_forward` puts a supine knee toward the floor, so the bridges
+      and the bench use `False`. Walking, jogging and walking down stairs
+      are still waiting on Mixamo clips in `tools/mocap/in/`.
+
 - [x] **Sides, stretch, ten more Mixamo clips, holds, barbell** (2026-09-11).
       The figure is one mesh per muscle per side, so a side plank or a pistol
       squat colours left and right apart; a `stretch` channel (teal, purple

@@ -158,6 +158,21 @@ function Scenery({ scenery }: { scenery: NonNullable<Exercise["scenery"]> }) {
     );
   }
   if (scenery.kind === "bike") return <Bike />;
+  if (scenery.kind === "bench") {
+    const { top, length, z } = scenery;
+    return (
+      <group>
+        <mesh material={plaster} position={[0, top - 0.03, z]}>
+          <boxGeometry args={[0.32, 0.06, length]} />
+        </mesh>
+        {[-length / 2 + 0.12, length / 2 - 0.12].map((dz) => (
+          <mesh key={dz} material={plaster} position={[0, (top - 0.06) / 2, z + dz]}>
+            <boxGeometry args={[0.26, top - 0.06, 0.06]} />
+          </mesh>
+        ))}
+      </group>
+    );
+  }
   if (scenery.kind === "roller") {
     return (
       <mesh position={[0, scenery.radius, scenery.z]} rotation-z={Math.PI / 2}>

@@ -198,3 +198,85 @@ export const childsPose = yoga("childs-pose", "Child's pose", "Balasana, from kn
   m("rectus-abdominis", "Rectus abdominis", "Trunk", "stabiliser", 0.15, "Barely working: this is a resting pose."),
 ]);
 
+export const treePose = yoga("tree-pose", "Tree pose", "Vrksasana, standing on the left leg", { position: [3.0, 1.4, 1.8], target: [0, 0.95, 0] }, [
+  m("gluteus-medius", "Gluteus medius", "Standing leg", "prime-mover", 0.85, "Left: keeps the pelvis level on one foot. Right: turns the lifted thigh out.", 0.5),
+  m("gluteus-minimus", "Gluteus minimus", "Standing leg", "synergist", 0.65, "Left: pelvis control with the medius.", 0.4),
+  m("gluteus-maximus", "Gluteus maximus", "Standing leg", "synergist", 0.5, "Left: holds the standing hip. Right: turns the lifted thigh out.", 0.55),
+  m("vastus-lateralis", "Vastus lateralis", "Standing leg", "stabiliser", 0.45, "Left: holds the standing knee.", 0.1),
+  m("soleus", "Soleus", "Standing leg", "stabiliser", 0.55, "Left: ankle balance.", 0.1),
+  m("fibularis", "Fibularis longus and brevis", "Standing leg", "stabiliser", 0.6, "Left: balances the standing ankle from the outside.", 0.1),
+  m("tibialis-anterior", "Tibialis anterior", "Standing leg", "stabiliser", 0.55, "Left: ankle balance from the front.", 0.1),
+  st(m("adductor-longus", "Adductor longus", "Lifted leg", "stabiliser", 0.15, "Right: lengthened by the turned-out, lifted thigh. Left: presses the standing thigh against the foot.", 0.4), 0.05, 0.6),
+  st(m("pectineus", "Pectineus", "Lifted leg", "stabiliser", 0.15, "Right: lengthened with the adductors.", 0.3), 0.05, 0.5),
+  m("biceps-femoris", "Biceps femoris", "Lifted leg", "synergist", 0.2, "Right: holds the knee bent with the foot on the thigh.", 0.45),
+  m("erector-spinae", "Erector spinae", "Trunk", "stabiliser", 0.5, "Keeps the trunk tall over the standing leg."),
+  m("external-obliques", "External obliques", "Trunk", "stabiliser", 0.45, "Steady the trunk against tipping.", 0.45),
+  m("anterior-deltoid", "Anterior deltoid", "Arms", "synergist", 0.6, "Holds the arms overhead, palms together."),
+  m("upper-trapezius", "Upper trapezius", "Arms", "synergist", 0.45, "Rotates the shoulder blades up under the raised arms."),
+]);
+
+export const chairPose = yoga("chair-pose", "Chair pose", "Utkatasana, from standing", { position: [3.2, 1.4, 1.8], target: [0, 0.85, 0] }, [
+  m("vastus-lateralis", "Vastus lateralis", "Legs", "prime-mover", 0.9, "Holds the bent knees against the whole body's weight."),
+  m("vastus-medialis", "Vastus medialis", "Legs", "prime-mover", 0.9, "Knee extension with the other vasti."),
+  m("vastus-intermedius", "Vastus intermedius", "Legs", "prime-mover", 0.85, "Deep knee extensor."),
+  m("rectus-femoris", "Rectus femoris", "Legs", "synergist", 0.6, "Knee extension; slack at the flexed hip."),
+  m("gluteus-maximus", "Gluteus maximus", "Hips", "prime-mover", 0.8, "Holds the hips from sinking further back and down."),
+  m("gluteus-medius", "Gluteus medius", "Hips", "stabiliser", 0.5, "Keeps the knees tracking over the feet."),
+  m("adductor-longus", "Adductor longus", "Hips", "stabiliser", 0.45, "Squeezes the knees together."),
+  m("soleus", "Soleus", "Lower leg", "stabiliser", 0.6, "Holds the shins forward over the heels."),
+  m("tibialis-anterior", "Tibialis anterior", "Lower leg", "stabiliser", 0.5, "Balances the weight over the heels."),
+  m("erector-spinae", "Erector spinae", "Trunk", "prime-mover", 0.8, "Holds the leant trunk long from the hips to the raised arms."),
+  m("rectus-abdominis", "Rectus abdominis", "Trunk", "stabiliser", 0.5, "Keeps the ribs in and the pelvis from tipping."),
+  m("anterior-deltoid", "Anterior deltoid", "Arms", "synergist", 0.65, "Holds the arms overhead in line with the trunk."),
+  m("middle-deltoid", "Middle deltoid", "Arms", "synergist", 0.5, "Overhead with the anterior fibres."),
+  m("upper-trapezius", "Upper trapezius", "Arms", "synergist", 0.5, "Rotates the shoulder blades up."),
+  st(m("latissimus-dorsi", "Latissimus dorsi", "Arms", "stabiliser", 0.3, "Lengthened with the arms overhead."), 0.5),
+]);
+
+export const trianglePose = yoga("triangle-pose", "Triangle pose", "Utthita Trikonasana, tipped over the left leg", { position: [0.8, 1.3, 3.2], target: [0, 0.8, 0] }, [
+  m("gluteus-medius", "Gluteus medius", "Hips", "prime-mover", 0.8, "Left: holds the pelvis over the front leg as the trunk tips. Right: keeps the back hip open.", 0.6),
+  m("gluteus-maximus", "Gluteus maximus", "Hips", "synergist", 0.5, "Both turn the thighs out in the wide stance.", 0.55),
+  m("vastus-lateralis", "Vastus lateralis", "Legs", "synergist", 0.6, "Both knees locked straight.", 0.5),
+  m("vastus-medialis", "Vastus medialis", "Legs", "synergist", 0.6, "Knee lock with the other vasti.", 0.5),
+  st(m("biceps-femoris", "Biceps femoris", "Legs", "stabiliser", 0.3, "Left: on stretch as the trunk folds sideways over the straight front leg.", 0.25), 0.85, 0.2),
+  st(m("semitendinosus", "Semitendinosus", "Legs", "stabiliser", 0.3, "Left: on stretch with biceps femoris.", 0.25), 0.85, 0.2),
+  st(m("semimembranosus", "Semimembranosus", "Legs", "stabiliser", 0.3, "Left: on stretch.", 0.25), 0.85, 0.2),
+  st(m("adductor-longus", "Adductor longus", "Legs", "stabiliser", 0.3, "Both lengthened by the wide stance; the back leg's most.", 0.3), 0.5, 0.7),
+  st(m("gracilis", "Gracilis", "Legs", "stabiliser", 0.2, "On stretch along the inner thighs.", 0.2), 0.5, 0.7),
+  m("fibularis", "Fibularis longus and brevis", "Lower leg", "stabiliser", 0.5, "Keep the outer edges of the feet down.", 0.5),
+  m("external-obliques", "External obliques", "Trunk", "prime-mover", 0.55, "Right: holds the top side of the trunk long and open. Left: the lower side braces.", 0.8),
+  m("internal-obliques", "Internal obliques", "Trunk", "synergist", 0.5, "Brace and turn the trunk open with the external obliques.", 0.6),
+  m("erector-spinae", "Erector spinae", "Trunk", "stabiliser", 0.6, "Keeps the spine long from the hips to the head."),
+  m("middle-deltoid", "Middle deltoid", "Arms", "synergist", 0.35, "Left: steadies the lower arm. Right: holds the top arm straight up.", 0.65),
+  m("supraspinatus", "Supraspinatus", "Arms", "stabiliser", 0.3, "Right: seats the raised shoulder.", 0.5),
+]);
+
+export const bridgePose = yoga("bridge-pose", "Bridge pose", "Setu Bandha Sarvangasana, from lying on the back", { position: [2.8, 1.1, 2.0], target: [0, 0.3, -0.05] }, [
+  m("gluteus-maximus", "Gluteus maximus", "Hips", "prime-mover", 0.85, "Lifts and holds the hips up in a line from the knees to the shoulders."),
+  m("biceps-femoris", "Biceps femoris", "Hips", "synergist", 0.6, "Hip extension through the planted heels."),
+  m("semitendinosus", "Semitendinosus", "Hips", "synergist", 0.55, "Hip extension with biceps femoris."),
+  m("erector-spinae", "Erector spinae", "Trunk", "prime-mover", 0.7, "Holds the arch from the shoulders to the hips."),
+  m("gluteus-medius", "Gluteus medius", "Hips", "stabiliser", 0.45, "Keeps the knees in line over the feet."),
+  m("vastus-lateralis", "Vastus lateralis", "Legs", "stabiliser", 0.4, "Holds the knee angle over the feet."),
+  m("posterior-deltoid", "Posterior deltoid", "Arms", "stabiliser", 0.4, "Presses the arms into the floor to lift the chest."),
+  m("triceps-long-head", "Triceps, long head", "Arms", "stabiliser", 0.4, "Presses the arms down along the floor."),
+  st(m("rectus-femoris", "Rectus femoris", "Front", "stabiliser", 0.15, "Lengthened over the extended hips."), 0.6),
+  st(m("pectineus", "Pectineus", "Front", "stabiliser", 0.1, "Lengthened with rectus femoris."), 0.5),
+  st(m("rectus-abdominis", "Rectus abdominis", "Front", "stabiliser", 0.2, "Lengthened over the arch, working just enough to keep the ribs from flaring."), 0.6),
+  st(m("pectoralis-major", "Pectoralis major", "Front", "stabiliser", 0.15, "Lengthened as the chest lifts toward the chin."), 0.4),
+]);
+
+export const seatedTwist = yoga("seated-twist", "Seated twist", "Ardha Matsyendrasana, twisting to the left", { position: [2.6, 1.3, 2.4], target: [0, 0.45, 0.1] }, [
+  m("external-obliques", "External obliques", "Trunk", "prime-mover", 0.8, "Right: turns the trunk to the left. Left: lengthened by the same turn.", 0.3),
+  m("internal-obliques", "Internal obliques", "Trunk", "prime-mover", 0.35, "Left: turns the trunk to the left with the right external oblique.", 0.75),
+  m("erector-spinae", "Erector spinae", "Trunk", "synergist", 0.6, "Keeps the spine tall through the twist; its deeper fibres rotate it."),
+  m("rectus-abdominis", "Rectus abdominis", "Trunk", "stabiliser", 0.35, "Keeps the trunk upright, not slumped."),
+  m("gluteus-maximus", "Gluteus maximus", "Hips", "stabiliser", 0.2, "Left: lengthened by the crossed, flexed hip.", 0.2),
+  st(m("gluteus-medius", "Gluteus medius", "Hips", "stabiliser", 0.2, "Left: on stretch with the knee drawn across.", 0.2), 0.6, 0.05),
+  m("rectus-femoris", "Rectus femoris", "Legs", "stabiliser", 0.5, "Left: holds the bent knee up. Right: locks the straight leg.", 0.35),
+  m("tibialis-anterior", "Tibialis anterior", "Legs", "stabiliser", 0.3, "Right: flexes the straight leg's foot.", 0.5),
+  m("posterior-deltoid", "Posterior deltoid", "Arms", "synergist", 0.4, "Right: hooks the arm round the knee and pulls the twist. Left: props the hand behind.", 0.55),
+  m("biceps-brachii", "Biceps brachii", "Arms", "stabiliser", 0.2, "Right: holds the hook on the knee.", 0.45),
+  m("triceps-long-head", "Triceps, long head", "Arms", "stabiliser", 0.45, "Left: props the trunk on the hand behind.", 0.2),
+]);
+
