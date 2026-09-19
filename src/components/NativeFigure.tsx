@@ -82,6 +82,50 @@ function attachBarbell(scene: THREE.Group): Barbell {
   };
 }
 
+/**
+ * A resistance band looped round both thighs just above the knees: a
+ * flattened ring placed each frame between the two knees and pointed from
+ * one to the other, so it stretches as the feet step apart.
+ */
+function attachBand(scene: THREE.Group): Barbell {
+  const rubber = new THREE.MeshStandardMaterial({ color: "#2f6f8f", roughness: 0.8, metalness: 0 });
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(1, 0.012, 10, 48), rubber);
+  ring.rotation.x = Math.PI / 2; // the loop lies flat
+  const g = new THREE.Group();
+  g.add(ring);
+  scene.add(g);
+  const bones = (["mixamorigLeftUpLeg", "mixamorigLeftLeg", "mixamorigRightUpLeg", "mixamorigRightLeg"] as const).map((n) => scene.getObjectByName(n));
+  const HL = new THREE.Vector3();
+  const KL = new THREE.Vector3();
+  const HR = new THREE.Vector3();
+  const KR = new THREE.Vector3();
+  const dir = new THREE.Vector3();
+  const X = new THREE.Vector3(1, 0, 0);
+  const ABOVE_KNEE = 0.08;
+  const THIGH_HALF = 0.075; // half the thigh's depth: the loop reaches round the front and back
+  return {
+    update() {
+      if (bones.some((b) => !b)) return;
+      scene.updateMatrixWorld(true);
+      bones[0]!.getWorldPosition(HL);
+      bones[1]!.getWorldPosition(KL);
+      bones[2]!.getWorldPosition(HR);
+      bones[3]!.getWorldPosition(KR);
+      KL.add(dir.copy(HL).sub(KL).normalize().multiplyScalar(ABOVE_KNEE));
+      KR.add(dir.copy(HR).sub(KR).normalize().multiplyScalar(ABOVE_KNEE));
+      g.position.copy(KL).add(KR).multiplyScalar(0.5);
+      dir.copy(KR).sub(KL);
+      const half = dir.length() / 2 + THIGH_HALF;
+      g.quaternion.setFromUnitVectors(X, dir.normalize());
+      g.scale.set(half, 1, THIGH_HALF);
+    },
+    dispose() {
+      g.removeFromParent();
+      rubber.dispose();
+    },
+  };
+}
+
 type Hold = { x: number; y: number; z: number; limb: "hand" | "foot" };
 
 /**
@@ -185,7 +229,7 @@ function placeHolds(group: THREE.Group, holds: Hold[], front: number): () => voi
  * Returns the function that removes it again.
  */
 function attachProps(scene: THREE.Group, props: Exercise["props"]): () => void {
-  if (!props || props === "barbell") return () => {}; // the barbell is placed per frame, see attachBarbell
+  if (!props || props === "barbell" || props === "band") return () => {}; // placed per frame, see attachBarbell and attachBand
   const steel = new THREE.MeshStandardMaterial({
     color: "#4a4744",
     roughness: 0.5,
@@ -296,7 +340,7 @@ export default function NativeFigure({ exercise }: { exercise: Exercise }) {
     action.setLoop(THREE.LoopRepeat, Infinity);
     action.play();
     action.paused = true; // the transport drives time, not the clock
-    const barbell = exercise.props === "barbell" ? attachBarbell(scene) : undefined;
+    const barbell = exercise.props === "barbell" ? attachBarbell(scene) : exercise.props === "band" ? attachBand(scene) : undefined;
     const holds = wall?.holds && holdsGroup.current ? placeHolds(holdsGroup.current, findHolds(scene, action, mixer, clip.duration), wall.front) : () => {};
     live.current = {
       materials,

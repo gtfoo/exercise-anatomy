@@ -1048,6 +1048,56 @@ def seated_twist_sample(t):
     return entered(stage(0), stage(45), t)
 
 
+
+# ---------- crab walk (banded, lateral) ----------
+# The owner's reference (sweat.com/exercises/crab-walk, 2026-09-19): a resistance band just above the knees, a
+# half squat with the trunk leant forward, side steps that never bring the feet together.
+CRAB_STEP = 0.20  # how far the body moves per side step
+CRAB_STEPS = 3  # steps to the left, then the same three back to the right
+CRAB_NARROW = 0.11  # each foot's distance from the hip line between steps (never together: the band stays taut)
+CRAB_THIGH, CRAB_SHIN = -45, 25  # the half squat, knees over the toes
+CRAB_SWING = (-52, 30)  # the stepping leg bends a little more, so the foot clears the floor
+
+
+def crab_walk_sample(t):
+    u = CRAB_STEPS * (2 * t if t <= 0.5 else 2 * (1 - t))  # steps to the left, then the leftward half reversed
+    k, f = math.floor(u), u - math.floor(u)
+    x0 = -CRAB_STEP * CRAB_STEPS / 2 + k * CRAB_STEP  # the hip line at the start of this step
+    # The left foot steps out (f 0-0.4) as the body moves half a step; the right foot steps in (0.5-0.9) as the
+    # body moves the other half. The trailing foot stays at the narrow width, so the band never slackens.
+    a, b = smooth(min(max(f / 0.4, 0.0), 1.0)), smooth(min(max((f - 0.5) / 0.4, 0.0), 1.0))
+    hip_x = x0 + CRAB_STEP * (0.5 * a + 0.5 * b)
+    x_l = x0 + CRAB_NARROW + CRAB_STEP * a
+    x_r = x0 - CRAB_NARROW + CRAB_STEP * b
+    lift_l = math.sin(math.pi * a) if 0 < f < 0.4 else 0.0
+    lift_r = math.sin(math.pi * b) if 0.5 < f < 0.9 else 0.0
+    q = all_ident()
+    legs = {}
+    for S, x_foot, lift, sgn in (("L", x_l, lift_l, 1), ("R", x_r, lift_r, -1)):
+        thigh = CRAB_THIGH + (CRAB_SWING[0] - CRAB_THIGH) * lift
+        shin = CRAB_SHIN + (CRAB_SWING[1] - CRAB_SHIN) * lift
+        vertical = L_THIGH * math.cos(thigh * DEG) + L_SHIN * math.cos(shin * DEG)
+        ab = math.atan2(x_foot - (hip_x + sgn * float(abs(rig["hip.l"][0]))), vertical)
+        legs[S] = (thigh, shin, ab, vertical)
+    stance = [legs[S] for S in ("L", "R") if (S == "L" and lift_l == 0) or (S == "R" and lift_r == 0)] or list(legs.values())
+    hip_y = 0.06 + min(v * math.cos(ab) for (_, _, ab, v) in stance)
+    hip_z = L_SHIN * math.sin(CRAB_SHIN * DEG) + L_THIGH * math.sin(CRAB_THIGH * DEG)
+    trunk = rx(35 * DEG)
+    root, _ = root_for_hip(np.array([hip_x, hip_y, hip_z]), trunk)
+    q["pelvis"], q["spine"] = trunk, trunk
+    q["neck"], q["head"] = rx(18 * DEG), rx(4 * DEG)
+    for S, (thigh, shin, ab, _) in legs.items():
+        side = q_axis([0, 0, 1], ab)
+        q["thigh." + S] = qmul(side, rx(thigh * DEG))
+        q["shin." + S] = qmul(side, rx(shin * DEG))
+        q["foot." + S] = IDENT  # flat, toes forward
+    for S, sgn in (("L", -1), ("R", 1)):
+        q["upper_arm." + S] = rx(-25 * DEG)  # the elbows a little forward
+        fore = qmul(q_axis([0, 1, 0], sgn * 48 * DEG), rx(-95 * DEG))  # the forearms level, turned in to meet at the chest
+        q["forearm." + S] = q["hand." + S] = q["fingers." + S] = fore
+    return {"root": [round(float(v), 4) for v in root], "q": q}
+
+
 # ---------- dips on parallel bars ----------
 # Support on locked arms with the legs hanging (knees bent back), lower
 # until the upper arms are level with the elbows behind and the trunk leant
@@ -1584,6 +1634,7 @@ CLIPS = {
     "downward-dog": (downward_dog_sample, "designed yoga hold, tools/myo/designed_clip.py"),
     "cobra-pose": (cobra_sample, "designed yoga hold, tools/myo/designed_clip.py"),
     "childs-pose": (childs_pose_sample, "designed yoga hold, tools/myo/designed_clip.py"),
+    "crab-walk": (crab_walk_sample, "designed movement, tools/myo/designed_clip.py"),
     "deadlift": (deadlift_sample, "designed barbell lift, tools/myo/designed_clip.py"),
     "romanian-deadlift": (rdl_sample, "designed barbell lift, tools/myo/designed_clip.py"),
     "bench-press": (bench_press_sample, "designed barbell lift, tools/myo/designed_clip.py"),

@@ -38,6 +38,7 @@ import { hipFlexorStretch, quadStretch, calfStretch, hamstringStretch } from "./
 import { deadlift, romanianDeadlift, benchPress, overheadPress, barbellRow, hipThrust } from "./weights-more";
 import { gluteBridge, hangingLegRaise, hollowHold } from "./core-more";
 import { sunSalutation } from "./sun-salutation";
+import { crabWalk } from "./crab-walk";
 import { treePose, chairPose, trianglePose, bridgePose, seatedTwist } from "./yoga-more";
 import { CATEGORIES } from "./types";
 
@@ -118,6 +119,7 @@ export const exercises: readonly Exercise[] = [
   trianglePose,
   bridgePose,
   seatedTwist,
+  crabWalk,
 ];
 
 /** The switcher's groups, categories and exercises both in alphabetical order (owner, 2026-09-13). */

@@ -81,6 +81,17 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Crab walk** (2026-09-19). The owner asked for a crab walk and sent
+      sweat.com/exercises/crab-walk (and a YouTube short) to say which one:
+      the banded lateral walk, not the hands-and-feet reverse tabletop the
+      first draft built. Designed (`crab_walk_sample`): a half squat with
+      the trunk leant forward, a band drawn round both thighs above the
+      knees (`props: "band"`, placed each frame between the knee bones by
+      `attachBand` in NativeFigure), three side steps to the left and the
+      same three played back to the right, the feet never together so the
+      band stays taut. Gluteus medius and minimus lead, per side, half a
+      step apart; the band's tension is not modelled and the page says so.
+
 - [x] **Barbell lifts, bridges, two core holds, a sun salutation and five
       more poses** (2026-09-15). Deadlift, Romanian deadlift, bench press,
       overhead press and barbell row in Weights, all designed
