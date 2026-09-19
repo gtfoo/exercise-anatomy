@@ -126,6 +126,50 @@ function attachBand(scene: THREE.Group): Barbell {
   };
 }
 
+/**
+ * An ab wheel: a wheel on an axle held between the hands, placed each frame
+ * at their midpoint and pointed from one to the other, spun by how far it
+ * has travelled along z (tools/myo/designed_clip.py's WHEEL_R).
+ */
+function attachWheel(scene: THREE.Group): Barbell {
+  const R = 0.1;
+  const steel = new THREE.MeshStandardMaterial({ color: "#4a4744", roughness: 0.5, metalness: 0.6 });
+  const rubber = new THREE.MeshStandardMaterial({ color: "#2b2b2b", roughness: 0.9, metalness: 0 });
+  const g = new THREE.Group();
+  const axle = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.4, 12), steel);
+  axle.rotation.z = Math.PI / 2;
+  g.add(axle);
+  const wheel = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 0.05, 32), rubber);
+  wheel.rotation.z = Math.PI / 2; // the axle along x
+  const spin = new THREE.Group(); // turned about the axle, so the spin never swings it
+  spin.add(wheel);
+  g.add(spin);
+  scene.add(g);
+  const left = scene.getObjectByName("mixamorigLeftHand");
+  const right = scene.getObjectByName("mixamorigRightHand");
+  const L = new THREE.Vector3();
+  const Rv = new THREE.Vector3();
+  const dir = new THREE.Vector3();
+  const X = new THREE.Vector3(1, 0, 0);
+  return {
+    update() {
+      if (!left || !right) return;
+      scene.updateMatrixWorld(true);
+      left.localToWorld(L.set(0, 0.08, 0.03));
+      right.localToWorld(Rv.set(0, 0.08, 0.03));
+      g.position.copy(L).add(Rv).multiplyScalar(0.5);
+      g.position.y = R; // the wheel sits on the floor whatever the hands do
+      g.quaternion.setFromUnitVectors(X, dir.copy(Rv).sub(L).normalize());
+      spin.rotation.x = g.position.z / R; // rolls as it travels
+    },
+    dispose() {
+      g.removeFromParent();
+      steel.dispose();
+      rubber.dispose();
+    },
+  };
+}
+
 type Hold = { x: number; y: number; z: number; limb: "hand" | "foot" };
 
 /**
@@ -229,7 +273,7 @@ function placeHolds(group: THREE.Group, holds: Hold[], front: number): () => voi
  * Returns the function that removes it again.
  */
 function attachProps(scene: THREE.Group, props: Exercise["props"]): () => void {
-  if (!props || props === "barbell" || props === "band") return () => {}; // placed per frame, see attachBarbell and attachBand
+  if (!props || props === "barbell" || props === "band" || props === "wheel") return () => {}; // placed per frame, see attachBarbell, attachBand and attachWheel
   const steel = new THREE.MeshStandardMaterial({
     color: "#4a4744",
     roughness: 0.5,
@@ -340,7 +384,7 @@ export default function NativeFigure({ exercise }: { exercise: Exercise }) {
     action.setLoop(THREE.LoopRepeat, Infinity);
     action.play();
     action.paused = true; // the transport drives time, not the clock
-    const barbell = exercise.props === "barbell" ? attachBarbell(scene) : exercise.props === "band" ? attachBand(scene) : undefined;
+    const barbell = exercise.props === "barbell" ? attachBarbell(scene) : exercise.props === "band" ? attachBand(scene) : exercise.props === "wheel" ? attachWheel(scene) : undefined;
     const holds = wall?.holds && holdsGroup.current ? placeHolds(holdsGroup.current, findHolds(scene, action, mixer, clip.duration), wall.front) : () => {};
     live.current = {
       materials,

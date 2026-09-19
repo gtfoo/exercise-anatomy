@@ -39,6 +39,10 @@ import { deadlift, romanianDeadlift, benchPress, overheadPress, barbellRow, hipT
 import { gluteBridge, hangingLegRaise, hollowHold } from "./core-more";
 import { sunSalutation } from "./sun-salutation";
 import { crabWalk } from "./crab-walk";
+import { abRoller } from "./ab-roller";
+import { singleLegRdlKneeUp } from "./legs-more";
+import { windshieldWipers, straightLegSitUp, straightLegHold, vUp, shoulderTap, doubleLegLift, straightLegRaise } from "./core-sweat";
+import { pikePushUp } from "./push-more";
 import { treePose, chairPose, trianglePose, bridgePose, seatedTwist } from "./yoga-more";
 import { CATEGORIES } from "./types";
 
@@ -120,6 +124,16 @@ export const exercises: readonly Exercise[] = [
   bridgePose,
   seatedTwist,
   crabWalk,
+  abRoller,
+  singleLegRdlKneeUp,
+  windshieldWipers,
+  straightLegSitUp,
+  straightLegHold,
+  vUp,
+  pikePushUp,
+  shoulderTap,
+  doubleLegLift,
+  straightLegRaise,
 ];
 
 /** The switcher's groups, categories and exercises both in alphabetical order (owner, 2026-09-13). */

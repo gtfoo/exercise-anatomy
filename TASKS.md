@@ -81,6 +81,17 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Ab roller and nine from sweat.com** (2026-09-19). The owner sent
+      sweat.com pages as the form reference for each: ab roller (kneeling
+      rollout, an ab wheel drawn on its axle between the hands and spun by
+      its travel, `props: "wheel"`), single-leg Romanian deadlift with a
+      knee-up, windshield wipers, straight-leg sit-up, straight-leg hold,
+      V-up, pike push-up, shoulder tap, double-leg lift (on the right
+      side) and straight-leg raise. All designed in `designed_clip.py`,
+      each page's disclaimer names sweat.com as the form source. The
+      YouTube shorts the owner also sent give no description to a fetch,
+      so the sweat.com text is what was followed.
+
 - [x] **Crab walk** (2026-09-19). The owner asked for a crab walk and sent
       sweat.com/exercises/crab-walk (and a YouTube short) to say which one:
       the banded lateral walk, not the hands-and-feet reverse tabletop the

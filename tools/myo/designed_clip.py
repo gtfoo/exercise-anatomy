@@ -1098,6 +1098,243 @@ def crab_walk_sample(t):
     return {"root": [round(float(v), 4) for v in root], "q": q}
 
 
+# ---------- ab roller ----------
+# The owner's reference (sweat.com/exercises/ab-roller, 2026-09-19): kneeling, a hand on each handle directly
+# below the chest, lean forward with a neutral spine so the wheel rolls out, pull it back with the abdominals.
+# The knees stay planted; the thighs and trunk open out toward one line and the arms reach along it.
+WHEEL_R = 0.10
+
+
+def ab_roller_stage(thigh_deg, trunk_deg, hand_ahead):
+    """Knees on the floor at z = 0 with the shins behind; the thigh and trunk by angle (rx: positive tips the
+    hips and shoulders forward); the hands on the wheel's axle, hand_ahead in front of the shoulders."""
+    q = all_ident()
+    thigh, trunk = thigh_deg * DEG, trunk_deg * DEG
+    knee = np.array([0.0, 0.06, 0.0])
+    hip = knee + np.array([0.0, math.cos(thigh), math.sin(thigh)]) * L_THIGH
+    root, pelvis_pos = root_for_hip(hip, rx(trunk))
+    q["pelvis"], q["spine"] = rx(trunk), rx(trunk)
+    q["neck"], q["head"] = rx(trunk - 12 * DEG), rx(trunk - 25 * DEG)  # the neck in line, the eyes to the floor ahead
+    for S in ("L", "R"):
+        q["thigh." + S], q["shin." + S], q["foot." + S] = rx(thigh), rx(90 * DEG), rx(120 * DEG)  # shins on the floor, toes back
+    for S, side in (("L", "l"), ("R", "r")):
+        shoulder = shoulder_from(pelvis_pos, rx(trunk), side)
+        hand = np.array([shoulder[0], WHEEL_R, shoulder[2] + hand_ahead])
+        up_a, fo_a, _ = two_link(shoulder, hand, L_UPPER, L_FORE, bend_forward=False)
+        q["upper_arm." + S], q["forearm." + S] = rx(up_a), qmul(rx(fo_a), PRONATE)
+        q["hand." + S] = q["fingers." + S] = qmul(rx(fo_a), PRONATE)  # gripping the handles
+    return {"root": [round(float(v), 4) for v in root], "q": q}
+
+
+def ab_roller_sample(t):
+    """One rollout from kneeling: out over the first half, back over the second."""
+    f = 0.5 - 0.5 * math.cos(2 * math.pi * t)
+    thigh = 18 + (60 - 18) * f  # as far as a neutral spine allows, not flat to the floor
+    trunk = 62 + (74 - 62) * f
+    ahead = 0.08 + (0.46 - 0.08) * f
+    return ab_roller_stage(thigh, trunk, ahead)
+
+
+# ---------- nine from sweat.com (the owner's references, 2026-09-19) ----------
+def single_leg_rdl_knee_up_sample(t):
+    """sweat.com/exercises/single-leg-romanian-deadlift-knee-up: standing on the left leg with its knee softly
+    bent, hinge until the trunk is level with the right leg extended behind (toes to the floor) and the arms
+    reaching in front; stand back up on the left leg and bring the right knee to the chest; lower the leg
+    without touching down."""
+    def stage(trunk_deg, r_thigh, r_shin, r_foot, up_deg, fo_deg, head_deg):
+        q = all_ident()
+        hip = hip_from_feet(-10, 5)
+        trunk = rx(trunk_deg * DEG)
+        root, _ = root_for_hip(hip, trunk)
+        q["pelvis"], q["spine"] = trunk, trunk
+        q["neck"], q["head"] = rx(head_deg * 0.6 * DEG), rx(head_deg * DEG)
+        set_legs(q, -10 * DEG, 5 * DEG, 0.0, side="L")
+        q["thigh.R"], q["shin.R"], q["foot.R"] = rx(r_thigh * DEG), rx(r_shin * DEG), rx(r_foot * DEG)
+        set_arms(q, up_deg * DEG, fo_deg * DEG)
+        return {"root": [round(float(v), 4) for v in root], "q": q}
+    ready = stage(2, -8, 12, 0, 0, 0, 0)  # tall, the right foot just off the floor
+    hinge = stage(85, 85, 85, 90, -88, -88, 45)  # trunk level, the right leg level behind, arms reaching ahead
+    tall = stage(0, -8, 12, 0, 0, 0, 0)
+    knee = stage(-4, -105, -12, 0, 0, 0, 0)  # the right knee to the chest
+    return sequence([(0, ready), (0.35, hinge), (0.62, tall), (0.78, knee), (1, ready)], t)
+
+
+def windshield_wipers_sample(t):
+    """sweat.com/exercises/windshield-wipers: on the back with the arms out in a T, the legs held straight up at
+    a right angle to the hips; lower them to the right until nearly parallel with the floor, back up, then to the
+    left."""
+    def stage(roll_deg):
+        q = all_ident()
+        flat = rx(-90 * DEG)
+        root, _ = root_for_hip(np.array([0.0, 0.12, 0.0]), flat)
+        q["spine"], q["neck"], q["head"] = flat, flat, flat
+        q["pelvis"] = qmul(q_axis([0, 0, 1], roll_deg * 0.6 * DEG), flat)  # the pelvis turns most of the way with the legs
+        legs = qmul(q_axis([0, 0, 1], roll_deg * DEG), rx(180 * DEG))  # straight up, then swung to the side
+        for S in ("L", "R"):
+            q["thigh." + S], q["shin." + S] = legs, legs
+            q["foot." + S] = qmul(q_axis([0, 0, 1], roll_deg * DEG), rx(170 * DEG))
+        for S, sgn in (("L", 1), ("R", -1)):
+            arm = q_axis([0, 0, 1], sgn * 90 * DEG)  # out along the floor
+            q["upper_arm." + S] = q["forearm." + S] = q["hand." + S] = q["fingers." + S] = arm
+        return {"root": [round(float(v), 4) for v in root], "q": q}
+    up, right, left = stage(0), stage(78), stage(-78)  # +z roll takes the legs toward -x, the right
+    return sequence([(0, up), (0.25, right), (0.5, up), (0.75, left), (1, up)], t)
+
+
+def supine_arms_over(legs_deg=-90):
+    """Lying on the back, arms stretched overhead along the floor."""
+    s = supine_sample()
+    set_arms(s["q"], 90 * DEG, 90 * DEG)
+    set_legs(s["q"], legs_deg * DEG, legs_deg * DEG, (legs_deg + 20) * DEG)
+    return s
+
+
+def straight_leg_sit_up_sample(t):
+    """sweat.com/exercises/straight-leg-sit-up: from lying with the arms overhead, heels planted, the trunk
+    curls up and the hands reach forward to the toes; then back down."""
+    def stage(trunk_deg, arm_target):
+        q = all_ident()
+        trunk = rx(trunk_deg * DEG)
+        root, pelvis_pos = root_for_hip(np.array([0.0, 0.12, 0.0]), trunk)
+        q["pelvis"], q["spine"] = trunk, trunk
+        q["neck"], q["head"] = rx((trunk_deg + 12) * DEG), rx((trunk_deg + 20) * DEG)
+        set_legs(q, -90 * DEG, -90 * DEG, -70 * DEG)
+        if arm_target is None:
+            set_arms(q, 180 * DEG, 180 * DEG)  # straight up
+        else:
+            for S, side in (("L", "l"), ("R", "r")):
+                shoulder = shoulder_from(pelvis_pos, trunk, side)
+                up_a, fo_a, _ = two_link(shoulder, np.array([shoulder[0], arm_target[0], arm_target[1]]), L_UPPER, L_FORE, bend_forward=False)
+                set_arms(q, up_a, fo_a, side=S)
+        return {"root": [round(float(v), 4) for v in root], "q": q}
+    down = supine_arms_over()
+    rising = stage(-40, None)
+    top = stage(48, (0.16, 0.82))  # hands to the toes
+    return sequence([(0, down), (0.25, rising), (0.5, top), (0.75, rising), (1, down)], t)
+
+
+def straight_leg_hold_sample(t):
+    """sweat.com/exercises/straight-leg-hold: on the back, both legs raised straight to 45 degrees, feet flexed,
+    held; entered from lying flat and released."""
+    flat = supine_sample()
+    hold = supine_sample()
+    set_legs(hold["q"], -135 * DEG, -135 * DEG, -145 * DEG)
+    return entered(flat, hold, t)
+
+
+def v_up_sample(t):
+    """sweat.com/exercises/v-up: from lying with the arms overhead and the legs together, raise the arms and legs
+    at once and touch the toes; lower."""
+    down = supine_arms_over()
+    top = all_ident()
+    trunk = rx(38 * DEG)
+    root, pelvis_pos = root_for_hip(np.array([0.0, 0.12, 0.0]), trunk)
+    top["pelvis"], top["spine"] = trunk, trunk
+    top["neck"], top["head"] = rx(48 * DEG), rx(55 * DEG)
+    set_legs(top, -138 * DEG, -138 * DEG, -128 * DEG)
+    foot_tip = np.array([0.0, 0.12, 0.0]) + np.array([0.0, math.cos(-138 * DEG) * -1, math.sin(-138 * DEG) * -1]) * (L_THIGH + L_SHIN)
+    for S, side in (("L", "l"), ("R", "r")):
+        shoulder = shoulder_from(pelvis_pos, trunk, side)
+        target = np.array([shoulder[0], foot_tip[1] + 0.02, foot_tip[2] - 0.04])
+        up_a, fo_a, _ = two_link(shoulder, target, L_UPPER, L_FORE, bend_forward=False)
+        set_arms(top, up_a, fo_a, side=S)
+    top = {"root": [round(float(v), 4) for v in root], "q": top}
+    mid = blend_samples(down, top, 0.5)
+    set_arms(mid["q"], 150 * DEG, 150 * DEG)  # the arms come over the top, not through the floor
+    return sequence([(0, down), (0.25, mid), (0.5, top), (0.75, mid), (1, down)], t)
+
+
+def pike_push_up_sample(t):
+    """sweat.com/exercises/pike-push-up: hands a little wider than the shoulders, feet behind on the balls, hips
+    high in an inverted V; bend the elbows to lower the forehead toward the floor, rocking onto the toes, and
+    press back up."""
+    f = 0.5 - 0.5 * math.cos(2 * math.pi * t)
+    hip = np.array([0.0, 0.78 - 0.06 * f, -0.40 + 0.06 * f])
+    shoulder_mid = np.array([0.0, 0.52 - 0.15 * f, -0.03 + 0.02 * f])
+    ankle = np.array([0.0, 0.06, -0.83])
+    q = all_ident()
+    d = shoulder_mid - hip
+    trunk_a = math.atan2(d[2], d[1])
+    trunk = rx(trunk_a)
+    root, pelvis_pos = root_for_hip(hip, trunk)
+    q["pelvis"], q["spine"] = trunk, trunk
+    q["neck"], q["head"] = rx(trunk_a + 8 * DEG), rx(trunk_a + 15 * DEG)  # the forehead to the floor
+    leg = ankle - hip
+    leg_a = angle_of(leg / np.linalg.norm(leg))
+    set_legs(q, leg_a, leg_a, 75 * DEG)  # on the balls of the feet
+    for S, side, sgn in (("L", "l", 1), ("R", "r", -1)):
+        shoulder = shoulder_from(pelvis_pos, trunk, side)
+        hand = np.array([sgn * (SHOULDER_X + 0.06), 0.0, 0.0])
+        up_a, fo_a, _ = two_link(shoulder, hand, L_UPPER, L_FORE, bend_forward=False)
+        q["upper_arm." + S], q["forearm." + S] = rx(up_a), qmul(rx(fo_a), PRONATE)
+        q["hand." + S] = q["fingers." + S] = qmul(rx(-90 * DEG), PRONATE)  # flat, fingers forward
+    return {"root": [round(float(v), 4) for v in root], "q": q}
+
+
+def high_plank_sample():
+    """A plank on straight arms, hands under the shoulders, feet a little wider than the hips."""
+    q = all_ident()
+    trunk = rx(68 * DEG)
+    root, _ = root_for_hip(np.array([0.0, 0.42, 0.0]), trunk)
+    q["pelvis"], q["spine"] = trunk, trunk
+    q["neck"], q["head"] = rx(60 * DEG), rx(50 * DEG)
+    set_legs(q, 68 * DEG, 68 * DEG, 95 * DEG)
+    for S in ("L", "R"):
+        q["upper_arm." + S], q["forearm." + S] = IDENT, qmul(IDENT, PRONATE)
+        q["hand." + S] = q["fingers." + S] = qmul(rx(-90 * DEG), PRONATE)
+    return {"root": [round(float(v), 4) for v in root], "q": q}
+
+
+def shoulder_tap_sample(t):
+    """sweat.com/exercises/shoulder-tap: in a high plank, the right hand crosses to tap the left shoulder and
+    returns, then the left hand taps the right shoulder."""
+    plank = high_plank_sample()
+
+    def tap(S, sgn):
+        s = {"root": list(plank["root"]), "q": dict(plank["q"])}
+        across = q_axis([0, 1, 0], sgn * 70 * DEG)  # the arm folds across the chest
+        s["q"]["upper_arm." + S] = qmul(across, rx(-40 * DEG))
+        s["q"]["forearm." + S] = s["q"]["hand." + S] = s["q"]["fingers." + S] = qmul(across, rx(-130 * DEG))
+        return s
+    right, left = tap("R", 1), tap("L", -1)  # the right hand (at -x) swings toward +x, the left shoulder
+    return sequence([(0, plank), (0.15, right), (0.35, right), (0.5, plank), (0.65, left), (0.85, left), (1, plank)], t)
+
+
+def double_leg_lift_sample(t):
+    """sweat.com/exercises/double-leg-lift: lying on the right side, the right arm along the mat under the head,
+    hips stacked and the legs in line; the obliques draw the right hip toward the ribs and lift both legs;
+    lower."""
+    roll = q_axis([0, 0, 1], -90 * DEG)  # from lying on the back onto the right side, the front toward +x
+
+    def stage(lift_deg):
+        q = all_ident()
+        body = qmul(roll, rx(-90 * DEG))
+        root, _ = root_for_hip(np.array([0.0, 0.14, 0.0]), body)
+        q["spine"], q["neck"], q["head"] = body, body, body
+        q["pelvis"] = qmul(roll, qmul(q_axis([0, 1, 0], -lift_deg * 0.3 * DEG), rx(-90 * DEG)))  # the hip hikes with the legs
+        legs = qmul(roll, qmul(q_axis([0, 1, 0], -lift_deg * DEG), rx(-90 * DEG)))  # the legs rise toward world +y
+        for S in ("L", "R"):
+            q["thigh." + S], q["shin." + S] = legs, legs
+            q["foot." + S] = qmul(roll, qmul(q_axis([0, 1, 0], -lift_deg * DEG), rx(-70 * DEG)))
+        q["upper_arm.R"] = q["forearm.R"] = q["hand.R"] = q["fingers.R"] = qmul(roll, rx(90 * DEG))  # along the mat overhead
+        q["upper_arm.L"] = qmul(roll, rx(-20 * DEG))  # the left hand on the floor in front
+        q["forearm.L"] = q["hand.L"] = q["fingers.L"] = qmul(roll, qmul(q_axis([0, 0, 1], -60 * DEG), rx(-60 * DEG)))
+        return {"root": [round(float(v), 4) for v in root], "q": q}
+    f = 0.5 - 0.5 * math.cos(2 * math.pi * t)
+    return stage(22 * f)
+
+
+def straight_leg_raise_sample(t):
+    """sweat.com/exercises/straight-leg-raise: on the back, legs straight, raise them to a right angle with
+    the hips and lower them without touching the floor."""
+    f = 0.5 - 0.5 * math.cos(2 * math.pi * t)
+    leg = -100 + (-180 + 100) * f
+    s = supine_sample()
+    set_legs(s["q"], leg * DEG, leg * DEG, (leg - 10) * DEG)
+    set_arms(s["q"], -90 * DEG, -90 * DEG, palm_down=True)  # pressing into the floor by the sides
+    return s
+
+
 # ---------- dips on parallel bars ----------
 # Support on locked arms with the legs hanging (knees bent back), lower
 # until the upper arms are level with the elbows behind and the trunk leant
@@ -1635,6 +1872,16 @@ CLIPS = {
     "cobra-pose": (cobra_sample, "designed yoga hold, tools/myo/designed_clip.py"),
     "childs-pose": (childs_pose_sample, "designed yoga hold, tools/myo/designed_clip.py"),
     "crab-walk": (crab_walk_sample, "designed movement, tools/myo/designed_clip.py"),
+    "ab-roller": (ab_roller_sample, "designed movement, tools/myo/designed_clip.py"),
+    "single-leg-rdl-knee-up": (single_leg_rdl_knee_up_sample, "designed movement, tools/myo/designed_clip.py"),
+    "windshield-wipers": (windshield_wipers_sample, "designed movement, tools/myo/designed_clip.py"),
+    "straight-leg-sit-up": (straight_leg_sit_up_sample, "designed movement, tools/myo/designed_clip.py"),
+    "straight-leg-hold": (straight_leg_hold_sample, "designed hold, tools/myo/designed_clip.py"),
+    "v-up": (v_up_sample, "designed movement, tools/myo/designed_clip.py"),
+    "pike-push-up": (pike_push_up_sample, "designed movement, tools/myo/designed_clip.py"),
+    "shoulder-tap": (shoulder_tap_sample, "designed movement, tools/myo/designed_clip.py"),
+    "double-leg-lift": (double_leg_lift_sample, "designed movement, tools/myo/designed_clip.py"),
+    "straight-leg-raise": (straight_leg_raise_sample, "designed movement, tools/myo/designed_clip.py"),
     "deadlift": (deadlift_sample, "designed barbell lift, tools/myo/designed_clip.py"),
     "romanian-deadlift": (rdl_sample, "designed barbell lift, tools/myo/designed_clip.py"),
     "bench-press": (bench_press_sample, "designed barbell lift, tools/myo/designed_clip.py"),
