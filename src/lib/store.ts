@@ -7,6 +7,9 @@ type ViewerState = {
   speed: 1 | 0.5;
   hovered: string | null;
   selected: string | null;
+  /** On a page with both lists (the atlas): which one the panel shows and the figure lets the reader pick. */
+  tab: "muscles" | "bones";
+  setTab: (tab: "muscles" | "bones") => void;
   /** The exercise panel (left) and the muscle panel (right) on wide screens; both collapse to a tab. */
   leftOpen: boolean;
   rightOpen: boolean;
@@ -27,6 +30,8 @@ export const useViewer = create<ViewerState>((set) => ({
   speed: 1,
   hovered: null,
   selected: null,
+  tab: "muscles",
+  setTab: (tab) => set({ tab, hovered: null, selected: null }),
   leftOpen: true,
   rightOpen: true,
   setLeftOpen: (leftOpen) => set({ leftOpen }),

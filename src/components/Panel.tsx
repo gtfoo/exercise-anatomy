@@ -21,6 +21,9 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
   const speed = useViewer((s) => s.speed);
   const setSpeed = useViewer((s) => s.setSpeed);
   const setHovered = useViewer((s) => s.setHovered);
+  const tab = useViewer((s) => s.tab);
+  const setTab = useViewer((s) => s.setTab);
+  const boneTab = !!exercise.bones && tab === "bones";
   const setSelected = useViewer((s) => s.setSelected);
   const rightOpen = useViewer((s) => s.rightOpen);
   const setRightOpen = useViewer((s) => s.setRightOpen);
@@ -158,7 +161,24 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
         </section>
       )}
 
-      {detail && (
+      {exercise.bones && (
+        <div className="flex gap-1 rounded-md bg-zinc-100 p-1 text-sm" role="tablist" aria-label="What the panel lists">
+          {(["muscles", "bones"] as const).map((k) => (
+            <button
+              key={k}
+              type="button"
+              role="tab"
+              aria-selected={tab === k}
+              onClick={() => setTab(k)}
+              className={`flex-1 rounded px-2 py-1 capitalize transition-colors ${tab === k ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-800"}`}
+            >
+              {k}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {detail && !boneTab && (
         <section className="rounded-md border border-zinc-200 bg-zinc-50 p-3 text-sm">
           <div className="flex items-baseline justify-between gap-2">
             <h3 className="font-medium text-zinc-900">{detail.name}</h3>
@@ -190,7 +210,8 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
         </section>
       )}
 
-      {groups.map(([group, muscles]) => (
+      {!boneTab &&
+        groups.map(([group, muscles]) => (
         <section key={group}>
           <h2 className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500">{group}</h2>
           <ul className="flex flex-col">
@@ -231,10 +252,8 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
         </section>
       ))}
 
-      {boneGroups.length > 0 && groups.length > 0 && (
-        <p className="mt-1 text-xs font-medium uppercase tracking-wide text-zinc-400">Bones</p>
-      )}
-      {boneGroups.map(([group, bones]) => (
+      {boneTab &&
+        boneGroups.map(([group, bones]) => (
         <section key={`bone-${group}`}>
           <h2 className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500">{group}</h2>
           <ul className="flex flex-col">

@@ -91,9 +91,13 @@ letter and a one-line task strands the *why*.
       bones stay opaque, as the focus rule wants. Exercise pages are
       unchanged: they list no bones, so their skeleton stays plain and
       unclickable. Figure rebuilt (6 min) and rebound to the Mixamo rig.
-      The owner found bones odd under a page called All muscles, so they
-      moved to their own Atlas page, All bones (`/bones`), where the
-      musculature is ghosted the whole time so the skeleton reads.
+      The owner found bones odd under a page called All muscles; a
+      separate All bones page was the first answer, then the owner asked
+      for one atlas with a Muscles | Bones switch in the panel (`tab` in
+      the store). The bones tab ghosts every muscle so the skeleton reads,
+      and only the open tab's parts respond to the pointer. The orbit
+      controls now zoom toward the cursor and pan (right-drag), so any
+      part can be brought up close (owner, same day).
 
 - [x] **Ab roller and nine from sweat.com** (2026-09-19). The owner sent
       sweat.com pages as the form reference for each: ab roller (kneeling

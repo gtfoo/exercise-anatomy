@@ -72,7 +72,7 @@ const highlight = new THREE.Color(HIGHLIGHT);
 const bone = new THREE.Color(BONE);
 
 /** Per-frame colours: activation ramp per side, hover/selection glow, and the focus fade. */
-export function paintMaterials(materials: FigureMaterials, exercise: Exercise, t: number, hovered: string | null, selected: string | null) {
+export function paintMaterials(materials: FigureMaterials, exercise: Exercise, t: number, hovered: string | null, selected: string | null, boneView = false) {
   for (const m of exercise.muscles) {
     for (const side of ["L", "R"] as const) {
       const mat = materials[key(m.id, side)];
@@ -93,8 +93,8 @@ export function paintMaterials(materials: FigureMaterials, exercise: Exercise, t
       } else if (selected === m.id) mat.emissive.copy(mat.color).multiplyScalar(0.2);
       else if (lit) mat.emissive.copy(highlight).multiplyScalar(0.35);
       else mat.emissive.copy(hot).multiplyScalar(level * 0.25);
-      // A selected bone fades the muscles too, so it can be seen through them.
-      const faded = selected !== null && !lit;
+      // A selected bone fades the muscles too, so it can be seen through them; the bones tab fades them all.
+      const faded = (selected !== null && !lit) || boneView;
       mat.opacity = faded ? 0.12 : 1;
       // A faded muscle must not write depth: drawn before the selected one it
       // would still hide it (a clamshell's bent thigh over the abdomen did
@@ -103,7 +103,8 @@ export function paintMaterials(materials: FigureMaterials, exercise: Exercise, t
       mat.depthWrite = !faded;
     }
   }
-  const ghost = selected !== null || (exercise.muscles.length === 0 && (exercise.bones?.length ?? 0) > 0);
+  // On the bones tab every muscle is ghosted the whole time, so the skeleton reads.
+  const ghost = selected !== null || boneView;
   materials["context-muscles"].opacity = ghost ? 0.12 : 1;
   materials["context-muscles"].depthWrite = !ghost;
   // Bones stay opaque and bone-coloured whatever is selected; a selected bone is painted the working red, a hovered one

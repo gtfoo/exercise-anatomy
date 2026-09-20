@@ -39,7 +39,7 @@ export default function ExerciseViewer({ exercise }: { exercise: Exercise }) {
           </button>
         )}
         <p className="pointer-events-none absolute right-4 bottom-3 hidden max-w-56 text-right text-xs text-zinc-400 md:block">
-          {exercise.static ? "drag to orbit · scroll to zoom · click a muscle" : "drag to orbit · scroll to zoom · space to play/pause · click a muscle"}
+          {exercise.static ? "drag to orbit · right-drag to pan · scroll to zoom at the cursor · click a part" : "drag to orbit · right-drag to pan · scroll to zoom at the cursor · space to play/pause · click a muscle"}
         </p>
       </div>
       <Panel exercise={exercise} />

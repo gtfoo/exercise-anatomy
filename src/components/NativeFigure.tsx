@@ -407,12 +407,15 @@ export default function NativeFigure({ exercise }: { exercise: Exercise }) {
 
   const setHovered = useViewer((s) => s.setHovered);
   const setSelected = useViewer((s) => s.setSelected);
+  const tab = useViewer((s) => s.tab);
+  // On a page with both lists only the open tab's parts respond to the pointer: bones on the bones tab, muscles on the other.
+  const pickable = (id: string) => !exercise.bones || id.startsWith("bone-") === (tab === "bones");
 
   useFrame(() => {
     const l = live.current;
     if (!l) return;
-    const { t, hovered, selected } = useViewer.getState();
-    paintMaterials(l.materials, exercise, t, hovered, selected);
+    const { t, hovered, selected, tab } = useViewer.getState();
+    paintMaterials(l.materials, exercise, t, hovered, selected, !!exercise.bones && tab === "bones");
     // Scrub: the clip's last frame equals its first for a loop, so t = 1 wraps to 0.
     l.action.time = (t % 1) * l.duration;
     l.mixer.update(0);
@@ -426,7 +429,7 @@ export default function NativeFigure({ exercise }: { exercise: Exercise }) {
         object={scene}
         onPointerOver={(e: { object: THREE.Object3D; stopPropagation: () => void }) => {
           const id = e.object.userData.partId as string | null;
-          if (!id) return;
+          if (!id || !pickable(id)) return;
           e.stopPropagation();
           setHovered(id);
           document.body.style.cursor = "pointer";
@@ -437,7 +440,7 @@ export default function NativeFigure({ exercise }: { exercise: Exercise }) {
         }}
         onClick={(e: { object: THREE.Object3D; stopPropagation: () => void }) => {
           const id = e.object.userData.partId as string | null;
-          if (!id) return;
+          if (!id || !pickable(id)) return;
           e.stopPropagation();
           setSelected(id);
         }}
