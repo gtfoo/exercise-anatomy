@@ -43,19 +43,29 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
   const detail = exercise.muscles.find((m) => m.id === selected);
   const boneDetail = exercise.bones?.find((b) => b.id === selected);
 
-  // Every muscle is listed under its atlas group (src/lib/muscles.ts), in the
-  // atlas's order, so the same muscle never sits under "calf" on one page and
-  // "ankle" on another. An exercise file's own `group` is only a fallback.
+  // Every muscle is listed under its atlas group (src/lib/muscles.ts), so the
+  // same muscle never sits under "calf" on one page and "ankle" on another;
+  // an exercise file's own `group` is only a fallback. The atlas lists the
+  // groups from the shoulders down; an exercise page lists them by how hard
+  // they work, the group with the strongest peak first and, within a group,
+  // the strongest muscle first (owner, 2026-09-20). Peaks are taken over the
+  // whole rep, so the order holds still while the figure moves.
   const groups = useMemo(() => {
     const canon = new Map(MUSCLES.map((m) => [m.id, m.group]));
     const order = [...new Set(MUSCLES.map((m) => m.group))];
+    const peak = (m: MuscleActivation) => Math.max(...m.curve.map(([, v]) => v), ...(m.right ?? []).map(([, v]) => v));
     const by = new Map<string, MuscleActivation[]>();
     for (const m of exercise.muscles) {
       const g = canon.get(m.id) ?? m.group;
       if (!by.has(g)) by.set(g, []);
       by.get(g)!.push(m);
     }
-    return [...by.entries()].sort(([a], [b]) => (order.indexOf(a) === -1 ? 99 : order.indexOf(a)) - (order.indexOf(b) === -1 ? 99 : order.indexOf(b)));
+    const atlasRank = (g: string) => (order.indexOf(g) === -1 ? 99 : order.indexOf(g));
+    if (exercise.static) return [...by.entries()].sort(([a], [b]) => atlasRank(a) - atlasRank(b));
+    const strongest = (ms: MuscleActivation[]) => Math.max(...ms.map(peak));
+    return [...by.entries()]
+      .map(([g, ms]) => [g, [...ms].sort((a, b) => peak(b) - peak(a))] as [string, MuscleActivation[]])
+      .sort(([a, am], [b, bm]) => strongest(bm) - strongest(am) || atlasRank(a) - atlasRank(b));
   }, [exercise]);
   const groupOf = (m: MuscleActivation) => MUSCLES.find((x) => x.id === m.id)?.group ?? m.group;
   const boneGroups = useMemo(() => {

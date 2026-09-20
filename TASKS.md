@@ -97,7 +97,9 @@ letter and a one-line task strands the *why*.
       the store). The bones tab ghosts every muscle so the skeleton reads,
       and only the open tab's parts respond to the pointer. The orbit
       controls now zoom toward the cursor and pan (right-drag), so any
-      part can be brought up close (owner, same day).
+      part can be brought up close (owner, same day). The muscle catalogue
+      is ordered shoulders to lower leg, so every page's groups read top
+      to bottom (owner, same day: quadriceps first was odd).
 
 - [x] **Ab roller and nine from sweat.com** (2026-09-19). The owner sent
       sweat.com pages as the form reference for each: ab roller (kneeling
