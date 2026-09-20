@@ -19,7 +19,7 @@ export const pikePushUp: Exercise = {
   native: { clip: "/models/clips/pike-push-up.glb" },
   camera: { position: [3.2, 1.3, 1.8], target: [0, 0.5, -0.3] },
   disclaimer:
-    "After the form at sweat.com: an inverted V, the forehead lowered toward the floor and pressed back.",
+    "An inverted V, the forehead lowered toward the floor and pressed back.",
   phases: [
     { name: "lower", t0: 0, t1: 0.5 },
     { name: "press", t0: 0.5, t1: 1 },
