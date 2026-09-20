@@ -173,6 +173,18 @@ function Scenery({ scenery }: { scenery: NonNullable<Exercise["scenery"]> }) {
       </group>
     );
   }
+  if (scenery.kind === "blocks") {
+    const { height, spacing, z } = scenery;
+    return (
+      <group>
+        {[-spacing, spacing].map((x) => (
+          <mesh key={x} material={plaster} position={[x, height / 2, z]}>
+            <boxGeometry args={[0.1, height, 0.23]} />
+          </mesh>
+        ))}
+      </group>
+    );
+  }
   if (scenery.kind === "roller") {
     return (
       <mesh position={[0, scenery.radius, scenery.z]} rotation-z={Math.PI / 2}>

@@ -520,6 +520,11 @@ def half_moon_sample(t):
     return sequence([(0, stand_sample(0)), (0.2, tip), (0.4, half_moon_hold()), (0.75, half_moon_hold()), (0.9, tip), (1, stand_sample(0))], t)
 
 
+BLOCK_H = 0.15  # yoga blocks on edge under the hands: on this figure the arms are no longer than the trunk, so
+# with the hands on the floor the hips cannot rise at all (probed 2026-09-20); blocks are the usual answer
+BLOCK_Z = 0.06
+
+
 def scale_stage(hip_y, trunk_deg):
     """Sitting cross-legged with the hands on the floor beside the hips; lifted when hip_y is above the floor.
     The hands stay where they are planted, so sitting with the trunk leant forward bends the elbows and the lift
@@ -533,17 +538,28 @@ def scale_stage(hip_y, trunk_deg):
         q["shin." + S] = q["foot." + S] = qmul(rx(-30 * DEG), q_axis([0, 0, 1], -sgn * 75 * DEG))  # shins crossing in front
     for S, side in (("L", "l"), ("R", "r")):
         shoulder = shoulder_from(pelvis_pos, trunk, side)
-        hand = np.array([shoulder[0], 0.03, 0.06])  # planted beside the hips, the same spot in both stages
+        hand = np.array([shoulder[0], BLOCK_H + 0.03, BLOCK_Z])  # planted on the blocks beside the hips, the same spot in both stages
         up_a, fo_a, _ = two_link(shoulder, hand, L_UPPER, L_FORE, bend_forward=False)
         q["upper_arm." + S], q["forearm." + S] = rx(up_a), qmul(rx(fo_a), PRONATE)
         q["hand." + S] = q["fingers." + S] = qmul(rx(-90 * DEG), PRONATE)
     return {"root": [round(float(v), 4) for v in root], "q": q}
 
 
+def scale_lift_hip_y(trunk_deg, hand=(BLOCK_H + 0.03, BLOCK_Z)):
+    """The hip height at which straight arms from the shoulders reach the planted hands: the lift is only as
+    high as that (owner, 2026-09-20: the body floated with the hands off the floor)."""
+    trunk = rx(trunk_deg * DEG)
+    _, pelvis_pos = root_for_hip(np.array([0.0, 0.0, 0.0]), trunk)
+    shoulder = shoulder_from(pelvis_pos, trunk, "l")  # at hip_y = 0: its y is the shoulder's offset above the hips
+    reach = L_UPPER + L_FORE - 0.005
+    dz = hand[1] - shoulder[2]
+    return hand[0] + math.sqrt(max(reach * reach - dz * dz, 0.0)) - shoulder[1]
+
+
 def scale_sample(t):
     """Tolasana: sitting cross-legged with the elbows bent, press through the hands until the arms are straight
     and the whole body is off the floor, hold, and lower."""
-    return entered(scale_stage(0.08, 25), scale_stage(0.21, 6), t)
+    return entered(scale_stage(0.08, 25), scale_stage(scale_lift_hip_y(6), 6), t)
 
 
 def headstand_stage(trunk_deg, thigh_deg, knee_deg, point):
@@ -834,6 +850,33 @@ def barbell_row_sample(t):
 
 
 BENCH_TOP = 0.45
+BENCH_GRIP = 0.40  # each hand this far from the midline on the bar
+
+
+def aim(v):
+    """The quaternion that turns a bone's rest direction (down) onto v, with the least twist."""
+    v = np.asarray(v, dtype=float)
+    v = v / max(float(np.linalg.norm(v)), 1e-9)
+    c = float(np.clip(np.dot(DOWN, v), -1.0, 1.0))
+    axis = np.cross(DOWN, v)
+    n = float(np.linalg.norm(axis))
+    if n < 1e-6:
+        return IDENT if c > 0 else q_axis([1, 0, 0], math.pi)
+    return q_axis(axis / n, math.acos(c))
+
+
+def two_link_3d(root, target, l1, l2, bend):
+    """The middle joint of a two-link chain from root to target, bent toward the direction `bend` (its part
+    perpendicular to the root-target line), in any plane."""
+    d = target - root
+    dist = min(float(np.linalg.norm(d)), l1 + l2 - 1e-4)
+    u = d / max(float(np.linalg.norm(d)), 1e-9)
+    a = (l1 * l1 - l2 * l2 + dist * dist) / (2 * dist)
+    h = math.sqrt(max(l1 * l1 - a * a, 0.0))
+    b = np.asarray(bend, dtype=float)
+    perp = b - np.dot(b, u) * u
+    perp = perp / max(float(np.linalg.norm(perp)), 1e-9)
+    return root + u * a + perp * h
 
 
 def bench_press_sample(t):
@@ -844,12 +887,22 @@ def bench_press_sample(t):
     root, _ = root_for_hip(np.array([0.0, BENCH_TOP + 0.07, 0.15]), trunk)
     q["pelvis"], q["spine"], q["neck"], q["head"] = trunk, trunk, trunk, trunk
     hip_l = np.array([0.0, BENCH_TOP + 0.07, 0.15])
-    thigh_a, shin_a, _ = two_link(hip_l, np.array([0.0, 0.06, 0.55]), L_THIGH, L_SHIN, bend_forward=False)  # the knee up
+    thigh_a, shin_a, _ = two_link(hip_l, np.array([0.0, 0.06, 0.55]), L_THIGH, L_SHIN, bend_forward=True)  # the knee up
     set_legs(q, thigh_a, shin_a, 0.0)  # thighs out to the knees, shins down to the planted feet
-    a = splined([(0, 90), (0.5, 178), (1, 90)], t)  # the upper arm from out level with the bench to straight up
-    for S, sgn in (("L", 1), ("R", -1)):
-        q["upper_arm." + S] = q_axis([0, 0, 1], sgn * a * DEG)
-        q["forearm." + S] = q["hand." + S] = q["fingers." + S] = qmul(rx(180 * DEG), PRONATE)  # vertical
+    # The hands hold one spot on the bar (owner, 2026-09-20): a fixed grip width, the bar over the lower chest,
+    # lowered to the chest and pressed to straight arms; the elbows bend out and down in the frontal plane.
+    f = 0.5 - 0.5 * math.cos(2 * math.pi * t)
+    _, pelvis_pos = root_for_hip(hip_l, trunk)
+    for S, side, sgn in (("L", "l", 1), ("R", "r", -1)):
+        shoulder = shoulder_from(pelvis_pos, trunk, side)
+        grip = np.array([sgn * BENCH_GRIP, 0.0, shoulder[2] + 0.10])
+        reach = L_UPPER + L_FORE - 0.01
+        dx, dz = grip[0] - shoulder[0], grip[2] - shoulder[2]
+        top = shoulder[1] + math.sqrt(max(reach * reach - dx * dx - dz * dz, 0.0))
+        hand = np.array([grip[0], shoulder[1] + 0.10 + (top - shoulder[1] - 0.10) * f, grip[2]])
+        elbow = two_link_3d(shoulder, hand, L_UPPER, L_FORE, np.array([sgn * 1.0, -0.4, 0.0]))
+        q["upper_arm." + S] = aim(elbow - shoulder)
+        q["forearm." + S] = q["hand." + S] = q["fingers." + S] = aim(hand - elbow)
     return {"root": [round(float(v), 4) for v in root], "q": q}
 
 
@@ -863,7 +916,7 @@ def bridge_geometry(f, shoulders, feet_z, trunk_lo, trunk_hi, arms):
     root, pelvis_pos = root_for_hip(hip, rx(a))
     q["pelvis"], q["spine"] = rx(a), rx(a)
     q["neck"], q["head"] = rx(-90 * DEG), rx(-90 * DEG)  # the head stays down
-    thigh, shin, _ = two_link(hip, np.array([0.0, 0.06, feet_z]), L_THIGH, L_SHIN, bend_forward=False)  # the knee up
+    thigh, shin, _ = two_link(hip, np.array([0.0, 0.06, feet_z]), L_THIGH, L_SHIN, bend_forward=True)  # the knee up (probed: False put it under the floor)
     for S in ("L", "R"):
         q["thigh." + S], q["shin." + S], q["foot." + S] = rx(thigh), rx(shin), IDENT
     arms(q, pelvis_pos, rx(a), hip)
@@ -881,9 +934,19 @@ def glute_bridge_sample(t):
     return bridge_geometry(f, np.array([0.0, 0.12, -0.45]), 0.40, -90, -121, arms_on_floor)
 
 
+def arms_clasped_under(q, pelvis_pos, trunk_q, hip):
+    """The arms straight along the floor under the back, drawn in to the midline so the hands clasp under the
+    pelvis, the shoulders rolled under."""
+    for S, sgn in (("L", 1), ("R", -1)):
+        arm = qmul(q_axis([0, 0, 1], -sgn * 16 * DEG), rx(-90 * DEG))
+        q["upper_arm." + S] = q["forearm." + S] = q["hand." + S] = q["fingers." + S] = arm
+
+
 def bridge_pose_sample(t):
-    """Setu Bandha Sarvangasana: the glute bridge geometry entered, held and released."""
-    return bridge_geometry(envelope(t), np.array([0.0, 0.12, -0.45]), 0.40, -90, -121, arms_on_floor)
+    """Setu Bandha Sarvangasana, which is not the glute bridge (owner asked the difference, 2026-09-20): the
+    feet closer to the hips, the hips lifted higher into an arch with the chest toward the chin, the hands
+    clasped under the back; entered from lying flat, held and released."""
+    return bridge_geometry(envelope(t), np.array([0.0, 0.12, -0.45]), 0.32, -90, -132, arms_clasped_under)
 
 
 def hip_thrust_sample(t):
@@ -1226,13 +1289,15 @@ def v_up_sample(t):
     """sweat.com/exercises/v-up: from lying with the arms overhead and the legs together, raise the arms and legs
     at once and touch the toes; lower."""
     down = supine_arms_over()
+    # A V: the trunk a little back from upright, the legs 50 degrees up, so the hip angle is open and the trunk
+    # does not run through the thighs (owner, 2026-09-20).
     top = all_ident()
-    trunk = rx(38 * DEG)
+    trunk = rx(-12 * DEG)
     root, pelvis_pos = root_for_hip(np.array([0.0, 0.12, 0.0]), trunk)
     top["pelvis"], top["spine"] = trunk, trunk
-    top["neck"], top["head"] = rx(48 * DEG), rx(55 * DEG)
-    set_legs(top, -138 * DEG, -138 * DEG, -128 * DEG)
-    foot_tip = np.array([0.0, 0.12, 0.0]) + np.array([0.0, math.cos(-138 * DEG) * -1, math.sin(-138 * DEG) * -1]) * (L_THIGH + L_SHIN)
+    top["neck"], top["head"] = rx(0.0), rx(12 * DEG)  # looking at the toes
+    set_legs(top, -140 * DEG, -140 * DEG, -130 * DEG)
+    foot_tip = np.array([0.0, 0.12, 0.0]) + np.array([0.0, math.cos(-140 * DEG) * -1, math.sin(-140 * DEG) * -1]) * (L_THIGH + L_SHIN)
     for S, side in (("L", "l"), ("R", "r")):
         shoulder = shoulder_from(pelvis_pos, trunk, side)
         target = np.array([shoulder[0], foot_tip[1] + 0.02, foot_tip[2] - 0.04])

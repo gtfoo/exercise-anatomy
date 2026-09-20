@@ -87,7 +87,9 @@ export type Exercise = {
     /** A foam roller lying across the figure's path (axis along x) at z, drawn to tools/myo/designed_clip.py's ROLLER_R. */
     | { kind: "roller"; radius: number; z: number }
     /** A flat bench along z, its top at `top` (tools/myo/designed_clip.py's BENCH_TOP), centred at z. */
-    | { kind: "bench"; top: number; length: number; z: number };
+    | { kind: "bench"; top: number; length: number; z: number }
+    /** Two yoga blocks on edge under the hands, `height` tall (designed_clip.py's BLOCK_H), at x = +-spacing and z. */
+    | { kind: "blocks"; height: number; spacing: number; z: number };
   /** Where the switcher lists it. */
   category: ExerciseCategory;
   /** Who captured the movement, when the clip came straight from a source file rather than through `motion`/`motion3d`. */

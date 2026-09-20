@@ -81,6 +81,21 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Five owner-spotted pose faults** (2026-09-20). Glute bridge, bridge
+      pose, hip thrust and bench press had every knee under the floor: my
+      earlier "fix" flipped `two_link`'s bend the wrong way, and I read
+      the screenshots as I expected them; a joint-position probe (exec the
+      script without its main, walk the chain) settled it in one run, and
+      that probe is the check to use before believing a screenshot. Bridge
+      pose now differs from the glute bridge (feet closer, higher arch,
+      hands clasped under the back). V-up: the trunk leaned the same way
+      as the legs and ran through the thighs; now a real V. Bench press:
+      the hands slid along the bar as the arms swung; now a fixed grip
+      with a frontal-plane two-link (`two_link_3d`, `aim`). Scale pose: the
+      hands floated because on this figure the arms are no longer than the
+      trunk, so the hips cannot rise off the floor at all; the pose is now
+      on yoga blocks (`scenery: blocks`), as it is usually taught.
+
 - [x] **Bones on the atlas** (2026-09-20). The owner asked whether the atlas
       could list the bones too. The skeleton had been in the figure all
       along as one unnamed, opaque mesh; `build_figure.py` now exports it as

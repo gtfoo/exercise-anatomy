@@ -99,7 +99,7 @@ export const halfMoon = yoga("half-moon", "Half moon", "Ardha Chandrasana, stand
   m("triceps-long-head", "Triceps, long head", "Arms", "stabiliser", 0.5, "Left: keeps the support arm locked.", 0.3),
 ]);
 
-export const scalePose = yoga("scale-pose", "Scale pose", "Tolasana: sitting cross-legged, the body lifted off the floor on the hands", { position: [2.8, 1.0, 2.0], target: [0, 0.4, 0] }, [
+export const scalePose = yoga("scale-pose", "Scale pose", "Tolasana: sitting cross-legged, the body lifted off the floor on the hands, on blocks", { position: [2.8, 1.0, 2.0], target: [0, 0.4, 0] }, [
   m("triceps-long-head", "Triceps, long head", "Arms", "prime-mover", 0.9, "Locks the elbows as the hands press the floor away."),
   m("triceps-lateral-head", "Triceps, lateral head", "Arms", "prime-mover", 0.85, "Elbow lock with the long head."),
   m("triceps-medial-head", "Triceps, medial head", "Arms", "prime-mover", 0.85, "Deep elbow lock."),
@@ -115,7 +115,8 @@ export const scalePose = yoga("scale-pose", "Scale pose", "Tolasana: sitting cro
   m("pectineus", "Pectineus", "Hips", "synergist", 0.6, "Hip flexion with rectus femoris."),
   st(m("adductor-longus", "Adductor longus", "Hips", "stabiliser", 0.3, "Lengthened by the crossed, turned-out thighs."), 0.5),
   st(m("gracilis", "Gracilis", "Hips", "stabiliser", 0.2, "On stretch along the inner thighs."), 0.5),
-]);
+], "free");
+scalePose.scenery = { kind: "blocks", height: 0.15, spacing: 0.17, z: 0.06 };
 
 export const headstand = yoga("headstand", "Headstand", "Sirsasana, supported on the forearms", { position: [3.2, 1.2, 1.6], target: [0, 0.85, 0] }, [
   m("upper-trapezius", "Upper trapezius", "Neck and shoulders", "prime-mover", 0.7, "Holds the neck long so the crown, not the neck, takes the weight."),
@@ -251,7 +252,7 @@ export const trianglePose = yoga("triangle-pose", "Triangle pose", "Utthita Trik
   m("supraspinatus", "Supraspinatus", "Arms", "stabiliser", 0.3, "Right: seats the raised shoulder.", 0.5),
 ]);
 
-export const bridgePose = yoga("bridge-pose", "Bridge pose", "Setu Bandha Sarvangasana, from lying on the back", { position: [2.8, 1.1, 2.0], target: [0, 0.3, -0.05] }, [
+export const bridgePose = yoga("bridge-pose", "Bridge pose", "Setu Bandha Sarvangasana, from lying on the back: feet close, hips high, hands clasped under the back", { position: [2.8, 1.1, 2.0], target: [0, 0.3, -0.05] }, [
   m("gluteus-maximus", "Gluteus maximus", "Hips", "prime-mover", 0.85, "Lifts and holds the hips up in a line from the knees to the shoulders."),
   m("biceps-femoris", "Biceps femoris", "Hips", "synergist", 0.6, "Hip extension through the planted heels."),
   m("semitendinosus", "Semitendinosus", "Hips", "synergist", 0.55, "Hip extension with biceps femoris."),
