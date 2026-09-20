@@ -9,7 +9,7 @@ import { lSit } from "./l-sit";
 import { clamshell } from "./clamshell";
 import { lateralRaise } from "./lateral-raise";
 import { breaststroke } from "./breaststroke";
-import { atlas } from "./atlas";
+import { atlas, bonesAtlas } from "./atlas";
 import { kettlebellSwing } from "./kettlebell-swing";
 import { bicycleCrunch } from "./bicycle-crunch";
 import { sprint } from "./sprint";
@@ -49,6 +49,7 @@ import { CATEGORIES } from "./types";
 /** Display order within a category. Routes are `/` for the atlas and `/<slug>` for the rest. */
 export const exercises: readonly Exercise[] = [
   atlas,
+  bonesAtlas,
   // Legs and hips
   squat,
   lunge,

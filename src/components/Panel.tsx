@@ -231,7 +231,7 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
         </section>
       ))}
 
-      {boneGroups.length > 0 && (
+      {boneGroups.length > 0 && groups.length > 0 && (
         <p className="mt-1 text-xs font-medium uppercase tracking-wide text-zinc-400">Bones</p>
       )}
       {boneGroups.map(([group, bones]) => (

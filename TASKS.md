@@ -90,7 +90,10 @@ letter and a one-line task strands the *why*.
       a Bones heading. A selected bone paints red and fades the muscles;
       bones stay opaque, as the focus rule wants. Exercise pages are
       unchanged: they list no bones, so their skeleton stays plain and
-      unclickable. Figure rebuilt (~25 min) and rebound to the Mixamo rig.
+      unclickable. Figure rebuilt (6 min) and rebound to the Mixamo rig.
+      The owner found bones odd under a page called All muscles, so they
+      moved to their own Atlas page, All bones (`/bones`), where the
+      musculature is ghosted the whole time so the skeleton reads.
 
 - [x] **Ab roller and nine from sweat.com** (2026-09-19). The owner sent
       sweat.com pages as the form reference for each: ab roller (kneeling

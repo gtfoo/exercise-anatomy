@@ -103,8 +103,9 @@ export function paintMaterials(materials: FigureMaterials, exercise: Exercise, t
       mat.depthWrite = !faded;
     }
   }
-  materials["context-muscles"].opacity = selected !== null ? 0.12 : 1;
-  materials["context-muscles"].depthWrite = selected === null;
+  const ghost = selected !== null || (exercise.muscles.length === 0 && (exercise.bones?.length ?? 0) > 0);
+  materials["context-muscles"].opacity = ghost ? 0.12 : 1;
+  materials["context-muscles"].depthWrite = !ghost;
   // Bones stay opaque and bone-coloured whatever is selected; a selected bone is painted the working red, a hovered one
   // glows orange, so a rib cage or a femur reads against the rest of the skeleton.
   for (const b of exercise.bones ?? []) {
