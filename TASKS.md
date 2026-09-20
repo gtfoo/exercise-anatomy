@@ -94,7 +94,10 @@ letter and a one-line task strands the *why*.
       with a frontal-plane two-link (`two_link_3d`, `aim`). Scale pose: the
       hands floated because on this figure the arms are no longer than the
       trunk, so the hips cannot rise off the floor at all; the pose is now
-      on yoga blocks (`scenery: blocks`), as it is usually taught.
+      on yoga blocks (`scenery: blocks`), as it is usually taught. The
+      bench press arms then twisted as they bent (owner, same day): `aim`
+      now builds each bone's frame from its direction plus a fixed front
+      (toward the feet), so a chain of them hinges without rolling.
 
 - [x] **Bones on the atlas** (2026-09-20). The owner asked whether the atlas
       could list the bones too. The skeleton had been in the figure all

@@ -853,16 +853,35 @@ BENCH_TOP = 0.45
 BENCH_GRIP = 0.40  # each hand this far from the midline on the bar
 
 
-def aim(v):
-    """The quaternion that turns a bone's rest direction (down) onto v, with the least twist."""
+def aim(v, front=(0.0, 0.0, 1.0)):
+    """The quaternion that points a bone (rest direction: down) along v with its front (rest: +z) kept toward
+    `front`, so a chain built from these only hinges and never twists as the direction changes (owner,
+    2026-09-20: the bench press arms were rotating, not just bending)."""
     v = np.asarray(v, dtype=float)
-    v = v / max(float(np.linalg.norm(v)), 1e-9)
-    c = float(np.clip(np.dot(DOWN, v), -1.0, 1.0))
-    axis = np.cross(DOWN, v)
-    n = float(np.linalg.norm(axis))
-    if n < 1e-6:
-        return IDENT if c > 0 else q_axis([1, 0, 0], math.pi)
-    return q_axis(axis / n, math.acos(c))
+    y = -v / max(float(np.linalg.norm(v)), 1e-9)  # where the rest +y (up the bone) goes
+    f = np.asarray(front, dtype=float)
+    z = f - np.dot(f, y) * y
+    if float(np.linalg.norm(z)) < 1e-6:
+        z = np.array([0.0, 1.0, 0.0]) - y[1] * y
+    z = z / max(float(np.linalg.norm(z)), 1e-9)
+    x = np.cross(y, z)
+    return q_from_matrix(np.column_stack([x, y, z]))
+
+
+def q_from_matrix(R):
+    """Unit quaternion [x, y, z, w] of a rotation matrix (columns: where the rest x, y, z axes go)."""
+    tr = R[0, 0] + R[1, 1] + R[2, 2]
+    if tr > 0:
+        S = math.sqrt(tr + 1.0) * 2
+        return [float((R[2, 1] - R[1, 2]) / S), float((R[0, 2] - R[2, 0]) / S), float((R[1, 0] - R[0, 1]) / S), 0.25 * S]
+    if R[0, 0] > R[1, 1] and R[0, 0] > R[2, 2]:
+        S = math.sqrt(1.0 + R[0, 0] - R[1, 1] - R[2, 2]) * 2
+        return [0.25 * S, float((R[0, 1] + R[1, 0]) / S), float((R[0, 2] + R[2, 0]) / S), float((R[2, 1] - R[1, 2]) / S)]
+    if R[1, 1] > R[2, 2]:
+        S = math.sqrt(1.0 + R[1, 1] - R[0, 0] - R[2, 2]) * 2
+        return [float((R[0, 1] + R[1, 0]) / S), 0.25 * S, float((R[1, 2] + R[2, 1]) / S), float((R[0, 2] - R[2, 0]) / S)]
+    S = math.sqrt(1.0 + R[2, 2] - R[0, 0] - R[1, 1]) * 2
+    return [float((R[0, 2] + R[2, 0]) / S), float((R[1, 2] + R[2, 1]) / S), 0.25 * S, float((R[1, 0] - R[0, 1]) / S)]
 
 
 def two_link_3d(root, target, l1, l2, bend):
