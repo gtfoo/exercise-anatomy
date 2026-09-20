@@ -247,7 +247,7 @@ export default function Scene({ exercise }: { exercise: Exercise }) {
 
       {/* A full sphere: the owner wants to look up at a plank from under the floor, so nothing stops the camera at the ground. */}
       {/* Zoom goes toward the cursor and the view can be panned (right-drag, or shift-drag), so any part of the figure can be brought up close (owner, 2026-09-20). */}
-      <OrbitControls target={target} minDistance={0.35} maxDistance={7} enablePan zoomToCursor />
+      <OrbitControls target={target} minDistance={0.35} maxDistance={7} enablePan zoomToCursor zoomSpeed={2.5} />
     </Canvas>
   );
 }
