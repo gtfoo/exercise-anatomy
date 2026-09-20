@@ -98,8 +98,10 @@ letter and a one-line task strands the *why*.
       and only the open tab's parts respond to the pointer. The orbit
       controls now zoom toward the cursor and pan (right-drag), so any
       part can be brought up close (owner, same day). The muscle catalogue
-      is ordered shoulders to lower leg, so every page's groups read top
-      to bottom (owner, same day: quadriceps first was odd).
+      is ordered shoulders to lower leg for the atlas; an exercise page
+      sorts its groups by their strongest peak over the rep, the hardest
+      working group first, and the muscles within a group by peak (owner,
+      same day).
 
 - [x] **Ab roller and nine from sweat.com** (2026-09-19). The owner sent
       sweat.com pages as the form reference for each: ab roller (kneeling
