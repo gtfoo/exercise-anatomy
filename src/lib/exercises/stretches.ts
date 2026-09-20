@@ -40,25 +40,6 @@ const stretch = (slug: string, name: string, what: string, camera: Exercise["cam
   ...extra,
 });
 
-export const hipFlexorStretch = stretch(
-  "hip-flexor-stretch",
-  "Hip flexor stretch",
-  "Kneeling on the right knee, the left foot forward, the hips pressed forward.",
-  { position: [3.0, 1.3, 1.8], target: [0, 0.6, 0.1] },
-  [
-    st(m("rectus-femoris", "Rectus femoris", "Back hip", "stabiliser", 0.15, "Right: the target, lengthened across the front of the extended hip and the bent knee. Left: holds the front knee.", 0.15), 0.05, 0.9),
-    st(m("pectineus", "Pectineus", "Back hip", "stabiliser", 0.1, "Right: the deep hip flexor lengthened with the hip pressed forward.", 0.1), 0.05, 0.8),
-    st(m("adductor-longus", "Adductor longus", "Back hip", "stabiliser", 0.1, "Right: lengthened with the hip extended.", 0.1), 0.05, 0.5),
-    m("gluteus-maximus", "Gluteus maximus", "Back hip", "prime-mover", 0.3, "Right: presses the hip forward into the stretch. Left: steadies the front hip.", 0.6),
-    m("vastus-lateralis", "Vastus lateralis", "Front leg", "synergist", 0.4, "Left: holds the front knee at a right angle.", 0.1),
-    m("vastus-medialis", "Vastus medialis", "Front leg", "synergist", 0.4, "Left: front knee with the other vasti.", 0.1),
-    m("gluteus-medius", "Gluteus medius", "Front leg", "stabiliser", 0.45, "Left: keeps the front knee from falling in.", 0.3),
-    m("rectus-abdominis", "Rectus abdominis", "Trunk", "prime-mover", 0.55, "Tucks the pelvis so the stretch lands on the hip flexor rather than the lower back."),
-    m("external-obliques", "External obliques", "Trunk", "synergist", 0.4, "Hold the pelvis square."),
-    m("erector-spinae", "Erector spinae", "Trunk", "stabiliser", 0.4, "Keeps the trunk tall."),
-  ],
-);
-
 export const quadStretch = stretch(
   "quad-stretch",
   "Standing quad stretch",

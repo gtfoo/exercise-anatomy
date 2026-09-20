@@ -698,9 +698,11 @@ def childs_pose_sample(t):
 
 
 # ---------- stretches ----------
-def hip_flexor_stretch_sample(t):
-    """Kneeling hip flexor stretch: from kneeling upright, the left foot steps forward to a right angle and the
-    hips press forward over the kneeling right leg, the trunk tall."""
+def low_lunge_sample(t):
+    """Anjaneyasana, the yoga low lunge (owner, 2026-09-20, in place of the kneeling hip flexor stretch): from
+    kneeling upright, the left foot steps forward with the knee over the ankle, the right knee stays down with
+    the shin along the floor, the hips sink forward and down, the arms rise overhead and the chest lifts into a
+    slight backbend, the gaze up."""
     kneel = all_ident()
     root, _ = root_for_hip(np.array([0.0, 0.48, 0.0]), IDENT)
     for S in ("L", "R"):
@@ -709,12 +711,15 @@ def hip_flexor_stretch_sample(t):
     kneel = {"root": [round(float(v), 4) for v in root], "q": kneel}
 
     lunge = all_ident()
-    trunk = rx(-3 * DEG)
-    root, _ = root_for_hip(np.array([0.0, 0.44, 0.0]), trunk)
+    trunk = rx(-12 * DEG)  # a slight backbend
+    hip_y = 0.06 + L_THIGH * math.cos(41 * DEG)  # the back knee on the floor at this thigh angle
+    root, _ = root_for_hip(np.array([0.0, hip_y, 0.0]), trunk)
     lunge["pelvis"], lunge["spine"] = trunk, trunk
-    lunge["thigh.L"], lunge["shin.L"], lunge["foot.L"] = rx(-90 * DEG), rx(0.0), IDENT  # the front knee at a right angle
-    lunge["thigh.R"], lunge["shin.R"], lunge["foot.R"] = rx(27 * DEG), rx(90 * DEG), rx(120 * DEG)  # kneeling, the hip pressed forward
-    set_arms(lunge, 12 * DEG, 12 * DEG)
+    lunge["neck"], lunge["head"] = rx(-18 * DEG), rx(-28 * DEG)  # the gaze up
+    front_thigh = -math.degrees(math.acos(-(hip_y - 0.06 - L_SHIN) / L_THIGH))  # the front shin vertical, the knee over the ankle
+    lunge["thigh.L"], lunge["shin.L"], lunge["foot.L"] = rx(front_thigh * DEG), rx(0.0), IDENT
+    lunge["thigh.R"], lunge["shin.R"], lunge["foot.R"] = rx(41 * DEG), rx(90 * DEG), rx(120 * DEG)  # kneeling, the hip pressed forward and down
+    set_arms(lunge, -172 * DEG, -172 * DEG)  # overhead
     lunge = {"root": [round(float(v), 4) for v in root], "q": lunge}
     return entered(kneel, lunge, t)
 
@@ -1981,7 +1986,7 @@ CLIPS = {
     "triangle-pose": (triangle_sample, "designed yoga hold, tools/myo/designed_clip.py"),
     "bridge-pose": (bridge_pose_sample, "designed yoga hold, tools/myo/designed_clip.py"),
     "seated-twist": (seated_twist_sample, "designed yoga hold, tools/myo/designed_clip.py"),
-    "hip-flexor-stretch": (hip_flexor_stretch_sample, "designed stretch, tools/myo/designed_clip.py"),
+    "low-lunge": (low_lunge_sample, "designed yoga hold, tools/myo/designed_clip.py"),
     "quad-stretch": (quad_stretch_sample, "designed stretch, tools/myo/designed_clip.py"),
     "calf-stretch": (calf_stretch_sample, "designed stretch, tools/myo/designed_clip.py"),
     "hamstring-stretch": (hamstring_fold_sample, "designed stretch, tools/myo/designed_clip.py"),

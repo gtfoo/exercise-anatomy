@@ -34,7 +34,7 @@ import { frontLever } from "./front-lever";
 import { foamRolling } from "./foam-rolling";
 import { standingLegRaise } from "./standing-leg-raise";
 import { warrior1, warrior2, halfMoon, scalePose, headstand, pigeonPose, downwardDog, cobraPose, childsPose } from "./yoga-more";
-import { hipFlexorStretch, quadStretch, calfStretch, hamstringStretch } from "./stretches";
+import { quadStretch, calfStretch, hamstringStretch } from "./stretches";
 import { deadlift, romanianDeadlift, benchPress, overheadPress, barbellRow, hipThrust } from "./weights-more";
 import { gluteBridge, hangingLegRaise, hollowHold } from "./core-more";
 import { sunSalutation } from "./sun-salutation";
@@ -43,7 +43,7 @@ import { abRoller } from "./ab-roller";
 import { singleLegRdlKneeUp } from "./legs-more";
 import { windshieldWipers, straightLegSitUp, straightLegHold, vUp, shoulderTap, doubleLegLift, straightLegRaise } from "./core-sweat";
 import { pikePushUp } from "./push-more";
-import { treePose, chairPose, trianglePose, bridgePose, seatedTwist } from "./yoga-more";
+import { treePose, chairPose, trianglePose, bridgePose, seatedTwist, lowLunge } from "./yoga-more";
 import { CATEGORIES } from "./types";
 
 /** Display order within a category. Routes are `/` for the atlas and `/<slug>` for the rest. */
@@ -103,7 +103,7 @@ export const exercises: readonly Exercise[] = [
   crowPose,
   sidePlank,
   // Stretches
-  hipFlexorStretch,
+  lowLunge,
   quadStretch,
   calfStretch,
   hamstringStretch,

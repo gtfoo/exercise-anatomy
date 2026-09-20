@@ -199,6 +199,24 @@ export const childsPose = yoga("childs-pose", "Child's pose", "Balasana, from kn
   m("rectus-abdominis", "Rectus abdominis", "Trunk", "stabiliser", 0.15, "Barely working: this is a resting pose."),
 ]);
 
+export const lowLunge = yoga("low-lunge", "Low lunge", "Anjaneyasana, the left foot forward, from kneeling; the hips sink, the arms rise, the chest lifts", { position: [3.0, 1.3, 2.0], target: [0, 0.7, 0] }, [
+  st(m("rectus-femoris", "Rectus femoris", "Back leg", "stabiliser", 0.2, "Right: lengthened across the front of the hip and thigh as the hips sink forward: the stretch of the pose.", 0.1), 0.05, 0.9),
+  st(m("pectineus", "Pectineus", "Back leg", "stabiliser", 0.15, "Right: lengthened with the other hip flexors.", 0.1), 0.05, 0.7),
+  st(m("adductor-longus", "Adductor longus", "Back leg", "stabiliser", 0.15, "Right: lengthened at the front of the extended hip.", 0.1), 0.05, 0.55),
+  st(m("rectus-abdominis", "Rectus abdominis", "Trunk", "stabiliser", 0.25, "Lengthened by the backbend, working just enough to keep the ribs from flaring."), 0.5),
+  m("gluteus-maximus", "Gluteus maximus", "Front leg", "prime-mover", 0.7, "Left: holds the front hip as the weight sinks into it. Right: presses the back hip forward.", 0.5),
+  m("vastus-lateralis", "Vastus lateralis", "Front leg", "prime-mover", 0.7, "Left: holds the front knee at a right angle under the body.", 0.15),
+  m("vastus-medialis", "Vastus medialis", "Front leg", "synergist", 0.65, "Left: knee control with the other vasti.", 0.15),
+  m("biceps-femoris", "Biceps femoris", "Front leg", "synergist", 0.45, "Left: steadies the front hip and knee.", 0.15),
+  m("gluteus-medius", "Gluteus medius", "Front leg", "stabiliser", 0.5, "Left: keeps the front knee tracking over the foot.", 0.3),
+  m("erector-spinae", "Erector spinae", "Trunk", "prime-mover", 0.7, "Lifts the chest into the backbend and holds the spine long."),
+  m("anterior-deltoid", "Anterior deltoid", "Arms", "synergist", 0.6, "Holds the arms overhead."),
+  m("upper-trapezius", "Upper trapezius", "Arms", "synergist", 0.45, "Rotates the shoulder blades up under the raised arms."),
+  st(m("latissimus-dorsi", "Latissimus dorsi", "Arms", "stabiliser", 0.25, "Lengthened with the arms overhead and the chest lifted."), 0.5),
+  m("gastrocnemius-medial", "Gastrocnemius (medial)", "Front leg", "stabiliser", 0.4, "Left: steadies the front ankle.", 0.1),
+  m("tibialis-anterior", "Tibialis anterior", "Front leg", "stabiliser", 0.4, "Left: balances the front shin over the foot.", 0.15),
+]);
+
 export const treePose = yoga("tree-pose", "Tree pose", "Vrksasana, standing on the left leg", { position: [3.0, 1.4, 1.8], target: [0, 0.95, 0] }, [
   m("gluteus-medius", "Gluteus medius", "Standing leg", "prime-mover", 0.85, "Left: keeps the pelvis level on one foot. Right: turns the lifted thigh out.", 0.5),
   m("gluteus-minimus", "Gluteus minimus", "Standing leg", "synergist", 0.65, "Left: pelvis control with the medius.", 0.4),
