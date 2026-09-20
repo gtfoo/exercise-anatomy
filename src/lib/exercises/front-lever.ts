@@ -24,7 +24,7 @@ export const frontLever: Exercise = {
   native: { clip: "/models/clips/front-lever.glb" },
   camera: { position: [3.4, 2.2, 2.0], target: [0, 1.7, 0.2] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is designed, not captured: no free motion capture of a front lever exists. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "",
   phases: [
     { name: "pull into tuck", t0: 0, t1: 0.2 },
     { name: "extend", t0: 0.2, t1: 0.4 },

@@ -7,7 +7,7 @@ import type { CurvePoint, Exercise } from "./types";
 
 const t = (...pts: [number, number][]): CurvePoint[] => pts;
 const DISCLAIMER =
-  "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is designed, not captured; the bar is drawn between the hands and its weight is not modelled. Nothing here is estimated or measured. Educational illustration, not training or medical advice.";
+  "";
 const lift = (slug: string, name: string, durationMs: number, camera: Exercise["camera"], phases: Exercise["phases"], muscles: Exercise["muscles"], extra: Partial<Exercise> = {}): Exercise => ({
   slug,
   category: "Weights",

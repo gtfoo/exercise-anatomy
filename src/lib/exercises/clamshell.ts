@@ -21,7 +21,7 @@ export const clamshell: Exercise = {
   // The body lies along X, head toward +X; look at it from the front, a little above.
   camera: { position: [-0.3, 0.9, 3.0], target: [0, 0.3, 0] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is designed, not captured. The tensor fasciae latae and the deep rotators (piriformis and the gemelli) are not modelled in the atlas. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "The tensor fasciae latae and the deep rotators (piriformis and the gemelli) are not in the atlas.",
   phases: [
     { name: "open", t0: 0, t1: 0.42 },
     { name: "hold", t0: 0.42, t1: 0.58 },

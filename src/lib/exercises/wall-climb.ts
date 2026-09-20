@@ -46,7 +46,7 @@ export const wallClimb: Exercise = {
   native: { clip: "/models/clips/wall-climb.glb" },
   camera: { position: [3.2, 2.2, -2.6], target: [0, 1.6, 0] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is two motion-capture clips, up and then down; the wall and its holds are drawn to where the hands and feet rest, not modelled; each side follows its own limb. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "Up and then down; the holds are drawn where the hands and feet rest; each side follows its own limb.",
   phases: [
     { name: "pull", t0: 0, t1: 0.2 },
     { name: "mantle", t0: 0.2, t1: 0.38 },

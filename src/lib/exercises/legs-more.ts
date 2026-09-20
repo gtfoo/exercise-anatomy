@@ -24,7 +24,7 @@ export const singleLegRdlKneeUp: Exercise = {
   native: { clip: "/models/clips/single-leg-rdl-knee-up.glb" },
   camera: { position: [3.2, 1.4, 1.8], target: [0, 0.8, 0] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is designed, not captured, to the form at sweat.com: standing on the left leg, hinge with the right leg behind and the arms in front, stand and bring the right knee up. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "After the form at sweat.com: standing on the left leg, hinge with the right leg behind and the arms in front, stand and bring the right knee up.",
   phases: [
     { name: "hinge", t0: 0, t1: 0.35 },
     { name: "stand", t0: 0.35, t1: 0.62 },

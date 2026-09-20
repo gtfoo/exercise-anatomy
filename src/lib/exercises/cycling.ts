@@ -28,7 +28,7 @@ export const cycling: Exercise = {
   native: { clip: "/models/clips/cycling.glb" },
   camera: { position: [2.9, 1.3, 1.4], target: [0, 0.75, 0.2] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is designed, not captured; the bike is drawn and the pedal load is not modelled. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "",
   phases: [
     { name: "right push", t0: 0, t1: 0.5 },
     { name: "left push", t0: 0.5, t1: 1 },

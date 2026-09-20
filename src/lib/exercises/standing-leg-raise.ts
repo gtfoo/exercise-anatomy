@@ -24,7 +24,7 @@ export const standingLegRaise: Exercise = {
   native: { clip: "/models/clips/standing-leg-raise.glb" },
   camera: { position: [3.2, 1.5, 1.6], target: [0, 0.9, 0.2] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The position is designed, not captured: Utthita Hasta Padangusthasana in its hands-free variation, standing on the left leg with the arms out for balance. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "Utthita Hasta Padangusthasana in its hands-free variation, standing on the left leg with the arms out for balance.",
   phases: [
     { name: "knee to chest", t0: 0, t1: 0.22 },
     { name: "extend", t0: 0.22, t1: 0.42 },

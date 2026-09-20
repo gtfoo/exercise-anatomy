@@ -7,7 +7,7 @@ import type { CurvePoint, Exercise } from "./types";
 
 const t = (...pts: [number, number][]): CurvePoint[] => pts;
 const DISCLAIMER = (form: string) =>
-  `Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is designed, not captured, to the form at sweat.com: ${form}. Nothing here is estimated or measured. Educational illustration, not training or medical advice.`;
+  `After the form at sweat.com: ${form}.`;
 const HOLD = (v: number) => t([0, Math.min(v, 0.15)], [0.4, v], [0.75, v], [1, Math.min(v, 0.15)]);
 const REP = t([0, 0.3], [0.25, 0.65], [0.5, 1], [0.75, 0.65], [1, 0.3]); // one rep, hardest at the top (t 0.5)
 const core = (slug: string, name: string, form: string, durationMs: number, camera: Exercise["camera"], phases: Exercise["phases"], muscles: Exercise["muscles"]): Exercise => ({

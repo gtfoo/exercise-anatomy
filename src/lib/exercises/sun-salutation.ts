@@ -17,7 +17,7 @@ export const sunSalutation: Exercise = {
   native: { clip: "/models/clips/sun-salutation.glb" },
   camera: { position: [3.4, 1.3, 1.8], target: [0, 0.7, 0] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The sequence is designed, not captured; where a practitioner steps or jumps between positions the feet slide. Nothing here is estimated or measured. Educational illustration, not training or medical advice. Surya Namaskar.",
+    "Where a practitioner steps or jumps between positions the feet slide. Surya Namaskar.",
   phases: [
     { name: "mountain", t0: 0, t1: 0.05 },
     { name: "arms overhead", t0: 0.05, t1: 0.14 },

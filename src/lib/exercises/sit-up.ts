@@ -21,7 +21,7 @@ export const sitUp: Exercise = {
   native: { clip: "/models/clips/sit-up.glb" },
   camera: { position: [2.8, 1.4, 1.6], target: [0, 0.35, 0.1] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is a motion-capture clip. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "",
   phases: [
     { name: "sit up", t0: 0, t1: 0.45 },
     { name: "lower", t0: 0.45, t1: 1 },

@@ -105,7 +105,7 @@ export type Exercise = {
   waterLevel?: number;
   /** Where to look from; the default frames a standing figure. */
   camera?: { position: [number, number, number]; target: [number, number, number] };
-  /** Shown under the title. Says what is and is not being claimed. */
+  /** Shown under the title after ILLUSTRATION_NOTE: the page's own note on the movement (its source, what it is, a Sanskrit name). May be empty. */
   disclaimer: string;
 };
 
@@ -153,3 +153,6 @@ export function inHalf(curve: readonly CurvePoint[], half: 0 | 1, rest: number, 
 export function phaseAt(phases: readonly Phase[], t: number): Phase | undefined {
   return phases.find((p) => t >= p.t0 && t < p.t1) ?? phases[phases.length - 1];
 }
+
+/** Under every page title (owner, 2026-09-20): what the page is for, and that the figure's form is not a demonstration. */
+export const ILLUSTRATION_NOTE = "This page illustrates how each muscle is activated through the movement. The figure's form is not an accurate demonstration of the exercise.";

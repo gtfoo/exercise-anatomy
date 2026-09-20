@@ -5,7 +5,7 @@ import type { CurvePoint, Exercise } from "./types";
 
 const t = (...pts: [number, number][]): CurvePoint[] => pts;
 const DISCLAIMER =
-  "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is designed, not captured. Nothing here is estimated or measured. Educational illustration, not training or medical advice.";
+  "";
 const HOLD = (v: number) => t([0, Math.min(v, 0.15)], [0.4, v], [0.75, v], [1, Math.min(v, 0.15)]);
 
 export const gluteBridge: Exercise = {

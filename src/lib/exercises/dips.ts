@@ -25,7 +25,7 @@ export const dips: Exercise = {
   native: { clip: "/models/clips/dips.glb" },
   camera: { position: [2.9, 1.6, 2.3], target: [0, 1.2, 0.05] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is designed, not captured: no free motion capture of a dip exists. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "",
   phases: [
     { name: "lower", t0: 0, t1: 0.42 },
     { name: "press", t0: 0.42, t1: 0.88 },

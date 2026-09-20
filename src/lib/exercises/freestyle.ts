@@ -36,7 +36,7 @@ export const freestyle: Exercise = {
   // The same CMU retarget, converted onto the rigged figure's skeleton with the root offset baked in.
   native: { clip: "/models/clips/freestyle.glb" },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement was captured on land, not in water, and no hydrodynamic forces are modelled, so nothing here is estimated or measured. Educational illustration, not coaching or medical advice.",
+    "Captured on land, not in water.",
   phases: [
     { name: "catch", t0: 0, t1: 0.15 },
     { name: "pull", t0: 0.15, t1: 0.35 },

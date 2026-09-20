@@ -28,7 +28,7 @@ export const overheadSquat: Exercise = {
   native: { clip: "/models/clips/overhead-squat.glb" },
   camera: { position: [3.2, 1.6, 2.2], target: [0, 1.0, 0.1] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is three motion-capture clips in sequence: the bar picked up and pressed, the squat, the bar set down. The bar is drawn between the hands and its weight is not modelled. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "The bar picked up and pressed, the squat, the bar set down.",
   phases: [
     { name: "pick up", t0: 0, t1: 0.3 },
     { name: "stand", t0: 0.3, t1: 0.41 },

@@ -35,7 +35,7 @@ export const pistolSquat: Exercise = {
   native: { clip: "/models/clips/pistol-squat.glb" },
   camera: { position: [2.6, 1.3, 2.4], target: [0, 0.7, 0.2] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is a motion-capture clip played in place, one rep on each leg. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "Played in place, one rep on each leg.",
   phases: [
     { name: "left leg: rise", t0: 0, t1: 0.25 },
     { name: "lower onto the right", t0: 0.25, t1: 0.55 },

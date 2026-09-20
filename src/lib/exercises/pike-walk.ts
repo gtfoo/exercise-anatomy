@@ -25,7 +25,7 @@ export const pikeWalk: Exercise = {
   native: { clip: "/models/clips/pike-walk.glb" },
   camera: { position: [3.2, 1.4, 1.2], target: [0, 0.5, -0.2] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is a motion-capture clip. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "",
   phases: [
     { name: "walk in", t0: 0, t1: PIKE },
     { name: "walk out", t0: PIKE, t1: 1 },

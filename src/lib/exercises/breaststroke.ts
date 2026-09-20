@@ -26,7 +26,7 @@ export const breaststroke: Exercise = {
   native: { clip: "/models/clips/breaststroke.glb" },
   camera: { position: [2.6, 1.9, 2.4], target: [0, 0.55, 0] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is a motion-capture clip performed out of water; no hydrodynamic forces are modelled, so nothing here is estimated or measured. Educational illustration, not coaching or medical advice.",
+    "Captured on land, not in water.",
   phases: [
     { name: "pull", t0: 0, t1: 0.4 },
     { name: "recover", t0: 0.4, t1: 0.6 },

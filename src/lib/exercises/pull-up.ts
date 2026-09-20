@@ -34,7 +34,7 @@ const baseline: Exercise = {
   // between the camera and the body or shifts the body toward one end by perspective.
   camera: { position: [0, 2.0, 3.9], target: [0, 1.55, 0] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is designed, not captured: no free motion capture of a strict pull-up exists. The musculoskeletal model used to estimate the squat has no arm or shoulder muscles, so nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "",
   phases: [
     { name: "pull", t0: 0, t1: 0.45 },
     { name: "top", t0: 0.45, t1: 0.55 },

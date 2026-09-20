@@ -36,7 +36,7 @@ export const cleanAndJerk: Exercise = {
   native: { clip: "/models/clips/clean-and-jerk.glb" },
   camera: { position: [3.2, 1.5, 2.2], target: [0, 1.0, 0.1] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is a motion-capture clip; the bar is drawn between the hands and its weight is not modelled. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "",
   phases: [
     { name: "set", t0: 0, t1: 0.09 },
     { name: "first pull", t0: 0.09, t1: 0.24 },

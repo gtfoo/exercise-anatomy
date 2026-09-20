@@ -26,7 +26,7 @@ export const sprint: Exercise = {
   native: { clip: "/models/clips/sprint.glb" },
   camera: { position: [2.8, 1.3, 2.2], target: [0, 0.95, 0] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is a motion-capture clip played in place; ground forces are not modelled. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "Played in place.",
   phases: [
     { name: "left drive", t0: 0, t1: 0.5 },
     { name: "right drive", t0: 0.5, t1: 1 },

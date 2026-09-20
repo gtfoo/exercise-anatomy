@@ -15,7 +15,7 @@ const PHASES = [
   { name: "release", t0: RELEASE, t1: 1 },
 ];
 const DISCLAIMER =
-  "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The position is designed, not captured: entered from rest, held, released; nothing here is estimated or measured. Educational illustration, not training or medical advice.";
+  "Entered from rest, held, released.";
 // v is the left side's level; vr the right side's, when the hold is asymmetric.
 const m = (id: string, name: string, group: string, role: MuscleActivation["role"], v: number, note: string, vr?: number): MuscleActivation => ({
   id,
@@ -199,7 +199,7 @@ export const childsPose = yoga("childs-pose", "Child's pose", "Balasana, from kn
   m("rectus-abdominis", "Rectus abdominis", "Trunk", "stabiliser", 0.15, "Barely working: this is a resting pose."),
 ]);
 
-export const lowLunge = yoga("low-lunge", "Low lunge", "Anjaneyasana, the left foot forward, from kneeling; the hips sink, the arms rise, the chest lifts", { position: [3.0, 1.3, 2.0], target: [0, 0.7, 0] }, [
+export const lowLunge = yoga("low-lunge", "Low lunge", "Anjaneyasana, from standing: the left foot steps into a lunge, the back knee lowers, the hips sink, the arms rise, the chest lifts", { position: [3.0, 1.3, 2.0], target: [0, 0.7, 0] }, [
   st(m("rectus-femoris", "Rectus femoris", "Back leg", "stabiliser", 0.2, "Right: lengthened across the front of the hip and thigh as the hips sink forward: the stretch of the pose.", 0.1), 0.05, 0.9),
   st(m("pectineus", "Pectineus", "Back leg", "stabiliser", 0.15, "Right: lengthened with the other hip flexors.", 0.1), 0.05, 0.7),
   st(m("adductor-longus", "Adductor longus", "Back leg", "stabiliser", 0.15, "Right: lengthened at the front of the extended hip.", 0.1), 0.05, 0.55),

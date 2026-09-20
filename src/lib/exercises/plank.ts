@@ -22,7 +22,7 @@ export const plank: Exercise = {
   native: { clip: "/models/clips/plank.glb" },
   camera: { position: [3.4, 1.3, 1.6], target: [0, 0.45, 0.2] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is two motion-capture clips, getting down and then holding. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "Getting down and then holding.",
   phases: [
     { name: "get down", t0: 0, t1: DOWN },
     { name: "hold", t0: DOWN, t1: 1 },

@@ -27,7 +27,7 @@ export const bicepCurl: Exercise = {
   native: { clip: "/models/clips/bicep-curl.glb" },
   camera: { position: [0.9, 1.5, 3.0], target: [0, 1.0, 0] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is a motion-capture clip; the dumbbells' weight is not modelled. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "",
   phases: [
     { name: "right arm", t0: 0, t1: 0.5 },
     { name: "left arm", t0: 0.5, t1: 1 },

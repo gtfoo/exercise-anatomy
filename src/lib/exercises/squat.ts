@@ -44,7 +44,7 @@ const baseline: Exercise = {
   // What is displayed: the same Mixamo clip, converted onto the rigged figure's own skeleton (tools/blender/convert_clip.py).
   native: { clip: "/models/clips/bodyweight-squat.glb" },
   disclaimer:
-    "Lower-limb activation is estimated by musculoskeletal simulation of the captured movement; trunk muscles are shown qualitatively by role. Nothing here is measured EMG. Educational illustration, not training or medical advice.",
+    "Lower-limb activation is estimated by musculoskeletal simulation of the captured movement; trunk muscles are shown qualitatively by role.",
   phases: [
     { name: "descent", t0: 0, t1: 0.42 },
     { name: "bottom", t0: 0.42, t1: 0.58 },

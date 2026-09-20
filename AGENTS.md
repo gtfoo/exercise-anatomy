@@ -29,7 +29,11 @@ movement: one rep of a bodyweight squat on a rigged écorché, scrubbable, with
 each named muscle coloured by activation and a focus mode that fades all but
 the selected muscle and the skeleton. In focus mode faded muscles do not
 write depth, so the selected muscle is visible from every angle through
-every other muscle; only bone may hide it (owner's rule, 2026-09-11). Educational; it says so on the page.
+every other muscle; only bone may hide it (owner's rule, 2026-09-11). Every page
+says it illustrates how each muscle is activated and that the figure's form is
+not an accurate demonstration (`ILLUSTRATION_NOTE`, owner's wording, 2026-09-20);
+the old provenance and advice boilerplate is gone from the page text, while the
+per-muscle provenance line in the panel stays.
 
 ## Three provenances, and the UI must never blur them
 

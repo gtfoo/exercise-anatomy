@@ -29,7 +29,7 @@ export const jumpingJacks: Exercise = {
   native: { clip: "/models/clips/jumping-jacks.glb" },
   camera: { position: [2.4, 1.5, 2.6], target: [0, 0.95, 0] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "",
   phases: [
     { name: "in", t0: 0, t1: 0.5 },
     { name: "out", t0: 0.5, t1: 1 },

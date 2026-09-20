@@ -3,7 +3,7 @@
 import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import type { Exercise, MuscleActivation } from "@/lib/exercises/types";
-import { ROLE_LABEL, levelAt, phaseAt } from "@/lib/exercises/types";
+import { ILLUSTRATION_NOTE, ROLE_LABEL, levelAt, phaseAt } from "@/lib/exercises/types";
 import { exercises, grouped, routeFor } from "@/lib/exercises";
 import { MUSCLES } from "@/lib/muscles";
 import { rampCss } from "@/lib/palette";
@@ -116,7 +116,10 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
           </select>
         </label>
         <h1 className="text-lg font-semibold tracking-tight text-zinc-900">{exercise.name}</h1>
-        <p className="mt-1 line-clamp-3 text-xs leading-relaxed text-zinc-500 md:line-clamp-none">{exercise.disclaimer}</p>
+        <p className="mt-1 line-clamp-3 text-xs leading-relaxed text-zinc-500 md:line-clamp-none">
+          {exercise.static ? "" : ILLUSTRATION_NOTE}
+          {exercise.disclaimer.trim() ? `${exercise.static ? "" : " "}${exercise.disclaimer.trim()}` : ""}
+        </p>
       </header>
 
       {!exercise.static && (

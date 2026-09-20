@@ -28,7 +28,7 @@ export const snatch: Exercise = {
   native: { clip: "/models/clips/snatch.glb" },
   camera: { position: [3.2, 1.6, 2.2], target: [0, 1.0, 0.15] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is a motion-capture clip; the bar is drawn between the hands and its weight is not modelled. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "",
   phases: [
     { name: "first pull", t0: 0, t1: 0.11 },
     { name: "second pull", t0: 0.11, t1: 0.19 },

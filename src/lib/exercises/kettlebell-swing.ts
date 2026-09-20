@@ -24,7 +24,7 @@ export const kettlebellSwing: Exercise = {
   native: { clip: "/models/clips/kettlebell-swing.glb" },
   camera: { position: [2.9, 1.4, 2.0], target: [0, 0.9, 0.1] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is a motion-capture clip; the bell's weight is not modelled. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "",
   phases: [
     { name: "drive", t0: 0, t1: 0.35 },
     { name: "float", t0: 0.35, t1: 0.6 },

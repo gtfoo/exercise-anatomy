@@ -23,7 +23,7 @@ export const bicycleCrunch: Exercise = {
   native: { clip: "/models/clips/bicycle-crunch.glb" },
   camera: { position: [2.5, 1.7, 1.9], target: [0, 0.3, 0.1] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is a motion-capture clip. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "",
   phases: [
     { name: "left elbow to right knee", t0: 0, t1: 0.5 },
     { name: "right elbow to left knee", t0: 0.5, t1: 1 },

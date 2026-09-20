@@ -699,29 +699,33 @@ def childs_pose_sample(t):
 
 # ---------- stretches ----------
 def low_lunge_sample(t):
-    """Anjaneyasana, the yoga low lunge (owner, 2026-09-20, in place of the kneeling hip flexor stretch): from
-    kneeling upright, the left foot steps forward with the knee over the ankle, the right knee stays down with
-    the shin along the floor, the hips sink forward and down, the arms rise overhead and the chest lifts into a
-    slight backbend, the gaze up."""
-    kneel = all_ident()
-    root, _ = root_for_hip(np.array([0.0, 0.48, 0.0]), IDENT)
-    for S in ("L", "R"):
-        kneel["thigh." + S], kneel["shin." + S], kneel["foot." + S] = IDENT, rx(90 * DEG), rx(120 * DEG)
-    set_arms(kneel, 8 * DEG, 8 * DEG)
-    kneel = {"root": [round(float(v), 4) for v in root], "q": kneel}
+    """Anjaneyasana, the yoga low lunge, from standing (owner, 2026-09-20): the left foot steps forward into a
+    lunge, the right knee lowers to the floor with the shin along it, the hips sink forward and down, the arms
+    rise overhead and the chest lifts into a slight backbend, the gaze up; then back up to standing."""
+    high = all_ident()  # the step: a lunge with the back knee off the floor, the trunk upright, the arms down
+    hip_y = 0.62
+    root, _ = root_for_hip(np.array([0.0, hip_y, 0.0]), IDENT)
+    front_thigh = -60.0
+    knee_y = hip_y - L_THIGH * math.cos(front_thigh * DEG)
+    front_shin = math.degrees(math.acos(min(1.0, (knee_y - 0.06) / L_SHIN)))  # the shin down to the planted foot
+    high["thigh.L"], high["shin.L"], high["foot.L"] = rx(front_thigh * DEG), rx(front_shin * DEG), IDENT
+    back = math.degrees(math.acos(min(1.0, (hip_y - 0.06) / (L_THIGH + L_SHIN))))  # the back leg straight to the ball of the foot
+    high["thigh.R"], high["shin.R"], high["foot.R"] = rx(back * DEG), rx(back * DEG), rx((back + 40) * DEG)
+    high = {"root": [round(float(v), 4) for v in root], "q": high}
 
-    lunge = all_ident()
+    low = all_ident()
     trunk = rx(-12 * DEG)  # a slight backbend
     hip_y = 0.06 + L_THIGH * math.cos(41 * DEG)  # the back knee on the floor at this thigh angle
     root, _ = root_for_hip(np.array([0.0, hip_y, 0.0]), trunk)
-    lunge["pelvis"], lunge["spine"] = trunk, trunk
-    lunge["neck"], lunge["head"] = rx(-18 * DEG), rx(-28 * DEG)  # the gaze up
+    low["pelvis"], low["spine"] = trunk, trunk
+    low["neck"], low["head"] = rx(-18 * DEG), rx(-28 * DEG)  # the gaze up
     front_thigh = -math.degrees(math.acos(-(hip_y - 0.06 - L_SHIN) / L_THIGH))  # the front shin vertical, the knee over the ankle
-    lunge["thigh.L"], lunge["shin.L"], lunge["foot.L"] = rx(front_thigh * DEG), rx(0.0), IDENT
-    lunge["thigh.R"], lunge["shin.R"], lunge["foot.R"] = rx(41 * DEG), rx(90 * DEG), rx(120 * DEG)  # kneeling, the hip pressed forward and down
-    set_arms(lunge, -172 * DEG, -172 * DEG)  # overhead
-    lunge = {"root": [round(float(v), 4) for v in root], "q": lunge}
-    return entered(kneel, lunge, t)
+    low["thigh.L"], low["shin.L"], low["foot.L"] = rx(front_thigh * DEG), rx(0.0), IDENT
+    low["thigh.R"], low["shin.R"], low["foot.R"] = rx(41 * DEG), rx(90 * DEG), rx(120 * DEG)  # kneeling, the hip pressed forward and down
+    set_arms(low, -172 * DEG, -172 * DEG)  # overhead
+    low = {"root": [round(float(v), 4) for v in root], "q": low}
+    stand = stand_sample(0)
+    return sequence([(0, stand), (0.2, high), (ENTER, low), (RELEASE, low), (0.9, high), (1, stand)], t)
 
 
 def quad_stretch_sample(t):

@@ -26,7 +26,7 @@ export const muscleUp: Exercise = {
   native: { clip: "/models/clips/muscle-up.glb" },
   camera: { position: [3.4, 2.3, 2.0], target: [0, 1.9, 0] }, // from the side: the lean over the bar is the movement
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is designed, not captured: no free motion capture of a muscle-up exists. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "",
   phases: [
     { name: "pull", t0: 0, t1: 0.22 },
     { name: "lean over", t0: 0.22, t1: 0.38 },

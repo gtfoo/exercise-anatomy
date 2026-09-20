@@ -33,7 +33,7 @@ export const lunge: Exercise = {
   native: { clip: "/models/clips/lunge.glb" },
   camera: { position: [3.0, 1.25, 1.6], target: [0, 0.8, 0.3] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is designed to textbook form, not captured: the only free capture used a wide stance. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "",
   phases: [
     { name: "left step", t0: 0, t1: 0.15 },
     { name: "left descent", t0: 0.15, t1: 0.275 },

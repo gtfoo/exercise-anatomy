@@ -23,7 +23,7 @@ export const lateralRaise: Exercise = {
   native: { clip: "/models/clips/lateral-raise.glb" },
   camera: { position: [0.6, 1.5, 3.2], target: [0, 1.05, 0] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is designed, not captured. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "",
   phases: [
     { name: "raise", t0: 0, t1: 0.45 },
     { name: "top", t0: 0.45, t1: 0.55 },

@@ -22,7 +22,7 @@ export const foamRolling: Exercise = {
   native: { clip: "/models/clips/foam-rolling.glb" },
   camera: { position: [2.6, 1.3, 2.4], target: [0, 0.4, 0.1] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is designed, not captured. The glute under the roller is shown lengthened, not working; the pressure of the roller itself is not modelled. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "The glute under the roller is shown lengthened, not working.",
   phases: [
     { name: "roll back", t0: 0, t1: 0.5 },
     { name: "roll forward", t0: 0.5, t1: 1 },

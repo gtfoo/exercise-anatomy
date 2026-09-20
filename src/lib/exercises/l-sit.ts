@@ -25,7 +25,7 @@ export const lSit: Exercise = {
   native: { clip: "/models/clips/l-sit.glb" },
   camera: { position: [2.9, 1.3, 2.3], target: [0, 0.85, 0.25] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is designed, not captured: no free motion capture of an L-sit exists. The iliopsoas, the deepest hip flexor, is not modelled in the atlas. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "The iliopsoas, the deepest hip flexor, is not in the atlas.",
   phases: [
     { name: "support", t0: 0, t1: 0.08 },
     { name: "raise", t0: 0.08, t1: 0.42 },

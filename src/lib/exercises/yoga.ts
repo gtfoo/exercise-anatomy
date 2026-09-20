@@ -16,7 +16,7 @@ const PHASES = [
   { name: "release", t0: RELEASE, t1: 1 },
 ];
 const DISCLAIMER =
-  "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The position is designed, not captured: entered from rest, held, released; nothing here is estimated or measured. Educational illustration, not training or medical advice.";
+  "Entered from rest, held, released.";
 // v is the left side's level; vr the right side's, when the hold is asymmetric.
 const m = (id: string, name: string, group: string, role: MuscleActivation["role"], v: number, note: string, vr?: number): MuscleActivation => ({
   id,

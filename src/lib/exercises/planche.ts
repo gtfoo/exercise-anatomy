@@ -24,7 +24,7 @@ export const planche: Exercise = {
   native: { clip: "/models/clips/planche.glb" },
   camera: { position: [3.2, 1.0, 1.4], target: [0, 0.4, -0.1] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is designed, not captured: no free motion capture of a planche exists. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "",
   phases: [
     { name: "lean into tuck", t0: 0, t1: 0.22 },
     { name: "extend", t0: 0.22, t1: 0.42 },

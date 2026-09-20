@@ -25,7 +25,7 @@ export const handstand: Exercise = {
   native: { clip: "/models/clips/handstand.glb" },
   camera: { position: [3.4, 1.4, 1.2], target: [0, 0.95, 0.35] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is designed, not captured: no free motion capture of a handstand exists. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "",
   phases: [
     { name: "fold", t0: 0, t1: 0.16 },
     { name: "kick up", t0: 0.16, t1: 0.4 },

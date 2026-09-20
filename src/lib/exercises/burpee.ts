@@ -24,7 +24,7 @@ export const burpee: Exercise = {
   native: { clip: "/models/clips/burpee.glb" },
   camera: { position: [3.4, 1.6, 2.0], target: [0, 0.8, 0.1] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is a motion-capture clip; ground forces are not modelled. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "",
   phases: [
     { name: "push up", t0: 0, t1: 0.12 },
     { name: "jump in", t0: 0.12, t1: 0.25 },

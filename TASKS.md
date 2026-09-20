@@ -81,6 +81,20 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Page notes reworded; low lunge from standing** (2026-09-20). The
+      owner asked to drop the provenance and advice boilerplate from the
+      page text ("The movement is a motion-capture clip. Nothing here is
+      estimated or measured. Educational illustration, not training or
+      medical advice." and its kin) and to say instead that the page
+      illustrates how each muscle is activated through the movement and
+      that the figure's form is not an accurate demonstration. That
+      sentence is `ILLUSTRATION_NOTE`, printed under every title; each
+      page's `disclaimer` keeps only its own description (source, what it
+      is, a Sanskrit name). The per-muscle provenance line in the panel is
+      untouched, and the squat keeps its one sentence saying its lower
+      limb is estimated. The low lunge now starts from standing: a step
+      into a high lunge, the back knee down, the hold, and back up.
+
 - [x] **Low lunge in place of the hip flexor stretch** (2026-09-20). The
       owner asked for the yoga low lunge instead: Anjaneyasana, from
       kneeling, the left foot forward with the knee over the ankle, the

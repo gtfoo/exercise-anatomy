@@ -18,7 +18,7 @@ export const atlas: Exercise = {
   native: { clip: "/models/clips/stand.glb" },
   camera: { position: [2.4, 1.4, 2.6], target: [0, 0.95, 0] },
   disclaimer:
-    "Every muscle and bone the figure names, at rest: switch between them in the panel. Click a muscle to isolate it, a bone to light it up; the exercise pages show which muscles work, and when, through a movement. Educational illustration, not training or medical advice.",
+    "Every muscle and bone the figure names, at rest: switch between them in the panel. Click a muscle to isolate it, a bone to light it up; the exercise pages show which muscles work, and when, through a movement.",
   phases: [{ name: "rest", t0: 0, t1: 1 }],
   muscles: MUSCLES.map((m) => ({ id: m.id, name: m.name, group: m.group, role: "stabiliser", note: m.note, curve: [[0, 0]] })),
   bones: BONES,

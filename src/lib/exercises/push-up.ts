@@ -26,7 +26,7 @@ export const pushUp: Exercise = {
   // The body lies along z with the hands ahead of the shoulders; look at its middle from the side, a little ahead.
   camera: { position: [3.5, 1.3, 1.5], target: [0, 0.3, 0.2] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is a motion-capture clip. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "",
   phases: [
     { name: "push", t0: 0, t1: 0.5 },
     { name: "lower", t0: 0.5, t1: 1 },

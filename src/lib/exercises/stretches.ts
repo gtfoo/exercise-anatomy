@@ -15,7 +15,7 @@ const PHASES = [
   { name: "ease out", t0: RELEASE, t1: 1 },
 ];
 const DISCLAIMER =
-  "Activation is shown qualitatively by role — prime mover, synergist, stabiliser — and the lengthened muscle in teal. The position is designed, not captured: eased into, held, eased out; nothing here is estimated or measured. Educational illustration, not training or medical advice.";
+  "Eased into, held, eased out.";
 const m = (id: string, name: string, group: string, role: MuscleActivation["role"], v: number, note: string, vr?: number): MuscleActivation => ({
   id,
   name,

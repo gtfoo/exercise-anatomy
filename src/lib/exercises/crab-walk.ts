@@ -33,7 +33,7 @@ export const crabWalk: Exercise = {
   native: { clip: "/models/clips/crab-walk.glb" },
   camera: { position: [0.6, 1.3, 3.4], target: [0, 0.7, 0] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is designed, not captured, to the form at sweat.com: a band above the knees, three steps to the left and the same three back; the band's tension is not modelled. Nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "After the form at sweat.com: a band above the knees, three steps to the left and the same three back.",
   phases: [
     { name: "step left", t0: 0, t1: 0.5 },
     { name: "step right", t0: 0.5, t1: 1 },

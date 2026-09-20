@@ -26,7 +26,7 @@ export const stairs: Exercise = {
   native: { clip: "/models/clips/stairs.glb" },
   camera: { position: [3.3, 2.0, 1.3], target: [0, 1.2, 0.6] },
   disclaimer:
-    "Activation is shown qualitatively by role — prime mover, synergist, stabiliser. The movement is a motion-capture clip played twice over and the staircase is drawn to its rise and run; nothing here is estimated or measured. Educational illustration, not training or medical advice.",
+    "Played twice over; the staircase is drawn to its rise and run.",
   phases: [
     { name: "left step", t0: 0, t1: 0.25 },
     { name: "right step", t0: 0.25, t1: 0.5 },
