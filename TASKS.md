@@ -89,14 +89,6 @@ letter and a one-line task strands the *why*.
       `/hip-flexor-stretch` address forwards there (a small client page),
       and the old clip is gone.
 
-- [x] **Low lunge in place of the hip flexor stretch** (2026-09-20). The
-      owner asked for the yoga low lunge instead: Anjaneyasana, from
-      kneeling, the left foot forward with the knee over the ankle, the
-      back knee down, the hips sinking, the arms overhead and a slight
-      backbend. It lives in Yoga at `/low-lunge`; the old
-      `/hip-flexor-stretch` address forwards there (a small client page),
-      and the old clip is gone.
-
 - [x] **Five owner-spotted pose faults** (2026-09-20). Glute bridge, bridge
       pose, hip thrust and bench press had every knee under the floor: my
       earlier "fix" flipped `two_link`'s bend the wrong way, and I read
