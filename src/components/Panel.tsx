@@ -38,6 +38,7 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
 
   const phase = phaseAt(exercise.phases, t);
   const detail = exercise.muscles.find((m) => m.id === selected);
+  const boneDetail = exercise.bones?.find((b) => b.id === selected);
 
   // Every muscle is listed under its atlas group (src/lib/muscles.ts), in the
   // atlas's order, so the same muscle never sits under "calf" on one page and
@@ -54,6 +55,14 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
     return [...by.entries()].sort(([a], [b]) => (order.indexOf(a) === -1 ? 99 : order.indexOf(a)) - (order.indexOf(b) === -1 ? 99 : order.indexOf(b)));
   }, [exercise]);
   const groupOf = (m: MuscleActivation) => MUSCLES.find((x) => x.id === m.id)?.group ?? m.group;
+  const boneGroups = useMemo(() => {
+    const by = new Map<string, NonNullable<Exercise["bones"]>[number][]>();
+    for (const b of exercise.bones ?? []) {
+      if (!by.has(b.group)) by.set(b.group, []);
+      by.get(b.group)!.push(b);
+    }
+    return [...by.entries()];
+  }, [exercise]);
 
   return (
     <aside
@@ -171,6 +180,16 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
         </section>
       )}
 
+      {boneDetail && (
+        <section className="rounded-md border border-zinc-200 bg-zinc-50 p-3 text-sm">
+          <div className="flex items-baseline justify-between gap-2">
+            <h3 className="font-medium text-zinc-900">{boneDetail.name}</h3>
+            <span className="text-right text-[10px] uppercase tracking-wide text-zinc-500">{boneDetail.group} · bone</span>
+          </div>
+          <p className="mt-1 leading-relaxed text-zinc-700">{boneDetail.note}</p>
+        </section>
+      )}
+
       {groups.map(([group, muscles]) => (
         <section key={group}>
           <h2 className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500">{group}</h2>
@@ -204,6 +223,33 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
                       ))}
                     <span className="flex-1">{m.name}</span>
                     {!exercise.static && <span className="text-[10px] uppercase tracking-wide text-zinc-400">{ROLE_LABEL[m.role]}</span>}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ))}
+
+      {boneGroups.length > 0 && (
+        <p className="mt-1 text-xs font-medium uppercase tracking-wide text-zinc-400">Bones</p>
+      )}
+      {boneGroups.map(([group, bones]) => (
+        <section key={`bone-${group}`}>
+          <h2 className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500">{group}</h2>
+          <ul className="flex flex-col">
+            {bones.map((b) => {
+              const active = hovered === b.id || selected === b.id;
+              return (
+                <li key={b.id}>
+                  <button
+                    type="button"
+                    onMouseEnter={() => setHovered(b.id)}
+                    onMouseLeave={() => setHovered(null)}
+                    onClick={() => setSelected(b.id)}
+                    className={`flex w-full items-center gap-3 rounded-md px-2 py-1 text-left text-sm transition-colors ${active ? "bg-zinc-100" : "hover:bg-zinc-50"}`}
+                  >
+                    <span className="flex-1">{b.name}</span>
                   </button>
                 </li>
               );

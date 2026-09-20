@@ -349,12 +349,13 @@ export default function NativeFigure({ exercise }: { exercise: Exercise }) {
   const { scene } = useGLTF(figureUrl);
   const { animations } = useGLTF(clipUrl);
   const ids = useMemo(() => new Set(exercise.muscles.map((m) => m.id)), [exercise]);
+  const boneIds = useMemo(() => new Set((exercise.bones ?? []).map((b) => b.id)), [exercise]);
   const live = useRef<Live | null>(null);
   const holdsGroup = useRef<THREE.Group>(null);
   const wall = exercise.scenery?.kind === "wall" ? exercise.scenery : null;
 
   useEffect(() => {
-    const materials = bindMaterials(scene, ids);
+    const materials = bindMaterials(scene, ids, boneIds);
     const props = attachProps(scene, exercise.props);
     // A converted clip carries position and scale tracks for every bone, baked
     // from the rig it was converted against; only the rotations and the hips'
@@ -402,7 +403,7 @@ export default function NativeFigure({ exercise }: { exercise: Exercise }) {
       for (const m of Object.values(materials)) m.dispose();
       live.current = null;
     };
-  }, [scene, animations, ids, clipUrl, exercise.props, wall]);
+  }, [scene, animations, ids, boneIds, clipUrl, exercise.props, wall]);
 
   const setHovered = useViewer((s) => s.setHovered);
   const setSelected = useViewer((s) => s.setSelected);
@@ -424,7 +425,7 @@ export default function NativeFigure({ exercise }: { exercise: Exercise }) {
       <primitive
         object={scene}
         onPointerOver={(e: { object: THREE.Object3D; stopPropagation: () => void }) => {
-          const id = e.object.userData.muscleId as string | null;
+          const id = e.object.userData.partId as string | null;
           if (!id) return;
           e.stopPropagation();
           setHovered(id);
@@ -435,7 +436,7 @@ export default function NativeFigure({ exercise }: { exercise: Exercise }) {
           document.body.style.cursor = "auto";
         }}
         onClick={(e: { object: THREE.Object3D; stopPropagation: () => void }) => {
-          const id = e.object.userData.muscleId as string | null;
+          const id = e.object.userData.partId as string | null;
           if (!id) return;
           e.stopPropagation();
           setSelected(id);

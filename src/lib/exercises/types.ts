@@ -94,6 +94,8 @@ export type Exercise = {
   credit?: string;
   /** A resting figure and a plain muscle list: no transport, no roles, no provenance line. */
   static?: boolean;
+  /** Named bone groups the page lists and lets the reader select (the atlas); ids match src/lib/bones.ts and the figure's "bone-<id>" meshes. */
+  bones?: readonly { id: string; name: string; group: string; note: string }[];
   /** Added to the root when free: where to put a body the clip does not place (a swimmer at the surface). */
   rootOffset?: [number, number, number];
   /** Floor by default; water draws a surface at `waterLevel` and no floor shadow. */

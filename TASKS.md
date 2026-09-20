@@ -81,6 +81,17 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Bones on the atlas** (2026-09-20). The owner asked whether the atlas
+      could list the bones too. The skeleton had been in the figure all
+      along as one unnamed, opaque mesh; `build_figure.py` now exports it as
+      51 named groups (`BONE_GROUPS`: one per long bone, paired `_L/_R`, the
+      wrist, midfoot and toe bones together, the vertebrae by region, the
+      skull as one), listed in `src/lib/bones.ts` and on the atlas page under
+      a Bones heading. A selected bone paints red and fades the muscles;
+      bones stay opaque, as the focus rule wants. Exercise pages are
+      unchanged: they list no bones, so their skeleton stays plain and
+      unclickable. Figure rebuilt (~25 min) and rebound to the Mixamo rig.
+
 - [x] **Ab roller and nine from sweat.com** (2026-09-19). The owner sent
       sweat.com pages as the form reference for each: ab roller (kneeling
       rollout, an ab wheel drawn on its axle between the hands and spun by

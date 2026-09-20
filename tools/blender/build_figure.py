@@ -318,10 +318,69 @@ for mid, names in targets.items():
         pending.append((obj, ranges, BUDGET_TARGET // 2, False))
         built.append(obj)
 ctx, ctx_ranges = merge("context-muscles", [O[n] for n in context_names])
-skel, skel_ranges = merge("skeleton", [O[n] for n in skeleton_names])
-pending += [(ctx, ctx_ranges, BUDGET_CONTEXT, False), (skel, skel_ranges, BUDGET_SKELETON, True)]
-pending_names = {skel.name: skeleton_names}
-built += [ctx, skel]
+pending.append((ctx, ctx_ranges, BUDGET_CONTEXT, False))
+built.append(ctx)
+
+# The skeleton goes out as named groups, "bone-<id>" or "bone-<id>_L/_R", so
+# the atlas page can list and select them (owner, 2026-09-20). The ids match
+# src/lib/bones.ts. Anything no group claims stays in an unnamed "skeleton".
+BONE_GROUPS = [
+    ("skull", False, re.compile(r"^(frontal bone|parietal bone|temporal bone|occipital bone|sphenoid bone|ethmoid bone|.*cells of ethmoid bone|sinus of (frontal|sphenoid) bone|zygomatic bone|maxilla|nasal bone|lacrimal bone|palatine bone|vomer|inferior nasal concha bone|nasal septal cartilage|lateral process of nasal septal cartilage|major alar cartilage|malleus|incus|stapes)$", re.I)),
+    ("mandible", False, re.compile(r"^mandible$", re.I)),
+    ("teeth", False, re.compile(r"incisor|canine|premolar|molar tooth", re.I)),
+    ("hyoid", False, re.compile(r"^hyoid bone$", re.I)),
+    ("laryngeal-cartilages", False, re.compile(r"^(thyroid|cricoid|arytenoid|corniculate) cartilage$", re.I)),
+    ("cervical-vertebrae", False, re.compile(r"^(atlas \(c1\)|axis \(c2\)|vertebra c[3-7])$", re.I)),
+    ("thoracic-vertebrae", False, re.compile(r"^vertebra t\d+$", re.I)),
+    ("lumbar-vertebrae", False, re.compile(r"^vertebra l[1-5]$", re.I)),
+    ("sacrum", False, re.compile(r"^sacrum$", re.I)),
+    ("coccyx", False, re.compile(r"^coccyx$", re.I)),
+    ("sternum", False, re.compile(r"^(manubrium of sternum|body of sternum|xiphoid process)$", re.I)),
+    ("ribs", True, re.compile(r"^(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|eleventh|twelfth) rib$", re.I)),
+    ("costal-cartilages", True, re.compile(r"^costal cartilage of", re.I)),
+    ("clavicle", True, re.compile(r"^clavicle$", re.I)),
+    ("scapula", True, re.compile(r"^scapula$", re.I)),
+    ("humerus", True, re.compile(r"^humerus$", re.I)),
+    ("radius", True, re.compile(r"^radius$", re.I)),
+    ("ulna", True, re.compile(r"^ulna$", re.I)),
+    ("carpals", True, re.compile(r"^(scaphoid|lunate|triquetrum|pisiform|trapezium|trapezoid|capitate|hamate) bone$", re.I)),
+    ("metacarpals", True, re.compile(r"metacarpal bone$", re.I)),
+    ("finger-phalanges", True, re.compile(r"phalanx of \w+ finger of hand$", re.I)),
+    ("hip-bone", True, re.compile(r"^hip bone$", re.I)),
+    ("femur", True, re.compile(r"^femur$", re.I)),
+    ("patella", True, re.compile(r"^patella$", re.I)),
+    ("tibia", True, re.compile(r"^tibia$", re.I)),
+    ("fibula", True, re.compile(r"^fibula$", re.I)),
+    ("talus", True, re.compile(r"^talus$", re.I)),
+    ("calcaneus", True, re.compile(r"^calcaneus$", re.I)),
+    ("midfoot-bones", True, re.compile(r"^(navicular|cuboid|medial cuneiform|intermediate cuneiform|lateral cuneiform) bone$", re.I)),
+    ("metatarsals", True, re.compile(r"(metatarsal bone|sesamoid bones of foot)$", re.I)),
+    ("toe-phalanges", True, re.compile(r"phalanx of \w+ finger of foot$", re.I)),
+]
+bone_members = {}
+unclaimed = []
+for n in skeleton_names:
+    base = re.sub(r"\.[lr]$", "", n)
+    side = "L" if n.endswith(".l") else "R" if n.endswith(".r") else None
+    for gid, sided, rx in BONE_GROUPS:
+        if rx.search(base):
+            key = "bone-%s_%s" % (gid, side) if sided and side else "bone-%s" % gid
+            bone_members.setdefault(key, []).append(n)
+            break
+    else:
+        unclaimed.append(n)
+if unclaimed:
+    print("skeleton meshes no bone group claims (kept as 'skeleton'):", unclaimed)
+    bone_members["skeleton"] = unclaimed
+skel_total = sum(by_name[n]["verts"] for n in skeleton_names) or 1
+pending_names = {}
+for key, names in bone_members.items():
+    obj, ranges = merge(key, [O[n] for n in names])
+    budget = max(400, int(BUDGET_SKELETON * sum(by_name[n]["verts"] for n in names) / skel_total))
+    pending.append((obj, ranges, budget, True))
+    pending_names[obj.name] = names
+    built.append(obj)
+print("bone groups: %d" % len(bone_members))
 
 # Everything from the atlas goes; only our meshes remain. Frees memory too.
 keep = {o.name for o in built}
