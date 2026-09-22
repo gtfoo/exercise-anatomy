@@ -1428,6 +1428,126 @@ def straight_leg_raise_sample(t):
     return s
 
 
+# ---------- racket sports (owner, 2026-09-22; form from coaching pages, see src/lib/exercises/racket-sports.ts) ----------
+# A right-handed player facing the net (+z). Each stroke is a sequence of stages given in the body's own frame:
+# the trunk's yaw about the vertical (positive turns the chest toward +x, the left), a forward lean, the knee
+# bend, and where each hand is relative to its shoulder in the body frame (x left, y up, z toward the net). The
+# arms are solved in 3D (two_link_3d, aim with the body's forward as the front, so they hinge without rolling).
+STANCE = 0.20  # each foot this far from the midline
+
+
+def racket_stage(yaw_deg, lean_deg, thigh_deg, shin_deg, r_hand, l_hand, hip_yaw=0.4, r_bend=(-0.6, -1.0, -0.4), l_bend=(0.6, -1.0, -0.4), racket=None, both=False):
+    """One stage of a stroke. `racket` is where the racket head points in the body frame; the hand's roll is
+    solved from it (the racket runs along the hand's palm axis), and with `both` the left hand takes the same
+    roll for a two-handed hold."""
+    q = all_ident()
+    yaw = q_axis([0, 1, 0], yaw_deg * DEG)
+    trunk = qmul(yaw, rx(lean_deg * DEG))
+    pelvis = qmul(q_axis([0, 1, 0], yaw_deg * hip_yaw * DEG), rx(lean_deg * 0.4 * DEG))
+    hip_y = 0.06 + L_SHIN * math.cos(shin_deg * DEG) + L_THIGH * math.cos(thigh_deg * DEG)
+    root, pelvis_pos = root_for_hip(np.array([0.0, hip_y, 0.0]), pelvis)
+    q["pelvis"], q["spine"] = pelvis, trunk
+    q["neck"] = qmul(q_axis([0, 1, 0], yaw_deg * 0.6 * DEG), rx(lean_deg * 0.3 * DEG))
+    q["head"] = qmul(q_axis([0, 1, 0], yaw_deg * 0.3 * DEG), rx(lean_deg * 0.15 * DEG))  # the eyes stay nearer the net
+    ab = math.atan2(STANCE - float(abs(rig["hip.l"][0])), hip_y - 0.06)
+    for S, sgn in (("L", 1), ("R", -1)):
+        side = q_axis([0, 0, 1], sgn * ab)
+        q["thigh." + S], q["shin." + S], q["foot." + S] = qmul(side, rx(thigh_deg * DEG)), qmul(side, rx(shin_deg * DEG)), IDENT
+    front = q_rot(yaw, np.array([0.0, 0.0, 1.0]))
+    r_world = q_rot(yaw, np.asarray(racket, dtype=float)) if racket is not None else None
+    for S, side_key, offset, bend, holds in (("R", "r", r_hand, r_bend, True), ("L", "l", l_hand, l_bend, both)):
+        shoulder = shoulder_from(pelvis_pos, trunk, side_key)
+        hand = shoulder + q_rot(yaw, np.asarray(offset, dtype=float))
+        elbow = two_link_3d(shoulder, hand, L_UPPER, L_FORE, q_rot(yaw, np.asarray(bend, dtype=float)))
+        q["upper_arm." + S] = aim(elbow - shoulder, front)
+        f = front
+        if holds and r_world is not None:
+            up_bone = (elbow - hand) / max(float(np.linalg.norm(elbow - hand)), 1e-9)
+            f2 = np.cross(up_bone, r_world)  # the palm normal that lays the racket along the hand's axis
+            if float(np.linalg.norm(f2)) > 1e-4:
+                f = f2
+        q["forearm." + S] = q["hand." + S] = q["fingers." + S] = aim(hand - elbow, f)
+    return {"root": [round(float(v), 4) for v in root], "q": q}
+
+
+def ready_stage(thigh=-18, shin=18):
+    """The ready position: knees soft, the racket held up in front with both hands."""
+    return racket_stage(0, 6, thigh, shin, (0.10, -0.16, 0.30), (0.0, -0.18, 0.32), r_bend=(-0.7, -1.0, -0.2), l_bend=(0.7, -1.0, -0.2), racket=(0.1, 1.0, 0.15), both=True)
+
+
+def tennis_forehand_sample(t):
+    """A topspin forehand, traced from the owner's motion-capture playback (001_Basic_forehand.mp4, 2026-09-22):
+    the racket held up in front at the ready with both hands; the backswing taken low and behind the right hip
+    as the shoulders turn, the free arm reaching out; the swing low to high to a contact out in front at hip
+    height; the follow-through wrapping across at chest height to finish beside the left shoulder."""
+    ready = ready_stage()
+    turn = racket_stage(-60, 8, -20, 20, (-0.30, -0.40, -0.24), (0.46, -0.16, 0.20), racket=(-0.3, -0.5, -0.8))
+    low = racket_stage(-30, 10, -22, 22, (-0.38, -0.48, 0.06), (0.36, -0.20, 0.30), racket=(-0.7, -0.5, -0.4))
+    contact = racket_stage(5, 8, -18, 18, (-0.30, -0.32, 0.46), (0.06, -0.22, 0.22), racket=(-0.9, 0.2, 0.3))
+    wrap = racket_stage(40, 6, -15, 15, (0.30, -0.06, 0.28), (0.05, -0.20, 0.18), r_bend=(0.2, -1.0, -0.6), racket=(0.5, 0.3, 0.8))
+    finish = racket_stage(30, 6, -15, 15, (0.28, 0.02, 0.18), (0.05, -0.20, 0.18), r_bend=(0.2, -1.0, -0.6), racket=(0.6, 0.7, 0.2))
+    return sequence([(0, ready), (0.28, turn), (0.42, low), (0.52, contact), (0.64, wrap), (0.78, finish), (1, ready)], t)
+
+
+def tennis_backhand_sample(t):
+    """A two-handed backhand: the unit turn to the left with both hands on the racket, the racket taken back past
+    the left hip; the swing low to high with the weight moving to the front foot to a contact just in front of
+    the lead knee, the racket pointing out to the left; the finish over the right shoulder."""
+    ready = ready_stage()
+    two = dict(r_bend=(0.6, -1.0, -0.4), l_bend=(0.8, -1.0, -0.2), both=True)
+    turn = racket_stage(70, 8, -22, 22, (0.26, -0.34, -0.22), (0.06, -0.34, -0.26), racket=(0.3, 0.1, -0.95), **two)
+    drop = racket_stage(40, 10, -26, 26, (0.28, -0.48, 0.02), (0.10, -0.48, -0.02), racket=(0.5, -0.6, -0.6), **two)
+    contact = racket_stage(-5, 8, -20, 20, (0.04, -0.36, 0.44), (-0.12, -0.36, 0.46), racket=(0.85, 0.15, 0.5), r_bend=(0.2, -1.0, -0.3), l_bend=(0.6, -1.0, -0.3), both=True)
+    follow = racket_stage(-45, 6, -15, 15, (-0.28, 0.10, 0.10), (-0.42, 0.06, 0.16), racket=(-0.4, 0.8, 0.2), r_bend=(-0.6, -1.0, -0.3), l_bend=(-0.3, -1.0, -0.3), both=True)
+    return sequence([(0, ready), (0.3, turn), (0.45, drop), (0.55, contact), (0.75, follow), (1, ready)], t)
+
+
+def tennis_serve_sample(t):
+    """A flat serve: sideways to the net, the toss arm rises straight as the racket arm comes up to the trophy
+    position with the knees bent; the racket drops behind the back as the legs drive up; contact with the arm
+    fully extended above the head; the racket follows through across the body to the opposite hip."""
+    stance = racket_stage(-60, 4, -8, 8, (-0.10, -0.42, 0.28), (0.02, -0.42, 0.32), racket=(0.2, -0.4, 0.9))
+    trophy = racket_stage(-60, -8, -30, 30, (-0.24, 0.30, -0.28), (0.06, 0.52, 0.12), r_bend=(-1.0, 0.2, -0.6), l_bend=(0.6, -0.2, -1.0), racket=(-0.2, 0.9, -0.4))
+    drop = racket_stage(-45, -6, -14, 14, (-0.12, 0.10, -0.36), (0.08, 0.30, 0.10), r_bend=(-1.0, 0.8, -0.3), l_bend=(0.6, -0.5, -1.0), racket=(0.1, -0.9, -0.3))
+    contact = racket_stage(-10, 6, -2, 2, (-0.06, 0.50, 0.16), (0.06, -0.20, 0.14), r_bend=(-1.0, 0.2, -0.5), racket=(0.0, 0.95, 0.3))
+    follow = racket_stage(15, 26, -10, 10, (0.34, -0.42, 0.14), (0.08, -0.30, 0.10), r_bend=(0.3, -0.6, -1.0), racket=(0.5, -0.8, 0.2))
+    return sequence([(0, stance), (0.25, trophy), (0.4, drop), (0.5, contact), (0.7, follow), (1, stance)], t)
+
+
+def pickleball_forehand_sample(t):
+    """A pickleball forehand drive: a short backswing with the paddle pointed at the side wall, a low knee bend,
+    a compact low-to-high swing to a contact out in front at waist height, the follow-through to the opposite
+    shoulder."""
+    ready = ready_stage(-28, 28)
+    turn = racket_stage(-50, 10, -34, 34, (-0.32, -0.30, -0.12), (0.34, -0.16, 0.18), racket=(-0.9, -0.3, -0.3))
+    contact = racket_stage(0, 8, -30, 30, (-0.26, -0.36, 0.42), (0.06, -0.28, 0.20), racket=(-0.9, 0.1, 0.4))
+    follow = racket_stage(35, 6, -24, 24, (0.22, 0.04, 0.22), (0.05, -0.24, 0.14), r_bend=(0.2, -1.0, -0.6), racket=(0.5, 0.4, 0.7))
+    return sequence([(0, ready), (0.3, turn), (0.5, contact), (0.7, follow), (1, ready)], t)
+
+
+def pickleball_backhand_sample(t):
+    """A two-handed pickleball backhand: shoulders and hips turn to the left as a unit with both hands on the
+    paddle, a short backswing past the left hip, the free hand doing most of the work through a contact in
+    front, the paddle finishing toward the right shoulder."""
+    ready = ready_stage(-28, 28)
+    two = dict(r_bend=(0.6, -1.0, -0.4), l_bend=(0.8, -1.0, -0.2), both=True)
+    turn = racket_stage(45, 10, -34, 34, (0.24, -0.34, -0.14), (0.06, -0.34, -0.18), racket=(0.4, 0.0, -0.9), **two)
+    contact = racket_stage(-5, 8, -30, 30, (0.02, -0.36, 0.40), (-0.14, -0.36, 0.42), racket=(0.85, 0.1, 0.5), r_bend=(0.2, -1.0, -0.3), l_bend=(0.6, -1.0, -0.3), both=True)
+    follow = racket_stage(-35, 6, -24, 24, (-0.24, 0.02, 0.16), (-0.36, -0.02, 0.20), racket=(-0.4, 0.7, 0.4), r_bend=(-0.6, -1.0, -0.3), l_bend=(-0.3, -1.0, -0.3), both=True)
+    return sequence([(0, ready), (0.3, turn), (0.5, contact), (0.7, follow), (1, ready)], t)
+
+
+def pickleball_serve_sample(t):
+    """A pickleball serve: sideways to the net, the ball held out in front by the free hand; the paddle swings
+    back low and forward in an underhand arc to a contact below the waist in front of the body, finishing with
+    the hand in line with the opposite shoulder."""
+    stance = racket_stage(-45, 6, -12, 12, (-0.10, -0.46, 0.10), (0.06, -0.34, 0.36), racket=(-0.2, -0.9, 0.3))
+    back = racket_stage(-55, 8, -16, 16, (-0.10, -0.48, -0.34), (0.06, -0.34, 0.36), r_bend=(-0.8, -0.6, 0.4), racket=(-0.3, -0.6, -0.75))
+    contact = racket_stage(-10, 8, -12, 12, (-0.10, -0.54, 0.34), (0.10, -0.30, 0.10), r_bend=(-0.8, -0.6, -0.3), racket=(-0.5, -0.3, 0.8))
+    follow = racket_stage(15, 6, -8, 8, (0.20, -0.06, 0.36), (0.08, -0.30, 0.10), r_bend=(-0.6, -0.6, -0.6), racket=(0.3, 0.5, 0.8))
+    return sequence([(0, stance), (0.3, back), (0.5, contact), (0.72, follow), (1, stance)], t)
+
+
 # ---------- dips on parallel bars ----------
 # Support on locked arms with the legs hanging (knees bent back), lower
 # until the upper arms are level with the elbows behind and the trunk leant
@@ -1966,6 +2086,12 @@ CLIPS = {
     "childs-pose": (childs_pose_sample, "designed yoga hold, tools/myo/designed_clip.py"),
     "crab-walk": (crab_walk_sample, "designed movement, tools/myo/designed_clip.py"),
     "ab-roller": (ab_roller_sample, "designed movement, tools/myo/designed_clip.py"),
+    "tennis-forehand": (tennis_forehand_sample, "designed stroke, tools/myo/designed_clip.py"),
+    "tennis-backhand": (tennis_backhand_sample, "designed stroke, tools/myo/designed_clip.py"),
+    "tennis-serve": (tennis_serve_sample, "designed stroke, tools/myo/designed_clip.py"),
+    "pickleball-forehand": (pickleball_forehand_sample, "designed stroke, tools/myo/designed_clip.py"),
+    "pickleball-backhand": (pickleball_backhand_sample, "designed stroke, tools/myo/designed_clip.py"),
+    "pickleball-serve": (pickleball_serve_sample, "designed stroke, tools/myo/designed_clip.py"),
     "single-leg-rdl-knee-up": (single_leg_rdl_knee_up_sample, "designed movement, tools/myo/designed_clip.py"),
     "windshield-wipers": (windshield_wipers_sample, "designed movement, tools/myo/designed_clip.py"),
     "straight-leg-sit-up": (straight_leg_sit_up_sample, "designed movement, tools/myo/designed_clip.py"),

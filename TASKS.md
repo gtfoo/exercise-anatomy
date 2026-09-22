@@ -81,6 +81,31 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Racket sports** (2026-09-22). The owner asked for tennis and
+      pickleball strokes and said to search YouTube first; a video yields
+      nothing to a fetch, so the form came from the coaching pages that go
+      with the videos (on.com and feeltennis.net for the forehand and
+      serve, mouratoglou.com for the two-handed backhand,
+      thedinkpickleball.com for the pickleball drives, usapickleball.org
+      for the underhand serve). Six designed clips for a right-handed
+      player: tennis forehand, two-handed backhand and serve; pickleball
+      forehand drive, two-handed backhand and serve. New in the tooling:
+      `racket_stage` builds a pose from the trunk's yaw, lean and knee bend
+      plus each hand's offset in the body frame, with the arms solved in 3D
+      by `two_link_3d` and `aim`; `racket` and `paddle` props ride in the
+      right hand along its palm axis like the dumbbells. A Racket sports
+      category. The obliques, glutes and the hitting arm's cuff are per
+      side, since a forehand loads one side and unwinds through the other.
+      The owner then sent a motion-capture playback of a forehand
+      (001_Basic_forehand.mp4); frames pulled with imageio (in the myo venv)
+      and tiled into contact sheets showed the racket held up at the ready,
+      the backswing low behind the right hip with the free arm out, and a
+      follow-through wrapping across at chest height to the left shoulder,
+      and the forehand was retuned to that. The backhands were off because
+      the racket ran along the hand's own axis; each stage now names where
+      the racket points and the hand's roll is solved from it (racket= in
+      racket_stage, both= for a two-handed hold).
+
 - [x] **Page notes reworded; low lunge from standing** (2026-09-20). The
       owner asked to drop the provenance and advice boilerplate from the
       page text ("The movement is a motion-capture clip. Nothing here is

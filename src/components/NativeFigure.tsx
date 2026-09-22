@@ -297,6 +297,44 @@ function attachProps(scene: THREE.Group, props: Exercise["props"]): () => void {
       steel.dispose();
     };
   }
+  if (props === "racket" || props === "paddle") {
+    // Held in the right hand like a hammer: the handle runs out along the hand's local +x (across the palm, the
+    // dumbbell's axis), the head beyond it in the hand's x-y plane, so the face turns with the palm.
+    const hand = scene.getObjectByName("mixamorigRightHand");
+    if (hand) {
+      const frame = new THREE.MeshStandardMaterial({ color: "#2b2b2b", roughness: 0.6 });
+      const strings = new THREE.MeshStandardMaterial({ color: "#d8d8d0", roughness: 0.9, transparent: true, opacity: 0.55, side: THREE.DoubleSide });
+      const g = new THREE.Group();
+      g.position.set(0, 0.07, 0.03);
+      if (props === "racket") {
+        const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.28, 12), steel);
+        handle.rotation.z = Math.PI / 2;
+        handle.position.x = 0.11;
+        const head = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.011, 10, 40), frame);
+        head.position.x = 0.42;
+        head.scale.set(1.25, 1, 1);
+        const face = new THREE.Mesh(new THREE.CircleGeometry(0.128, 40), strings);
+        face.position.x = 0.42;
+        face.scale.set(1.25, 1, 1);
+        g.add(handle, head, face);
+      } else {
+        const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.15, 12), steel);
+        handle.rotation.z = Math.PI / 2;
+        handle.position.x = 0.045;
+        const face = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.012, 40), frame);
+        face.rotation.x = Math.PI / 2;
+        face.position.x = 0.25;
+        face.scale.set(1.2, 1, 1);
+        g.add(handle, face);
+      }
+      hand.add(g);
+      added.push(g);
+    }
+    return () => {
+      for (const g of added) g.removeFromParent();
+      steel.dispose();
+    };
+  }
   if (props === "kettlebell") {
     // One bell held in both hands: parented to the left hand, offset toward the
     // right one, the handle across the palms and the bell hanging below them.

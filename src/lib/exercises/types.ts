@@ -36,7 +36,7 @@ export type MuscleActivation = {
 export type Phase = { name: string; t0: number; t1: number };
 
 /** Switcher groups, in display order. */
-export const CATEGORIES = ["Atlas", "Legs and hips", "Push and pull", "Weights", "Core", "Cardio", "Swimming", "Yoga", "Stretches"] as const;
+export const CATEGORIES = ["Atlas", "Legs and hips", "Push and pull", "Weights", "Core", "Cardio", "Racket sports", "Swimming", "Yoga", "Stretches"] as const;
 export type ExerciseCategory = (typeof CATEGORIES)[number];
 
 import type { MotionClip, MotionClip3D } from "@/lib/kinematics/types";
@@ -70,7 +70,7 @@ export type Exercise = {
   /** Half the distance between parallel bars, metres: where the hands rest. */
   barSpacing?: number;
   /** Equipment the viewer attaches to bones: to the hands, pedals to the feet, or a barbell drawn between the hands each frame. */
-  props?: "dumbbells" | "kettlebell" | "pedals" | "barbell" | "band" | "wheel";
+  props?: "dumbbells" | "kettlebell" | "pedals" | "barbell" | "band" | "wheel" | "racket" | "paddle";
   /** Fixed scenery besides the floor: a wall to climb, a staircase, or a bicycle (drawn to tools/myo/designed_clip.py's BIKE_* constants). */
   scenery?:
     | {
