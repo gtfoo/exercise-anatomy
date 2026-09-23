@@ -458,6 +458,7 @@ export default function NativeFigure({ exercise }: { exercise: Exercise }) {
     l.action.time = (t % 1) * l.duration;
     l.mixer.update(0);
     l.barbell?.update();
+    (window as unknown as { __figure?: THREE.Group }).__figure = scene; // for probing bone positions from the console
   });
 
   return (

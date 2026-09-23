@@ -103,8 +103,18 @@ letter and a one-line task strands the *why*.
       follow-through wrapping across at chest height to the left shoulder,
       and the forehand was retuned to that. The backhands were off because
       the racket ran along the hand's own axis; each stage now names where
-      the racket points and the hand's roll is solved from it (racket= in
-      racket_stage, both= for a two-handed hold).
+      the racket points and the hand's roll is solved from it. The owner
+      said the swings were still very off (2026-09-23), and a proper
+      frame-by-frame review plus reading bone positions out of the running
+      scene (window.__figure, a probe hook in NativeFigure) found why: the
+      racket directions I had chosen were nearly parallel to the forearm,
+      which no grip allows, and the hand had no wrist. Each stage now gives
+      the hand position and the racket head position; the wrist is cocked
+      from the forearm line toward the racket up to WRIST_MAX (72 deg) and
+      the roll follows (frame_q). racket_report prints the wrist and
+      racket-to-forearm angle per stage; that is the check to run before
+      converting a stroke. The Mixamo hand's palm axis is the design
+      frame's -x, measured in the scene, so the racket prop runs along +x.
 
 - [x] **Page notes reworded; low lunge from standing** (2026-09-20). The
       owner asked to drop the provenance and advice boilerplate from the
