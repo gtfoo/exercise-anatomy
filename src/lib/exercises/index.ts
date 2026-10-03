@@ -40,6 +40,7 @@ import { gluteBridge, hangingLegRaise, hollowHold } from "./core-more";
 import { sunSalutation } from "./sun-salutation";
 import { crabWalk } from "./crab-walk";
 import { abRoller } from "./ab-roller";
+import { wallAngel } from "./wall-angel";
 import { tennisForehand, tennisBackhand, tennisServe, pickleballForehand, pickleballBackhand, pickleballServe } from "./racket-sports";
 import { singleLegRdlKneeUp } from "./legs-more";
 import { windshieldWipers, straightLegSitUp, straightLegHold, vUp, shoulderTap, doubleLegLift, straightLegRaise } from "./core-sweat";
@@ -126,6 +127,7 @@ export const exercises: readonly Exercise[] = [
   seatedTwist,
   crabWalk,
   abRoller,
+  wallAngel,
   tennisForehand,
   tennisBackhand,
   tennisServe,

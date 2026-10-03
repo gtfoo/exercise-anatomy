@@ -173,6 +173,14 @@ function Scenery({ scenery }: { scenery: NonNullable<Exercise["scenery"]> }) {
       </group>
     );
   }
+  if (scenery.kind === "backwall") {
+    const { z, height } = scenery;
+    return (
+      <mesh material={plaster} position={[0, height / 2, z - 0.06]}>
+        <boxGeometry args={[1.8, height, 0.12]} />
+      </mesh>
+    );
+  }
   if (scenery.kind === "blocks") {
     const { height, spacing, z } = scenery;
     return (

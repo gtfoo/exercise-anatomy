@@ -89,7 +89,9 @@ export type Exercise = {
     /** A flat bench along z, its top at `top` (tools/myo/designed_clip.py's BENCH_TOP), centred at z. */
     | { kind: "bench"; top: number; length: number; z: number }
     /** Two yoga blocks on edge under the hands, `height` tall (designed_clip.py's BLOCK_H), at x = +-spacing and z. */
-    | { kind: "blocks"; height: number; spacing: number; z: number };
+    | { kind: "blocks"; height: number; spacing: number; z: number }
+    /** A wall behind the figure, its face at z (designed_clip.py's wall_angel_geometry), the slab behind it. */
+    | { kind: "backwall"; z: number; height: number };
   /** Where the switcher lists it. */
   category: ExerciseCategory;
   /** Who captured the movement, when the clip came straight from a source file rather than through `motion`/`motion3d`. */

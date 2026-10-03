@@ -1591,6 +1591,76 @@ def pickleball_serve_sample(t):
     return sequence([(0, stance), (0.3, back), (0.5, contact), (0.72, follow), (1, stance)], t)
 
 
+# ---------- wall angel (owner, 2026-10-02) ----------
+# Back, hips and head against a wall behind the figure, the feet a hand-span out with soft knees; the arms slide
+# from a V overhead down to a W (elbows a little below the shoulders, forearms upright), hold, and back up. The
+# backs of the arms stay on the wall, so the upper arm runs back from the shoulder to the wall plane and the
+# forearm lies in it. Contact was checked by reading the skinned vertices' depth in the scene (2026-10-02).
+WALL_BACK = 0.122  # the body's back surface behind the hip joints, in this pose (measured in the scene)
+ARM_HALF = 0.072  # the upper arm's depth behind its bone axis (deltoid and triceps), measured in the scene
+FORE_HALF = 0.040  # the forearm's
+FEET_OUT = 0.12  # the ankles this far forward of where they stand at rest
+
+
+def wall_angel_geometry():
+    hip_mid = (rig["hip.l"] + rig["hip.r"]) / 2
+    wall_z = float(hip_mid[2]) - WALL_BACK
+    return hip_mid, wall_z
+
+
+def wall_angel_stage(theta_deg, phi_deg):
+    """theta: the upper arm's abduction from hanging (90 is level), phi: the forearm's (180 is straight up)."""
+    q = all_ident()
+    hip_mid, wall_z = wall_angel_geometry()
+    hip = hip_mid + np.array([0.0, -0.03, 0.0])  # the soft knees lower the hips a little down the wall
+    root, pelvis_pos = root_for_hip(hip, IDENT)
+    q["neck"], q["head"] = rx(-6 * DEG), rx(2 * DEG)  # a chin tuck, the back of the head toward the wall
+    for S, side in (("L", "l"), ("R", "r")):
+        hip_side = hip_from(pelvis_pos, IDENT, side)
+        ankle = rig["ankle." + side] + np.array([0.0, 0.0, FEET_OUT])
+        th, sh, _ = two_link(hip_side, ankle, L_THIGH, L_SHIN, bend_forward=True)
+        q["thigh." + S], q["shin." + S], q["foot." + S] = rx(th), rx(sh), IDENT
+    z_arm = wall_z + ARM_HALF
+    for S, side, sgn in (("L", "l", 1.0), ("R", "r", -1.0)):
+        shoulder = shoulder_from(pelvis_pos, IDENT, side)
+        back = min(max((float(shoulder[2]) - z_arm) / L_UPPER, 0.0), 0.8)
+        c = math.sqrt(1.0 - back * back)
+        th = theta_deg * DEG
+        u = np.array([sgn * math.sin(th) * c, -math.cos(th) * c, -back])  # out to the side and back to the wall
+        ph = phi_deg * DEG
+        back_f = min(max((z_arm - (wall_z + FORE_HALF)) / L_FORE, 0.0), 0.6)  # the thinner forearm leans back onto the wall
+        cf = math.sqrt(1.0 - back_f * back_f)
+        f = np.array([sgn * math.sin(ph) * cf, -math.cos(ph) * cf, -back_f])
+        # The humerus is turned out so its front faces up and in (perpendicular to it in the frontal plane); the
+        # forearm and hand turn the palm forward, the back of the hand to the wall.
+        front_u = np.array([sgn * math.cos(th), math.sin(th), 0.0])
+        q["upper_arm." + S] = aim(u, front_u)
+        q["forearm." + S] = q["hand." + S] = q["fingers." + S] = aim(f, np.array([0.0, 0.0, 1.0]))
+    return {"root": [round(float(v), 4) for v in root], "q": q}
+
+
+def wall_angel_sample(t):
+    """From the V overhead, slide down to the W (t 0.4), hold, and slide back up to the V."""
+    theta = keyed([(0, 150), (0.4, 80), (0.6, 80), (1, 150)], t)
+    phi = keyed([(0, 162), (0.4, 170), (0.6, 170), (1, 162)], t)
+    return wall_angel_stage(theta, phi)
+
+
+def wall_angel_report():
+    hip_mid, wall_z = wall_angel_geometry()
+    print("wall z %.3f (hip line z %.3f)" % (wall_z, float(hip_mid[2])))
+    for name, t in (("V", 0.0), ("mid", 0.2), ("W", 0.5)):
+        s = wall_angel_sample(t)
+        r = np.array(s["root"], float)
+        pelvis = rig["pelvis"] + r
+        for S, side in (("L", "l"), ("R", "r")):
+            sh = pelvis + q_rot(s["q"]["spine"], rig["shoulder." + side] - rig["pelvis"])
+            el = sh + q_rot(s["q"]["upper_arm." + S], DOWN * L_UPPER)
+            ha = el + q_rot(s["q"]["forearm." + S], DOWN * L_FORE)
+            palm = q_rot(s["q"]["hand." + S], np.array([0.0, 0.0, 1.0]))
+            print("  %-3s %s shoulder z %.3f elbow %s hand %s palm %s" % (name, S, sh[2], np.round(el, 3), np.round(ha, 3), np.round(palm, 2)))
+
+
 # ---------- dips on parallel bars ----------
 # Support on locked arms with the legs hanging (knees bent back), lower
 # until the upper arms are level with the elbows behind and the trunk leant
@@ -2129,6 +2199,7 @@ CLIPS = {
     "childs-pose": (childs_pose_sample, "designed yoga hold, tools/myo/designed_clip.py"),
     "crab-walk": (crab_walk_sample, "designed movement, tools/myo/designed_clip.py"),
     "ab-roller": (ab_roller_sample, "designed movement, tools/myo/designed_clip.py"),
+    "wall-angel": (wall_angel_sample, "designed movement, tools/myo/designed_clip.py"),
     "tennis-forehand": (tennis_forehand_sample, "designed stroke, tools/myo/designed_clip.py"),
     "tennis-backhand": (tennis_backhand_sample, "designed stroke, tools/myo/designed_clip.py"),
     "tennis-serve": (tennis_serve_sample, "designed stroke, tools/myo/designed_clip.py"),

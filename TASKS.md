@@ -81,6 +81,20 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Wall angel** (2026-10-02). Designed (`wall_angel_sample`) after the
+      usual coaching description: back, hips and head on the wall, feet a
+      hand-span out with soft knees, the arms sliding from a V overhead to a
+      W with the elbows just below the shoulders, hold, and back up, palms
+      forward with the backs of the arms on the wall. A new `backwall`
+      scenery. Contact was set from the scene itself: the skinned vertices'
+      depth (window.__figure, getVertexPosition) put the back surface 0.12 m
+      behind the hip line in this pose and the upper arm 0.074 m behind its
+      bone axis, so the wall sits at -0.131 and the arm axes lie that far in
+      front of it. The first draft had the trunk 1.5 cm and the arms 3 cm
+      inside the wall; the re-check after the fix could not run because the
+      browser pane was hidden, so it rests on that first measurement. Listed
+      under Stretches as a mobility drill.
+
 - [x] **Racket sports** (2026-09-22). The owner asked for tennis and
       pickleball strokes and said to search YouTube first; a video yields
       nothing to a fetch, so the form came from the coaching pages that go
