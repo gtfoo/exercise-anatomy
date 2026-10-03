@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useMemo } from "react";
+import { Suspense, useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
@@ -140,6 +140,29 @@ function Bike() {
 }
 
 /** A wall face in front of the figure, for a climb, and a staircase rising away from it, drawn to the clip's rise and run. */
+/**
+ * A wall behind the figure that never hides it (owner, 2026-10-02): lightly
+ * translucent seen from the front, nearly clear once the camera swings
+ * behind it. It writes no depth, and it is drawn before the figure when the
+ * camera is in front (so faded muscles in front of it are not painted over)
+ * and after the figure when the camera is behind (so it veils, not hides).
+ */
+function BackWall({ z, height }: { z: number; height: number }) {
+  const mesh = useRef<THREE.Mesh>(null);
+  const material = useRef<THREE.MeshStandardMaterial>(null);
+  useFrame(({ camera }) => {
+    const d = camera.position.z - z; // > 0: the camera is on the figure's side of the wall
+    if (material.current) material.current.opacity = 0.1 + 0.45 * THREE.MathUtils.smoothstep(d, -0.2, 0.4);
+    if (mesh.current) mesh.current.renderOrder = d > 0 ? -1 : 10;
+  });
+  return (
+    <mesh ref={mesh} position={[0, height / 2, z - 0.06]}>
+      <boxGeometry args={[1.8, height, 0.12]} />
+      <meshStandardMaterial ref={material} color="#d9d4cc" roughness={0.95} transparent opacity={0.55} depthWrite={false} />
+    </mesh>
+  );
+}
+
 function Scenery({ scenery }: { scenery: NonNullable<Exercise["scenery"]> }) {
   const plaster = useMemo(() => new THREE.MeshStandardMaterial({ color: "#d9d4cc", roughness: 0.95 }), []);
   if (scenery.kind === "wall") {
@@ -173,14 +196,7 @@ function Scenery({ scenery }: { scenery: NonNullable<Exercise["scenery"]> }) {
       </group>
     );
   }
-  if (scenery.kind === "backwall") {
-    const { z, height } = scenery;
-    return (
-      <mesh material={plaster} position={[0, height / 2, z - 0.06]}>
-        <boxGeometry args={[1.8, height, 0.12]} />
-      </mesh>
-    );
-  }
+  if (scenery.kind === "backwall") return <BackWall z={scenery.z} height={scenery.height} />;
   if (scenery.kind === "blocks") {
     const { height, spacing, z } = scenery;
     return (

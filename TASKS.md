@@ -93,7 +93,12 @@ letter and a one-line task strands the *why*.
       front of it. The first draft had the trunk 1.5 cm and the arms 3 cm
       inside the wall; the re-check after the fix could not run because the
       browser pane was hidden, so it rests on that first measurement. Listed
-      under Stretches as a mobility drill.
+      under Stretches as a mobility drill. The owner then asked for the wall
+      not to hide the figure from behind: `BackWall` in Scene.tsx is
+      translucent from the front (0.55) and nearly clear once the camera
+      passes behind its plane (0.1), writes no depth, and draws before the
+      figure from the front and after it from behind. Not yet seen in the
+      browser: the pane was hidden when it shipped.
 
 - [x] **Racket sports** (2026-09-22). The owner asked for tennis and
       pickleball strokes and said to search YouTube first; a video yields
