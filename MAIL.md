@@ -17,3 +17,7 @@ append; only this agent deletes.
 *Empty — the elision withdrawal (nothing owed back) archived, 2026-09-08.*
 
 ---
+
+---
+
+*Empty — the Jev review (no reply asked, nothing to act on: a runtime model would end the static export) archived, 2026-10-04.*
