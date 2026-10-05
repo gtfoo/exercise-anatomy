@@ -1661,6 +1661,176 @@ def wall_angel_report():
             print("  %-3s %s shoulder z %.3f elbow %s hand %s palm %s" % (name, S, sh[2], np.round(el, 3), np.round(ha, 3), np.round(palm, 2)))
 
 
+# ---------- Copenhagen plank (owner, 2026-10-04) ----------
+# A side plank on the left forearm with the right (top) ankle on a bench: from lying on the side with the hips
+# on the floor, the hips lift until the body is one straight line and the bottom leg rises to touch the
+# underside of the bench; held; lowered. Lying on the left side with the head toward +x, as the side plank.
+# Everything is solved from the geometry: the trunk tilt that keeps the lower shoulder propped over the elbow,
+# the hip x that puts the straight top leg's ankle on the bench, and the hip height where trunk and top leg
+# make one line.
+COPEN_X = -0.45  # the bench's x: the top ankle rests on it
+COPEN_SHOULDER_Y = 0.04 + L_UPPER  # the lower shoulder over the elbow on the floor
+COPEN_LEG = L_THIGH + L_SHIN
+_copen_cache = {}
+
+
+def copen_roll(a):
+    return q_axis([0, 0, 1], -(90 * DEG - a))  # lying on the left side, rising by a toward the head
+
+
+def copen_body(hip_y):
+    key = round(hip_y, 5)
+    if key in _copen_cache:
+        return _copen_cache[key]
+    mid = (rig["hip.l"] + rig["hip.r"]) / 2
+
+    def sh_y(a):
+        q = copen_roll(a)
+        _, pp = root_for_hip(np.array([0.0, hip_y, 0.0]), q)
+        return float(shoulder_from(pp, q, "l")[1])
+
+    lo, hi = -40 * DEG, 70 * DEG  # the shoulder rises with the tilt: bisect
+    for _ in range(50):
+        m_ = (lo + hi) / 2
+        if sh_y(m_) < COPEN_SHOULDER_Y:
+            lo = m_
+        else:
+            hi = m_
+    a = (lo + hi) / 2
+    q = copen_roll(a)
+    off_r = q_rot(q, rig["hip.r"] - mid)
+    B = np.array([COPEN_X, BENCH_TOP + 0.05, 0.0])  # the top ankle on the bench
+    dy = B[1] - (hip_y + off_r[1])
+    hip_x = B[0] + math.sqrt(max(COPEN_LEG ** 2 - dy * dy, 0.0)) - off_r[0]
+    res = (a, q, np.array([hip_x, hip_y, 0.0]), B, off_r)
+    _copen_cache[key] = res
+    return res
+
+
+def copen_heights():
+    """The hip height lying on the side (the lower hip 0.10 above the floor) and in the plank (one line)."""
+    if "heights" in _copen_cache:
+        return _copen_cache["heights"]
+    mid = (rig["hip.l"] + rig["hip.r"]) / 2
+    y0 = 0.2
+    for _ in range(4):
+        a, q, hip, B, off_r = copen_body(y0)
+        y0 = 0.10 - float(q_rot(q, rig["hip.l"] - mid)[1])
+    best = None
+    for i in range(0, 161):
+        y = 0.15 + i * 0.004
+        a, q, hip, B, off_r = copen_body(y)
+        rh = hip + off_r
+        leg_a = math.atan2(rh[1] - B[1], rh[0] - B[0])
+        err = abs(leg_a - a)
+        if best is None or err < best[0]:
+            best = (err, y)
+    _copen_cache["heights"] = (y0, best[1])
+    return y0, best[1]
+
+
+def copenhagen_sample(t):
+    y0, y1 = copen_heights()
+    f = envelope(t)
+    a, q_tr, hip, B, _ = copen_body(y0 + (y1 - y0) * f)
+    root, pelvis_pos = root_for_hip(hip, q_tr)
+    q = all_ident()
+    for b in ("pelvis", "spine", "neck", "head"):
+        q[b] = q_tr
+    front = np.array([0.0, 0.0, 1.0])
+    rh = hip_from(pelvis_pos, q_tr, "r")
+    lh = hip_from(pelvis_pos, q_tr, "l")
+    floor_pt = np.array([COPEN_X - 0.04, 0.08, 0.0])  # the bottom leg resting on the floor under the bench
+    under = np.array([COPEN_X, BENCH_TOP - 0.06 - 0.05, 0.0])  # touching the underside of the bench top
+    target = floor_pt + (under - floor_pt) * f
+    qr, ql = aim(B - rh, front), aim(target - lh, front)
+    q["thigh.R"] = q["shin.R"] = q["foot.R"] = qr
+    q["thigh.L"] = q["shin.L"] = q["foot.L"] = ql
+    q["upper_arm.L"] = IDENT  # straight down from the shoulder to the elbow on the floor
+    q["forearm.L"] = q["hand.L"] = q["fingers.L"] = qmul(rx(-90 * DEG), PRONATE)  # along the floor in front, palm down
+    body = np.array([math.cos(a), math.sin(a), 0.0])
+    q["upper_arm.R"] = q["forearm.R"] = q["hand.R"] = q["fingers.R"] = aim(-body + np.array([0.0, 0.0, 0.18]), np.array([0.0, -1.0, 0.0]))  # the top hand on the hip
+    return {"root": [round(float(v), 4) for v in root], "q": q}
+
+
+def copenhagen_report():
+    y0, y1 = copen_heights()
+    print("hips: lying %.3f, plank %.3f; bench x %.2f top %.2f" % (y0, y1, COPEN_X, BENCH_TOP))
+    for name, t in (("lying", 0.0), ("plank", 0.55)):
+        s = copenhagen_sample(t)
+        r = np.array(s["root"], float)
+        pelvis = rig["pelvis"] + r
+        out = []
+        for S, side in (("L", "l"), ("R", "r")):
+            hp = pelvis + q_rot(s["q"]["pelvis"], rig["hip." + side] - rig["pelvis"])
+            an = hp + q_rot(s["q"]["thigh." + S], DOWN * (L_THIGH + L_SHIN))
+            out.append("%s ankle %s" % (S, np.round(an, 3)))
+        sh = pelvis + q_rot(s["q"]["spine"], rig["shoulder.l"] - rig["pelvis"])
+        el = sh + q_rot(s["q"]["upper_arm.L"], DOWN * L_UPPER)
+        print("  %-5s %s | L shoulder %s elbow %s" % (name, " | ".join(out), np.round(sh, 3), np.round(el, 3)))
+
+
+# ---------- cat-cow (owner, 2026-10-04) ----------
+# On hands and knees, the hands planted under the shoulders and the knees under the hips. Cow: the pelvis tips
+# forward so the tail rises and the belly drops, the chest lifts, the gaze goes up. Cat: the pelvis tucks, the
+# back rounds up between the shoulder blades, the chin comes to the chest. The spine bends at L5 between the
+# pelvis and the chest bones, and the hands stay where they were planted.
+CAT_HIP = np.array([0.0, 0.47, 0.0])
+CAT_NEUTRAL = (84, 82)  # pelvis and chest angles of the neutral table: the arms near straight under the shoulders
+
+
+def cat_cow_shoulder(pelvis_q, spine_q, side):
+    _, pelvis_pos = root_for_hip(CAT_HIP, pelvis_q)
+    l5 = pelvis_pos + q_rot(pelvis_q, rig["l5"] - rig["pelvis"])
+    return l5 + q_rot(spine_q, rig["shoulder." + side] - rig["l5"])
+
+
+def cat_cow_stage(pelvis_deg, spine_deg, neck_deg, head_deg):
+    q = all_ident()
+    qp, qs = rx(pelvis_deg * DEG), rx(spine_deg * DEG)
+    root, _ = root_for_hip(CAT_HIP, qp)
+    q["pelvis"], q["spine"] = qp, qs
+    q["neck"], q["head"] = rx(neck_deg * DEG), rx(head_deg * DEG)
+    for S in ("L", "R"):
+        q["thigh." + S], q["shin." + S], q["foot." + S] = IDENT, rx(90 * DEG), rx(120 * DEG)  # knees under the hips
+    for S, side in (("L", "l"), ("R", "r")):
+        neutral = cat_cow_shoulder(rx(CAT_NEUTRAL[0] * DEG), rx(CAT_NEUTRAL[1] * DEG), side)
+        hand = np.array([neutral[0], 0.03, neutral[2]])  # planted under the shoulders of the neutral table
+        sh = cat_cow_shoulder(qp, qs, side)
+        up_a, fo_a, _ = two_link(sh, hand, L_UPPER, L_FORE, bend_forward=False)
+        q["upper_arm." + S], q["forearm." + S] = rx(up_a), qmul(rx(fo_a), PRONATE)
+        q["hand." + S] = q["fingers." + S] = qmul(rx(-90 * DEG), PRONATE)
+    return {"root": [round(float(v), 4) for v in root], "q": q}
+
+
+CAT_COW = {
+    # The shoulders stay near their neutral height (the arms straight, as taught): cow sways the pelvis and lifts
+    # the chest a little; cat tucks the pelvis so L5 rises and the back rounds over it.
+    "pelvis": [(0, 84), (0.25, 104), (0.5, 84), (0.75, 66), (1, 84)],
+    "spine": [(0, 82), (0.25, 76), (0.5, 82), (0.75, 87), (1, 82)],
+    "neck": [(0, 80), (0.25, 45), (0.5, 80), (0.75, 120), (1, 80)],
+    "head": [(0, 88), (0.25, 40), (0.5, 88), (0.75, 135), (1, 88)],
+}
+
+
+def cat_cow_sample(t):
+    """Neutral, into cow (t 0.25), back through neutral, into cat (0.75), and back."""
+    k = lambda n: splined(CAT_COW[n], t)
+    return cat_cow_stage(k("pelvis"), k("spine"), k("neck"), k("head"))
+
+
+def cat_cow_report():
+    for name, t in (("neutral", 0.0), ("cow", 0.25), ("cat", 0.75)):
+        k = lambda n: splined(CAT_COW[n], t)
+        qp, qs = rx(k("pelvis") * DEG), rx(k("spine") * DEG)
+        sh = cat_cow_shoulder(qp, qs, "l")
+        neutral = cat_cow_shoulder(rx(CAT_NEUTRAL[0] * DEG), rx(CAT_NEUTRAL[1] * DEG), "l")
+        reach = float(np.linalg.norm(sh - np.array([neutral[0], 0.03, neutral[2]])))
+        _, pelvis_pos = root_for_hip(CAT_HIP, qp)
+        l5 = pelvis_pos + q_rot(qp, rig["l5"] - rig["pelvis"])
+        print("  %-7s L5 y %.3f shoulder %s reach %.3f of %.3f" % (name, l5[1], np.round(sh, 3), reach, L_UPPER + L_FORE))
+
+
 # ---------- dips on parallel bars ----------
 # Support on locked arms with the legs hanging (knees bent back), lower
 # until the upper arms are level with the elbows behind and the trunk leant
@@ -2200,6 +2370,8 @@ CLIPS = {
     "crab-walk": (crab_walk_sample, "designed movement, tools/myo/designed_clip.py"),
     "ab-roller": (ab_roller_sample, "designed movement, tools/myo/designed_clip.py"),
     "wall-angel": (wall_angel_sample, "designed movement, tools/myo/designed_clip.py"),
+    "copenhagen-plank": (copenhagen_sample, "designed hold, tools/myo/designed_clip.py"),
+    "cat-cow": (cat_cow_sample, "designed flow, tools/myo/designed_clip.py"),
     "tennis-forehand": (tennis_forehand_sample, "designed stroke, tools/myo/designed_clip.py"),
     "tennis-backhand": (tennis_backhand_sample, "designed stroke, tools/myo/designed_clip.py"),
     "tennis-serve": (tennis_serve_sample, "designed stroke, tools/myo/designed_clip.py"),

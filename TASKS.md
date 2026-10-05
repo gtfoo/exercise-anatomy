@@ -81,6 +81,21 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Copenhagen plank and cat-cow** (2026-10-04), from the owner's pick of
+      the suggestion list. Copenhagen plank (Core): on the left forearm, the
+      right ankle on a bench, the hips lift into one line and the bottom leg
+      rises to the bench's underside, held, lowered. Solved from geometry in
+      `copenhagen_sample`: the trunk tilt that keeps the lower shoulder over
+      the elbow, the hip x that lands the straight top leg's ankle on the
+      bench, the hip height where trunk and leg are one line
+      (`copenhagen_report` prints the contacts). The bench scenery takes an
+      optional x. Adductors per side, the top leg's most. Cat-cow (Yoga): a
+      flow on hands and knees bending at L5 between the pelvis and chest
+      bones with the hands planted; the first draft folded the elbows 54
+      degrees in cat, so the cat chest angle is the one that keeps the
+      shoulders at their neutral height (`cat_cow_report` prints the reach).
+      Both seen in the browser at their key frames.
+
 - [x] **Wall angel** (2026-10-02). Designed (`wall_angel_sample`) after the
       usual coaching description: back, hips and head on the wall, feet a
       hand-span out with soft knees, the arms sliding from a V overhead to a

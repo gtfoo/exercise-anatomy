@@ -41,6 +41,8 @@ import { sunSalutation } from "./sun-salutation";
 import { crabWalk } from "./crab-walk";
 import { abRoller } from "./ab-roller";
 import { wallAngel } from "./wall-angel";
+import { copenhagenPlank } from "./copenhagen-plank";
+import { catCow } from "./cat-cow";
 import { tennisForehand, tennisBackhand, tennisServe, pickleballForehand, pickleballBackhand, pickleballServe } from "./racket-sports";
 import { singleLegRdlKneeUp } from "./legs-more";
 import { windshieldWipers, straightLegSitUp, straightLegHold, vUp, shoulderTap, doubleLegLift, straightLegRaise } from "./core-sweat";
@@ -128,6 +130,8 @@ export const exercises: readonly Exercise[] = [
   crabWalk,
   abRoller,
   wallAngel,
+  copenhagenPlank,
+  catCow,
   tennisForehand,
   tennisBackhand,
   tennisServe,

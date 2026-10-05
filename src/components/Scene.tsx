@@ -184,7 +184,7 @@ function Scenery({ scenery }: { scenery: NonNullable<Exercise["scenery"]> }) {
   if (scenery.kind === "bench") {
     const { top, length, z } = scenery;
     return (
-      <group>
+      <group position={[scenery.x ?? 0, 0, 0]}>
         <mesh material={plaster} position={[0, top - 0.03, z]}>
           <boxGeometry args={[0.32, 0.06, length]} />
         </mesh>
