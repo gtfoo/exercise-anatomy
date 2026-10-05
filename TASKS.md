@@ -81,6 +81,27 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Racket strokes clear of the body** (2026-10-04). The owner saw the
+      arms passing through the body in the tennis strokes. A probe
+      (~/.cache/ea-collide.py) found it in all six racket strokes, up to
+      17 cm: the torso's cross-section by height was measured from the
+      figure's own vertices skinned to the pelvis and spine
+      (~/.cache/ea-torso.py over tools/blender/out/figure.glb, now
+      TORSO_SECTIONS in designed_clip.py) and every frame's arm capsules
+      tested against it. Three causes, three fixes: hand targets behind
+      the body's midline (a hand crossing the body is now pushed out in
+      front, torso_push_front); elbows bent in a fixed direction that swung
+      them through the chest (each elbow is now chosen on its circle, the
+      nearest to the intended bend that clears, elbow_clear_of_torso); and
+      bone rotations blended between two clear stages that swung the arm
+      through in between (a stroke is now parameters splined through its
+      stages and rebuilt every frame, racket_flow). The backhands also had
+      their contact and finish moved where they belong (hands centred to
+      left at contact, over the right shoulder at the finish) and the hands
+      brought within reach so the arm is never locked straight across the
+      chest. All six probe clear on every frame. The pickleball strokes
+      share the code and the fault, so they were fixed and reconverted too.
+
 - [x] **Copenhagen plank and cat-cow** (2026-10-04), from the owner's pick of
       the suggestion list. Copenhagen plank (Core): on the left forearm, the
       right ankle on a bench, the hips lift into one line and the bottom leg

@@ -1451,11 +1451,108 @@ def frame_q(along, x_dir):
     return q_from_matrix(np.column_stack([x, y, z]))
 
 
+# The torso's cross-section by height in the rest pose, measured from the figure's own vertices skinned to the
+# pelvis and spine bones (~/.cache/ea-torso.py over tools/blender/out/figure.glb, 2026-10-04): (rest y,
+# half-width, centre z, half-depth). The racket strokes keep the arms outside it (owner, 2026-10-04: the arms
+# went through the body).
+TORSO_SECTIONS = np.array([
+    (0.85, 0.156, -0.021, 0.091), (0.90, 0.156, -0.011, 0.100), (0.95, 0.152, 0.003, 0.100), (1.00, 0.136, 0.012, 0.095),
+    (1.05, 0.124, 0.015, 0.101), (1.10, 0.135, 0.013, 0.110), (1.15, 0.145, 0.011, 0.114), (1.20, 0.154, 0.004, 0.120),
+    (1.25, 0.152, -0.001, 0.127), (1.30, 0.155, -0.002, 0.128), (1.35, 0.150, -0.012, 0.115),
+])
+ARM_RADII = (0.045, 0.035)  # upper arm, forearm
+SHOULDER_SKIP = 0.10  # the top of the upper arm is the shoulder itself, at the torso's edge
+
+
+def _qinv(q):
+    return [-q[0], -q[1], -q[2], q[3]]
+
+
+def torso_rest(p, pelvis_pos, qp, qs):
+    """A world point into the rest torso frame (below L5 by the pelvis, above by the chest), and the way back."""
+    l5_w = pelvis_pos + q_rot(qp, rig["l5"] - rig["pelvis"])
+    above = rig["l5"] + q_rot(_qinv(qs), p - l5_w)
+    if above[1] >= rig["l5"][1]:
+        return above, (lambda r: l5_w + q_rot(qs, r - rig["l5"]))
+    return rig["pelvis"] + q_rot(_qinv(qp), p - pelvis_pos), (lambda r: pelvis_pos + q_rot(qp, r - rig["pelvis"]))
+
+
+def torso_clear(pr, radius):
+    """Distance from a rest-frame point's surface (a sphere of `radius`) to the torso outline; < 0 is inside."""
+    y = pr[1]
+    if y < TORSO_SECTIONS[0, 0] or y > TORSO_SECTIONS[-1, 0]:
+        return 1.0
+    hw = np.interp(y, TORSO_SECTIONS[:, 0], TORSO_SECTIONS[:, 1])
+    cz = np.interp(y, TORSO_SECTIONS[:, 0], TORSO_SECTIONS[:, 2])
+    hd = np.interp(y, TORSO_SECTIONS[:, 0], TORSO_SECTIONS[:, 3])
+    x, z = pr[0], pr[2] - cz
+    r = math.hypot(x / hw, z / hd)
+    g = math.hypot(x / hw ** 2, z / hd ** 2) / max(r, 1e-9)
+    return (r - 1.0) / max(g, 1e-9) - radius
+
+
+def torso_push_front(p, pelvis_pos, qp, qs, radius):
+    """A hand inside (or within `radius` of) the torso moved straight forward in the torso's frame until clear:
+    a hand crossing the body passes in front of it, never through it."""
+    pr, back = torso_rest(p, pelvis_pos, qp, qs)
+    if torso_clear(pr, radius) >= 0:
+        return p
+    pr = pr.copy()
+    for _ in range(200):
+        pr[2] += 0.005
+        if torso_clear(pr, radius) >= 0:
+            break
+    return back(pr)
+
+
+def arm_clearance(shoulder, elbow, hand, pelvis_pos, qp, qs):
+    worst = 1.0
+    for a, b, rad in ((shoulder, elbow, ARM_RADII[0]), (elbow, hand, ARM_RADII[1])):
+        for k in range(1, 7):
+            pt = a + (b - a) * k / 6
+            if float(np.linalg.norm(pt - shoulder)) < SHOULDER_SKIP:
+                continue
+            pr, _ = torso_rest(pt, pelvis_pos, qp, qs)
+            worst = min(worst, torso_clear(pr, rad))
+    return worst
+
+
+def elbow_clear_of_torso(shoulder, hand, bend, pelvis_pos, qp, qs):
+    """The elbow on its circle about the shoulder-hand line: the one nearest the intended bend that keeps the
+    whole arm out of the torso, or failing that the clearest."""
+    d = hand - shoulder
+    n = max(float(np.linalg.norm(d)), 1e-9)
+    u = d / n
+    dist = min(n, L_UPPER + L_FORE - 1e-4)
+    a = (L_UPPER ** 2 - L_FORE ** 2 + dist ** 2) / (2 * dist)
+    h = math.sqrt(max(L_UPPER ** 2 - a * a, 0.0))
+    c = shoulder + u * a
+    wrist = shoulder + u * dist
+    b = np.asarray(bend, dtype=float)
+    e1 = b - np.dot(b, u) * u
+    if float(np.linalg.norm(e1)) < 1e-6:
+        e1 = np.cross(u, [0.0, 0.0, 1.0])
+    e1 = e1 / float(np.linalg.norm(e1))
+    e2 = np.cross(u, e1)
+    best_clear, best_any = None, None
+    for k in range(72):
+        th = k * 5 * DEG
+        elbow = c + h * (math.cos(th) * e1 + math.sin(th) * e2)
+        clr = arm_clearance(shoulder, elbow, wrist, pelvis_pos, qp, qs)
+        dev = min(th, 2 * math.pi - th)
+        if clr >= 0.005 and (best_clear is None or dev < best_clear[0]):
+            best_clear = (dev, elbow)
+        if best_any is None or clr > best_any[0]:
+            best_any = (clr, elbow)
+    return (best_clear or best_any)[1], wrist
+
+
 def racket_stage(yaw_deg, lean_deg, thigh_deg, shin_deg, r_hand, l_hand, hip_yaw=0.4, r_bend=(-0.6, -1.0, -0.4), l_bend=(0.6, -1.0, -0.4), head=None, both=False):
     """One stage of a stroke, in the body's frame (x left, y up, z toward the net): the trunk's yaw and lean,
     the knee bend, each hand's offset from its shoulder, and `head`, where the racket head is (offset from the
     right shoulder). The racket runs out of the hand along the hand's palm axis, so the hand is cocked at the
-    wrist to lay it toward the head, up to WRIST_MAX; with `both` the left hand takes the same hold."""
+    wrist to lay it toward the head, up to WRIST_MAX. With `both` the left hand holds the handle just above the
+    right. Every hand is kept in front of the torso and every elbow placed so the arm clears it."""
     q = all_ident()
     yaw = q_axis([0, 1, 0], yaw_deg * DEG)
     trunk = qmul(yaw, rx(lean_deg * DEG))
@@ -1472,18 +1569,23 @@ def racket_stage(yaw_deg, lean_deg, thigh_deg, shin_deg, r_hand, l_hand, hip_yaw
     front = q_rot(yaw, np.array([0.0, 0.0, 1.0]))
     r_shoulder = shoulder_from(pelvis_pos, trunk, "r")
     head_w = r_shoulder + q_rot(yaw, np.asarray(head, dtype=float)) if head is not None else None
-    for S, side_key, offset, bend, holds in (("R", "r", r_hand, r_bend, True), ("L", "l", l_hand, l_bend, both)):
-        shoulder = shoulder_from(pelvis_pos, trunk, side_key)
-        hand = shoulder + q_rot(yaw, np.asarray(offset, dtype=float))
-        elbow = two_link_3d(shoulder, hand, L_UPPER, L_FORE, q_rot(yaw, np.asarray(bend, dtype=float)))
+    hands = {}
+    hands["R"] = torso_push_front(r_shoulder + q_rot(yaw, np.asarray(r_hand, dtype=float)), pelvis_pos, pelvis, trunk, 0.04)
+    l_shoulder = shoulder_from(pelvis_pos, trunk, "l")
+    hands["L"] = l_shoulder + q_rot(yaw, np.asarray(l_hand, dtype=float))
+    if both > 0 and head_w is not None:
+        rr = head_w - hands["R"]
+        on_handle = hands["R"] + rr / max(float(np.linalg.norm(rr)), 1e-9) * 0.085  # the top hand on the handle
+        hands["L"] = hands["L"] + (on_handle - hands["L"]) * float(both)
+    hands["L"] = torso_push_front(hands["L"], pelvis_pos, pelvis, trunk, 0.04)
+    for S, shoulder, bend, holds in (("R", r_shoulder, r_bend, True), ("L", l_shoulder, l_bend, float(both) >= 0.5)):
+        elbow, hand = elbow_clear_of_torso(shoulder, hands[S], q_rot(yaw, np.asarray(bend, dtype=float)), pelvis_pos, pelvis, trunk)
         q["upper_arm." + S] = aim(elbow - shoulder, front)
         d = hand - elbow
         d = d / max(float(np.linalg.norm(d)), 1e-9)
         if holds and head_w is not None:
             r = head_w - hand
             r = r / max(float(np.linalg.norm(r)), 1e-9)
-            # The hand bone lies as near the forearm line as the grip allows: perpendicular to the racket if the
-            # wrist can reach that, else cocked WRIST_MAX toward it.
             h = d - np.dot(d, r) * r
             if float(np.linalg.norm(h)) < 1e-4:
                 h = d
@@ -1493,8 +1595,8 @@ def racket_stage(yaw_deg, lean_deg, thigh_deg, shin_deg, r_hand, l_hand, hip_yaw
                 axis = np.cross(d, h)
                 axis = axis / max(float(np.linalg.norm(axis)), 1e-9)
                 h = q_rot(q_axis(axis, WRIST_MAX), d)
-            q["forearm." + S] = frame_q(d, -r)  # the forearm rolled with the racket
-            q["hand." + S] = q["fingers." + S] = frame_q(h, -r)  # the racket along the palm axis (Mixamo +x is our -x)
+            q["forearm." + S] = frame_q(d, -r)
+            q["hand." + S] = q["fingers." + S] = frame_q(h, -r)
         else:
             q["forearm." + S] = q["hand." + S] = q["fingers." + S] = aim(d, front)
     return {"root": [round(float(v), 4) for v in root], "q": q}
@@ -1511,9 +1613,32 @@ def racket_report(sample_fn, stages):
         print("  %-8s t=%.2f wrist %3.0f deg, racket-forearm %3.0f deg" % (name, t, math.degrees(math.acos(max(-1, min(1, float(np.dot(d, h)))))), math.degrees(math.acos(max(-1, min(1, float(np.dot(d, rk))))))))
 
 
-def ready_stage(thigh=-18, shin=18, head=(0.14, 0.26, 0.36)):
+def key(yaw, lean, thigh, shin, r_hand, l_hand, head, r_bend=(-0.6, -1.0, -0.4), l_bend=(0.6, -1.0, -0.4), both=0.0, hip_yaw=0.4):
+    """A stroke stage as parameters for racket_stage."""
+    return dict(yaw_deg=yaw, lean_deg=lean, thigh_deg=thigh, shin_deg=shin, r_hand=tuple(r_hand), l_hand=tuple(l_hand), head=tuple(head), r_bend=tuple(r_bend), l_bend=tuple(l_bend), both=float(both), hip_yaw=hip_yaw)
+
+
+def racket_flow(keys, t):
+    """The stroke at t: every parameter follows a monotone spline through the stages and the pose is rebuilt at
+    each frame, so the arms clear the torso between the stages as well as at them (blending the bone rotations
+    between two clear stages had swung the arms through the chest)."""
+    names = keys[0][1].keys()
+    params = {}
+    for n in names:
+        v0 = keys[0][1][n]
+        if isinstance(v0, tuple):
+            params[n] = tuple(splined([(tk, d[n][i]) for tk, d in keys], t) for i in range(len(v0)))
+        else:
+            params[n] = splined([(tk, d[n]) for tk, d in keys], t)
+    return racket_stage(**params)
+
+
+def ready_key(thigh=-18, shin=18, head=(0.14, 0.26, 0.36)):
     """The ready position: knees soft, the racket held up in front with both hands."""
-    return racket_stage(0, 6, thigh, shin, (0.10, -0.16, 0.30), (0.0, -0.18, 0.32), r_bend=(-0.7, -1.0, -0.2), l_bend=(0.7, -1.0, -0.2), head=head, both=True)
+    return key(0, 6, thigh, shin, (0.10, -0.16, 0.30), (0.0, -0.18, 0.32), head, r_bend=(-0.7, -1.0, -0.2), l_bend=(0.7, -1.0, -0.2), both=1)
+
+
+TWO = dict(r_bend=(0.6, -1.0, -0.4), l_bend=(0.8, -1.0, -0.2), both=1)
 
 
 def tennis_forehand_sample(t):
@@ -1521,74 +1646,87 @@ def tennis_forehand_sample(t):
     the racket held up in front at the ready with both hands; the elbow bends and the racket head drops low
     behind the right hip as the shoulders turn, the free arm reaching out toward the net; the arm straightens
     and swings low to high to a contact out in front at hip height, the racket pointing out to the right; the
-    follow-through wraps across at chest height to finish beside the left shoulder, racket up."""
-    ready = ready_stage()
-    turn = racket_stage(-60, 8, -20, 20, (-0.18, -0.24, -0.26), (0.46, -0.14, 0.18), r_bend=(-1.0, -0.4, 0.1), head=(-0.30, -0.60, -0.48))
-    low = racket_stage(-30, 10, -22, 22, (-0.30, -0.44, 0.0), (0.36, -0.20, 0.30), r_bend=(-0.6, -1.0, -0.3), head=(-0.52, -0.60, -0.36))
-    contact = racket_stage(5, 8, -18, 18, (-0.30, -0.32, 0.46), (0.06, -0.22, 0.22), head=(-0.73, -0.30, 0.54))
-    wrap = racket_stage(40, 6, -15, 15, (0.30, -0.06, 0.28), (0.05, -0.20, 0.18), r_bend=(0.2, -1.0, -0.6), head=(0.42, 0.30, 0.56))
-    finish = racket_stage(30, 6, -15, 15, (0.28, 0.02, 0.18), (0.05, -0.20, 0.18), r_bend=(0.2, -1.0, -0.6), head=(0.20, 0.44, 0.30))
-    return sequence([(0, ready), (0.28, turn), (0.42, low), (0.52, contact), (0.64, wrap), (0.78, finish), (1, ready)], t)
+    follow-through wraps across in front of the chest to finish beside the left shoulder, racket up."""
+    return racket_flow([
+        (0, ready_key()),
+        (0.28, key(-60, 8, -20, 20, (-0.30, -0.24, -0.18), (0.46, -0.14, 0.18), (-0.40, -0.60, -0.42), r_bend=(-1.0, -0.4, 0.1))),
+        (0.42, key(-30, 10, -22, 22, (-0.30, -0.44, 0.0), (0.36, -0.20, 0.30), (-0.52, -0.60, -0.36))),
+        (0.52, key(5, 8, -18, 18, (-0.30, -0.32, 0.46), (0.06, -0.22, 0.22), (-0.73, -0.30, 0.54))),
+        (0.64, key(40, 6, -15, 15, (0.30, -0.06, 0.32), (0.05, -0.20, 0.22), (0.42, 0.30, 0.60), r_bend=(0.2, -1.0, -0.6))),
+        (0.78, key(30, 6, -15, 15, (0.28, 0.02, 0.24), (0.05, -0.20, 0.22), (0.20, 0.44, 0.36), r_bend=(0.2, -1.0, -0.6))),
+        (1, ready_key()),
+    ], t)
 
 
 def tennis_backhand_sample(t):
-    """A two-handed backhand: the unit turn to the left with both hands on the racket, the racket head dropping
-    low behind the left hip; the swing low to high with the weight moving to the front foot, to a contact just in
-    front of the lead knee with the racket pointing out to the left; the finish over the right shoulder, the
-    racket head pointing back."""
-    ready = ready_stage()
-    two = dict(r_bend=(0.6, -1.0, -0.4), l_bend=(0.8, -1.0, -0.2), both=True)
-    turn = racket_stage(70, 8, -22, 22, (0.26, -0.34, -0.22), (0.06, -0.34, -0.26), head=(0.34, -0.70, -0.50), **two)
-    drop = racket_stage(40, 10, -26, 26, (0.28, -0.48, 0.02), (0.10, -0.48, -0.02), head=(0.58, -0.70, -0.26), **two)
-    contact = racket_stage(-5, 8, -20, 20, (0.04, -0.36, 0.44), (-0.12, -0.36, 0.46), head=(0.46, -0.30, 0.60), r_bend=(0.2, -1.0, -0.3), l_bend=(0.6, -1.0, -0.3), both=True)
-    follow = racket_stage(-45, 6, -15, 15, (-0.28, 0.10, 0.10), (-0.42, 0.06, 0.16), head=(-0.36, 0.26, -0.30), r_bend=(-0.6, -1.0, -0.3), l_bend=(-0.3, -1.0, -0.3), both=True)
-    return sequence([(0, ready), (0.3, turn), (0.45, drop), (0.55, contact), (0.75, follow), (1, ready)], t)
+    """A two-handed backhand: the unit turn to the left with both hands on the racket, the hands taken back in
+    front of the left hip and the racket head low behind; the swing low to high with the weight moving to the
+    front foot, to a contact just in front of the lead knee with the racket pointing out to the left; the finish
+    over the right shoulder, the racket head pointing back."""
+    return racket_flow([
+        (0, ready_key()),
+        (0.3, key(70, 8, -22, 22, (0.19, -0.23, 0.37), (0.12, -0.30, 0.42), (0.30, -0.66, -0.12), **TWO)),
+        (0.45, key(40, 10, -26, 26, (0.14, -0.27, 0.36), (0.10, -0.42, 0.42), (0.46, -0.70, 0.06), **TWO)),
+        (0.55, key(-5, 8, -20, 20, (0.18, -0.30, 0.32), (0.04, -0.32, 0.38), (0.58, -0.30, 0.56), r_bend=(0.2, -1.0, -0.3), l_bend=(0.6, -1.0, -0.3), both=1)),
+        (0.75, key(-45, 6, -15, 15, (-0.08, 0.14, 0.16), (-0.30, 0.10, 0.20), (-0.20, 0.34, -0.20), r_bend=(-0.6, -1.0, -0.3), l_bend=(-0.3, -1.0, -0.3), both=1)),
+        (1, ready_key()),
+    ], t)
 
 
 def tennis_serve_sample(t):
     """A flat serve: sideways to the net, the toss arm rises straight as the racket arm comes up to the trophy
     position with the knees bent; the racket drops behind the back as the legs drive up; contact with the arm
     fully extended above the head; the racket follows through across the body to the opposite hip."""
-    stance = racket_stage(-60, 4, -8, 8, (-0.10, -0.42, 0.28), (0.02, -0.42, 0.32), head=(0.02, -0.62, 0.66))
-    trophy = racket_stage(-60, -8, -30, 30, (-0.24, 0.30, -0.28), (0.06, 0.52, 0.12), r_bend=(-1.0, 0.2, -0.6), l_bend=(0.6, -0.2, -1.0), head=(-0.20, 0.72, -0.42))
-    drop = racket_stage(-45, -6, -14, 14, (-0.12, 0.10, -0.36), (0.08, 0.30, 0.10), r_bend=(-1.0, 0.8, -0.3), l_bend=(0.6, -0.5, -1.0), head=(0.0, -0.30, -0.42))
-    contact = racket_stage(-10, 6, -2, 2, (-0.06, 0.50, 0.16), (0.06, -0.20, 0.14), r_bend=(-1.0, 0.2, -0.5), head=(0.0, 0.94, 0.26))
-    follow = racket_stage(15, 26, -10, 10, (0.34, -0.42, 0.14), (0.08, -0.30, 0.10), r_bend=(0.3, -0.6, -1.0), head=(0.62, -0.66, 0.36))
-    return sequence([(0, stance), (0.25, trophy), (0.4, drop), (0.5, contact), (0.7, follow), (1, stance)], t)
+    return racket_flow([
+        (0, key(-60, 4, -8, 8, (-0.10, -0.42, 0.28), (0.02, -0.42, 0.32), (0.02, -0.62, 0.66))),
+        (0.25, key(-60, -8, -30, 30, (-0.24, 0.30, -0.28), (0.06, 0.52, 0.12), (-0.20, 0.72, -0.42), r_bend=(-1.0, 0.2, -0.6), l_bend=(0.6, -0.2, -1.0))),
+        (0.4, key(-45, -6, -14, 14, (-0.12, 0.10, -0.36), (0.08, 0.30, 0.10), (0.0, -0.30, -0.42), r_bend=(-1.0, 0.8, -0.3), l_bend=(0.6, -0.5, -1.0))),
+        (0.5, key(-10, 6, -2, 2, (-0.06, 0.50, 0.16), (0.06, -0.20, 0.14), (0.0, 0.94, 0.26), r_bend=(-1.0, 0.2, -0.5))),
+        (0.7, key(15, 26, -10, 10, (0.24, -0.36, 0.30), (0.08, -0.30, 0.14), (0.52, -0.62, 0.52), r_bend=(0.3, -0.6, -1.0))),
+        (1, key(-60, 4, -8, 8, (-0.10, -0.42, 0.28), (0.02, -0.42, 0.32), (0.02, -0.62, 0.66))),
+    ], t)
 
 
 def pickleball_forehand_sample(t):
     """A pickleball forehand drive: a short backswing with the paddle pointed at the side wall, a low knee bend,
     a compact low-to-high swing to a contact out in front at waist height, the follow-through to the opposite
-    shoulder."""
-    ready = ready_stage(-28, 28, head=(0.14, 0.20, 0.36))
-    turn = racket_stage(-50, 10, -34, 34, (-0.32, -0.30, -0.12), (0.34, -0.16, 0.18), head=(-0.55, -0.50, -0.30))
-    contact = racket_stage(0, 8, -30, 30, (-0.26, -0.36, 0.42), (0.06, -0.28, 0.20), head=(-0.58, -0.36, 0.50))
-    follow = racket_stage(35, 6, -24, 24, (0.22, 0.04, 0.22), (0.05, -0.24, 0.14), r_bend=(0.2, -1.0, -0.6), head=(0.32, 0.30, 0.40))
-    return sequence([(0, ready), (0.3, turn), (0.5, contact), (0.7, follow), (1, ready)], t)
+    shoulder, in front of the chest."""
+    ready = ready_key(-28, 28, head=(0.14, 0.20, 0.36))
+    return racket_flow([
+        (0, ready),
+        (0.3, key(-50, 10, -34, 34, (-0.32, -0.30, -0.12), (0.34, -0.16, 0.18), (-0.55, -0.50, -0.30))),
+        (0.5, key(0, 8, -30, 30, (-0.26, -0.36, 0.42), (0.06, -0.28, 0.20), (-0.58, -0.36, 0.50))),
+        (0.7, key(35, 6, -24, 24, (0.22, 0.04, 0.30), (0.05, -0.24, 0.20), (0.32, 0.30, 0.48), r_bend=(0.2, -1.0, -0.6))),
+        (1, ready),
+    ], t)
 
 
 def pickleball_backhand_sample(t):
     """A two-handed pickleball backhand: shoulders and hips turn to the left as a unit with both hands on the
-    paddle, a short backswing past the left hip, the free hand doing most of the work through a contact in
-    front, the paddle finishing toward the right shoulder."""
-    ready = ready_stage(-28, 28, head=(0.14, 0.20, 0.36))
-    two = dict(r_bend=(0.6, -1.0, -0.4), l_bend=(0.8, -1.0, -0.2), both=True)
-    turn = racket_stage(45, 10, -34, 34, (0.24, -0.34, -0.14), (0.06, -0.34, -0.18), head=(0.34, -0.60, -0.34), **two)
-    contact = racket_stage(-5, 8, -30, 30, (0.02, -0.36, 0.40), (-0.14, -0.36, 0.42), head=(0.33, -0.32, 0.50), r_bend=(0.2, -1.0, -0.3), l_bend=(0.6, -1.0, -0.3), both=True)
-    follow = racket_stage(-35, 6, -24, 24, (-0.24, 0.02, 0.16), (-0.36, -0.02, 0.20), head=(-0.32, 0.26, -0.06), r_bend=(-0.6, -1.0, -0.3), l_bend=(-0.3, -1.0, -0.3), both=True)
-    return sequence([(0, ready), (0.3, turn), (0.5, contact), (0.7, follow), (1, ready)], t)
+    paddle, a short backswing to in front of the left hip, the free hand doing most of the work through a
+    contact in front, the paddle finishing toward the right shoulder."""
+    ready = ready_key(-28, 28, head=(0.14, 0.20, 0.36))
+    return racket_flow([
+        (0, ready),
+        (0.3, key(45, 10, -34, 34, (0.17, -0.24, 0.37), (0.10, -0.32, 0.42), (0.32, -0.56, 0.02), **TWO)),
+        (0.5, key(-5, 8, -30, 30, (0.17, -0.31, 0.31), (0.02, -0.32, 0.36), (0.46, -0.32, 0.48), r_bend=(0.2, -1.0, -0.3), l_bend=(0.6, -1.0, -0.3), both=1)),
+        (0.7, key(-35, 6, -24, 24, (-0.06, 0.08, 0.18), (-0.28, 0.04, 0.22), (-0.18, 0.30, -0.10), r_bend=(-0.6, -1.0, -0.3), l_bend=(-0.3, -1.0, -0.3), both=1)),
+        (1, ready),
+    ], t)
 
 
 def pickleball_serve_sample(t):
     """A pickleball serve: sideways to the net, the ball held out in front by the free hand; the paddle swings
     back low and forward in an underhand arc to a contact below the waist in front of the body, finishing with
     the hand in line with the opposite shoulder."""
-    stance = racket_stage(-45, 6, -12, 12, (-0.10, -0.46, 0.10), (0.06, -0.34, 0.36), head=(-0.14, -0.76, 0.22))
-    back = racket_stage(-55, 8, -16, 16, (-0.10, -0.48, -0.34), (0.06, -0.34, 0.36), r_bend=(-0.8, -0.6, 0.4), head=(-0.16, -0.70, -0.58))
-    contact = racket_stage(-10, 8, -12, 12, (-0.10, -0.54, 0.34), (0.10, -0.30, 0.10), r_bend=(-0.8, -0.6, -0.3), head=(-0.24, -0.62, 0.62))
-    follow = racket_stage(15, 6, -8, 8, (0.20, -0.06, 0.36), (0.08, -0.30, 0.10), r_bend=(-0.6, -0.6, -0.6), head=(0.36, 0.20, 0.52))
-    return sequence([(0, stance), (0.3, back), (0.5, contact), (0.72, follow), (1, stance)], t)
+    stance = key(-45, 6, -12, 12, (-0.10, -0.46, 0.10), (0.06, -0.34, 0.36), (-0.14, -0.76, 0.22))
+    return racket_flow([
+        (0, stance),
+        (0.3, key(-55, 8, -16, 16, (-0.20, -0.46, -0.30), (0.06, -0.34, 0.36), (-0.26, -0.70, -0.56), r_bend=(-0.8, -0.6, 0.4))),
+        (0.5, key(-10, 8, -12, 12, (-0.14, -0.50, 0.34), (0.10, -0.30, 0.14), (-0.28, -0.60, 0.62), r_bend=(-0.8, -0.6, -0.3))),
+        (0.72, key(15, 6, -8, 8, (0.20, -0.06, 0.40), (0.08, -0.30, 0.14), (0.36, 0.20, 0.56), r_bend=(-0.6, -0.6, -0.6))),
+        (1, stance),
+    ], t)
 
 
 # ---------- wall angel (owner, 2026-10-02) ----------
