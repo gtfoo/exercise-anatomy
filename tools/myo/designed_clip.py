@@ -1451,17 +1451,49 @@ def frame_q(along, x_dir):
     return q_from_matrix(np.column_stack([x, y, z]))
 
 
-# The torso's cross-section by height in the rest pose, measured from the figure's own vertices skinned to the
-# pelvis and spine bones (~/.cache/ea-torso.py over tools/blender/out/figure.glb, 2026-10-04): (rest y,
-# half-width, centre z, half-depth). The racket strokes keep the arms outside it (owner, 2026-10-04: the arms
-# went through the body).
-TORSO_SECTIONS = np.array([
-    (0.85, 0.156, -0.021, 0.091), (0.90, 0.156, -0.011, 0.100), (0.95, 0.152, 0.003, 0.100), (1.00, 0.136, 0.012, 0.095),
-    (1.05, 0.124, 0.015, 0.101), (1.10, 0.135, 0.013, 0.110), (1.15, 0.145, 0.011, 0.114), (1.20, 0.154, 0.004, 0.120),
-    (1.25, 0.152, -0.001, 0.127), (1.30, 0.155, -0.002, 0.128), (1.35, 0.150, -0.012, 0.115),
-])
-ARM_RADII = (0.045, 0.035)  # upper arm, forearm
-SHOULDER_SKIP = 0.10  # the top of the upper arm is the shoulder itself, at the torso's edge
+def rest_fix(a, b):
+    """The least rotation taking the rig's rest direction of the bone from joint a to joint b onto straight
+    down. The designs aim each bone as if it hung straight down at rest, but the figure's upper arm hangs 10
+    degrees off that and its forearm 17, so the real elbow and wrist landed up to 9 cm from the design (and the
+    arms in the chest); aim(v) followed by this puts the real bone along v."""
+    u = rig[b] - rig[a]
+    u = u / float(np.linalg.norm(u))
+    axis = np.cross(u, DOWN)
+    s = float(np.linalg.norm(axis))
+    if s < 1e-9:
+        return IDENT
+    return q_axis(axis / s, math.atan2(s, float(np.dot(u, DOWN))))
+
+
+# The torso in the rest pose as a signed distance field: the figure's own body, filled solid, the part skinned
+# mostly to the hips, spine or a clavicle (tools/myo/measure_torso.py writes torso_sdf.npz from the rig the site
+# plays). The racket strokes keep the arms outside it (owner, 2026-10-04 and -06: the arms went through the
+# body). Convex outlines per height, used before this, cut straight across the hollow under each arm, so they
+# could not tell an arm resting at the side from one pressed into the chest.
+#
+# The arms are tested by their own skin: a sample of each arm's vertices, skinned the way the rig will skin them
+# (each blended between the torso, upper arm, forearm and hand by its weights), measured in that field. A capsule
+# round the bones cannot see what matters most: the skin of the armpit, up to 14 cm off the upper arm's axis,
+# folding into the chest as the arm crosses it.
+def _load_torso():
+    z = np.load(os.path.join(os.path.dirname(os.path.abspath(__file__)), "torso_sdf.npz"))
+    arms = {}
+    for s in "lr":
+        v, w = z["arm_" + s].astype(float), z["arm_" + s + "_w"].astype(float)
+        far = np.linalg.norm(v - rig["shoulder." + s], axis=1) > SHOULDER_SKIP
+        arms[s] = (v[far], w[far])
+    torso = (z["sdf_mm"].astype(float) / 1000.0, z["origin"].astype(float))
+    head = (z["head_sdf_mm"].astype(float) / 1000.0, z["head_origin"].astype(float))
+    return torso, head, float(z["voxel"]), z["neck_joint"].astype(float), z["head_joint"].astype(float), arms
+
+
+SHOULDER_SKIP = 0.12  # the top of the upper arm is the deltoid joining the shoulder
+SKIN_TOLERANCE = 0.005  # a resting arm's skin may press this far into the side
+FOREARM_MARGIN = 0.01  # how far the forearm and hand are kept off the body
+BELLY_TOP = 1.2  # the height (at rest) up to which the belly turns less than the chest
+FOREARM_SKIN = 0.035  # the forearm's skin from its bone, for keeping the other hand off it
+TORSO_FIELD, HEAD_FIELD, FIELD_VOX, NECK_J, HEAD_J, ARM_SKIN = _load_torso()
+FOREARM_RADIUS = 0.035  # for keeping the other hand off the forearm
 
 
 def _qinv(q):
@@ -1478,17 +1510,8 @@ def torso_rest(p, pelvis_pos, qp, qs):
 
 
 def torso_clear(pr, radius):
-    """Distance from a rest-frame point's surface (a sphere of `radius`) to the torso outline; < 0 is inside."""
-    y = pr[1]
-    if y < TORSO_SECTIONS[0, 0] or y > TORSO_SECTIONS[-1, 0]:
-        return 1.0
-    hw = np.interp(y, TORSO_SECTIONS[:, 0], TORSO_SECTIONS[:, 1])
-    cz = np.interp(y, TORSO_SECTIONS[:, 0], TORSO_SECTIONS[:, 2])
-    hd = np.interp(y, TORSO_SECTIONS[:, 0], TORSO_SECTIONS[:, 3])
-    x, z = pr[0], pr[2] - cz
-    r = math.hypot(x / hw, z / hd)
-    g = math.hypot(x / hw ** 2, z / hd ** 2) / max(r, 1e-9)
-    return (r - 1.0) / max(g, 1e-9) - radius
+    """Distance from a rest-frame point's surface (a sphere of `radius`) to the torso; < 0 is inside."""
+    return float(_sdf(TORSO_FIELD, np.asarray(pr, dtype=float)[None, :])[0]) - radius
 
 
 def torso_push_front(p, pelvis_pos, qp, qs, radius):
@@ -1505,21 +1528,91 @@ def torso_push_front(p, pelvis_pos, qp, qs, radius):
     return back(pr)
 
 
-def arm_clearance(shoulder, elbow, hand, pelvis_pos, qp, qs):
-    worst = 1.0
-    for a, b, rad in ((shoulder, elbow, ARM_RADII[0]), (elbow, hand, ARM_RADII[1])):
-        for k in range(1, 7):
-            pt = a + (b - a) * k / 6
-            if float(np.linalg.norm(pt - shoulder)) < SHOULDER_SKIP:
-                continue
-            pr, _ = torso_rest(pt, pelvis_pos, qp, qs)
-            worst = min(worst, torso_clear(pr, rad))
+def _qmat(q):
+    x, y, z, w = q
+    return np.array([[1 - 2 * (y * y + z * z), 2 * (x * y - z * w), 2 * (x * z + y * w)],
+                     [2 * (x * y + z * w), 1 - 2 * (x * x + z * z), 2 * (y * z - x * w)],
+                     [2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x * x + y * y)]])
+
+
+def _sdf(field, pts):
+    """A field (distances, origin) at rest-frame points, trilinear; off the field is clear."""
+    F, origin = field
+    g = (pts - origin) / FIELD_VOX
+    i = np.floor(g).astype(int)
+    ok = ((i >= 0) & (i + 1 < np.array(F.shape))).all(axis=1)
+    out = np.ones(len(pts))
+    i, f = i[ok], g[ok] - i[ok]
+    acc = np.zeros(len(i))
+    for dx in (0, 1):
+        for dy in (0, 1):
+            for dz in (0, 1):
+                wgt = (f[:, 0] if dx else 1 - f[:, 0]) * (f[:, 1] if dy else 1 - f[:, 1]) * (f[:, 2] if dz else 1 - f[:, 2])
+                acc += wgt * F[i[:, 0] + dx, i[:, 1] + dy, i[:, 2] + dz]
+    out[ok] = acc
+    return out
+
+
+def arm_skin_world(side, q_up, q_fo, q_ha, shoulder_w, pelvis_pos, qp, qs, parts=(1, 2, 3)):
+    """The arm's sampled skin vertices mostly skinned to one of `parts` (1 upper arm, 2 forearm, 3 hand), skinned
+    by the arm's bone rotations (world, from rest) and the torso's; with the elbow and wrist."""
+    v, w = ARM_SKIN[side]
+    sh, el, wr = rig["shoulder." + side], rig["elbow." + side], rig["wrist." + side]
+    R_up, R_fo, R_ha = _qmat(q_up), _qmat(q_fo), _qmat(q_ha)
+    el_w = shoulder_w + R_up @ (el - sh)
+    wr_w = el_w + R_fo @ (wr - el)
+    l5_w = pelvis_pos + q_rot(qp, rig["l5"] - rig["pelvis"])
+    keep = np.isin(w.argmax(axis=1), parts)
+    v, w = v[keep], w[keep]
+    world = (w[:, :1] * (l5_w + (v - rig["l5"]) @ _qmat(qs).T) + w[:, 1:2] * (shoulder_w + (v - sh) @ R_up.T)
+             + w[:, 2:3] * (el_w + (v - el) @ R_fo.T) + w[:, 3:4] * (wr_w + (v - wr) @ R_ha.T))
+    return world, el_w, wr_w
+
+
+def arm_skin_clear(side, q_up, q_fo, q_ha, shoulder_w, pelvis_pos, qp, qs, qn=None, qh=None, parts=(1, 2, 3)):
+    """How far the arm's skin is outside the body (< 0 inside): the torso, in its rest frame, and, given the neck
+    and head rotations, the head in its own (it turns less than the chest, so the chin meets an arm the chest
+    would have missed)."""
+    world, _, _ = arm_skin_world(side, q_up, q_fo, q_ha, shoulder_w, pelvis_pos, qp, qs, parts)
+    if not len(world):
+        return 1.0
+    l5_w = pelvis_pos + q_rot(qp, rig["l5"] - rig["pelvis"])
+    R_s = _qmat(qs)
+    rest = rig["l5"] + (world - l5_w) @ R_s
+    low = rest[:, 1] < rig["l5"][1]
+    if low.any():
+        rest[low] = rig["pelvis"] + (world[low] - pelvis_pos) @ _qmat(qp)
+    worst = float(_sdf(TORSO_FIELD, rest).min())
+    # The belly turns part of the way between the hips and the chest, so at its height the torso is also tried
+    # turned halfway (the forehands' backswing grazed it where the chest alone said clear).
+    belly = rest[:, 1] < BELLY_TOP
+    if belly.any():
+        mid = q_slerp(qp, qs, 0.5)
+        worst = min(worst, float(_sdf(TORSO_FIELD, rig["l5"] + (world[belly] - (pelvis_pos + q_rot(qp, rig["l5"] - rig["pelvis"]))) @ _qmat(mid)).min()))
+    if qh is not None:
+        neck_w = l5_w + R_s @ (NECK_J - rig["l5"])
+        head_w = neck_w + _qmat(qn) @ (HEAD_J - NECK_J)
+        worst = min(worst, float(_sdf(HEAD_FIELD, HEAD_J + (world - head_w) @ _qmat(qh)).min()))
     return worst
 
 
-def elbow_clear_of_torso(shoulder, hand, bend, pelvis_pos, qp, qs):
-    """The elbow on its circle about the shoulder-hand line: the one nearest the intended bend that keeps the
-    whole arm out of the torso, or failing that the clearest."""
+def hands_apart(skin_l, skin_r):
+    """How far each hand's skin is from the other forearm's (< 0 inside it). Each skin is (hand vertices,
+    elbow, wrist)."""
+    worst = 1.0
+    for (hand, _, _), (_, el, wr) in ((skin_l, skin_r), (skin_r, skin_l)):
+        if not len(hand):
+            continue
+        ax = wr - el
+        t = np.clip((hand - el) @ ax / float(ax @ ax), 0.0, 1.0)
+        worst = min(worst, float(np.linalg.norm(hand - (el + t[:, None] * ax), axis=1).min()) - FOREARM_SKIN)
+    return worst
+
+
+def elbow_clear_of_torso(shoulder, hand, bend, clear_fn, avoid=None):
+    """The elbow on its circle about the shoulder-hand line: the one nearest the intended bend whose arm's skin
+    stays out of the torso (clear_fn(elbow, wrist) says by how much), with the forearm off the `avoid` points
+    (each a point and a radius), or failing that the clearest."""
     d = hand - shoulder
     n = max(float(np.linalg.norm(d)), 1e-9)
     u = d / n
@@ -1538,9 +1631,14 @@ def elbow_clear_of_torso(shoulder, hand, bend, pelvis_pos, qp, qs):
     for k in range(72):
         th = k * 5 * DEG
         elbow = c + h * (math.cos(th) * e1 + math.sin(th) * e2)
-        clr = arm_clearance(shoulder, elbow, wrist, pelvis_pos, qp, qs)
+        clr = clear_fn(elbow, wrist) + SKIN_TOLERANCE
+        for p, rad in avoid or ():
+            # the other hand: kept off this forearm
+            for j in range(1, 6):
+                pt = elbow + (wrist - elbow) * j / 6
+                clr = min(clr, float(np.linalg.norm(pt - p)) - rad - FOREARM_RADIUS)
         dev = min(th, 2 * math.pi - th)
-        if clr >= 0.005 and (best_clear is None or dev < best_clear[0]):
+        if clr >= 0 and (best_clear is None or dev < best_clear[0]):
             best_clear = (dev, elbow)
         if best_any is None or clr > best_any[0]:
             best_any = (clr, elbow)
@@ -1575,14 +1673,26 @@ def racket_stage(yaw_deg, lean_deg, thigh_deg, shin_deg, r_hand, l_hand, hip_yaw
     hands["L"] = l_shoulder + q_rot(yaw, np.asarray(l_hand, dtype=float))
     if both > 0 and head_w is not None:
         rr = head_w - hands["R"]
-        on_handle = hands["R"] + rr / max(float(np.linalg.norm(rr)), 1e-9) * 0.085  # the top hand on the handle
+        on_handle = hands["R"] + rr / max(float(np.linalg.norm(rr)), 1e-9) * 0.11  # the top hand on the handle, a hand's width up
         hands["L"] = hands["L"] + (on_handle - hands["L"]) * float(both)
     hands["L"] = torso_push_front(hands["L"], pelvis_pos, pelvis, trunk, 0.04)
-    for S, shoulder, bend, holds in (("R", r_shoulder, r_bend, True), ("L", l_shoulder, l_bend, float(both) >= 0.5)):
-        elbow, hand = elbow_clear_of_torso(shoulder, hands[S], q_rot(yaw, np.asarray(bend, dtype=float)), pelvis_pos, pelvis, trunk)
-        q["upper_arm." + S] = aim(elbow - shoulder, front)
+    def solve(S, shoulder, bend, holds, target, avoid):
+        """One arm to a hand target: the elbow placed clear of the torso (and of `avoid`), the forearm along
+        elbow-to-hand, the hand cocked toward the racket head when it holds the racket; and where the hand's
+        own points (palm, knuckles, fingers) land."""
+        s = S.lower()
+        fix_up, fix_fo = rest_fix("shoulder." + s, "elbow." + s), rest_fix("elbow." + s, "wrist." + s)
+
+        def clear(elbow, wrist):
+            q_up = qmul(aim(elbow - shoulder, front), fix_up)
+            q_fo = qmul(aim(wrist - elbow, front), fix_fo)
+            return arm_skin_clear(s, q_up, q_fo, q_fo, shoulder, pelvis_pos, pelvis, trunk, q["neck"], q["head"], parts=(1, 2))
+
+        elbow, hand = elbow_clear_of_torso(shoulder, target, q_rot(yaw, np.asarray(bend, dtype=float)), clear, avoid)
+        out = {"upper_arm." + S: qmul(aim(elbow - shoulder, front), fix_up)}
         d = hand - elbow
         d = d / max(float(np.linalg.norm(d)), 1e-9)
+        h = d
         if holds and head_w is not None:
             r = head_w - hand
             r = r / max(float(np.linalg.norm(r)), 1e-9)
@@ -1595,10 +1705,58 @@ def racket_stage(yaw_deg, lean_deg, thigh_deg, shin_deg, r_hand, l_hand, hip_yaw
                 axis = np.cross(d, h)
                 axis = axis / max(float(np.linalg.norm(axis)), 1e-9)
                 h = q_rot(q_axis(axis, WRIST_MAX), d)
-            q["forearm." + S] = frame_q(d, -r)
-            q["hand." + S] = q["fingers." + S] = frame_q(h, -r)
+            out["forearm." + S] = qmul(frame_q(d, -r), fix_fo)
+            out["hand." + S] = out["fingers." + S] = frame_q(h, -r)  # left as designed: the racket runs along it
         else:
-            q["forearm." + S] = q["hand." + S] = q["fingers." + S] = aim(d, front)
+            out["forearm." + S] = qmul(aim(d, front), fix_fo)
+            out["hand." + S] = out["fingers." + S] = aim(d, front)
+        mcp = hand + q_rot(out["hand." + S], rig["mcp." + s] - rig["wrist." + s])
+        u = (mcp - hand) / max(float(np.linalg.norm(mcp - hand)), 1e-9)
+        return out, [hand, (hand + mcp) / 2, mcp, mcp + u * 0.045, mcp + u * 0.09]  # to the fingertips
+
+    def arm_clear(S, shoulder, got):
+        """The arm's clearance from the body: the upper arm's skin may press SKIN_TOLERANCE in (its armpit folds
+        into the side however the arm moves); the forearm and hand keep FOREARM_MARGIN off (the rig's skin sits a
+        little deeper than this one's, and the sample of it is about 1 cm apart)."""
+        s = S.lower()
+        a = (got["upper_arm." + S], got["forearm." + S], got["hand." + S], shoulder, pelvis_pos, pelvis, trunk, q["neck"], q["head"])
+        return min(arm_skin_clear(s, *a, parts=(1,)) + SKIN_TOLERANCE, arm_skin_clear(s, *a, parts=(2, 3)) - FOREARM_MARGIN)
+
+    def hand_skin(S, shoulder, got):
+        return arm_skin_world(S.lower(), got["upper_arm." + S], got["forearm." + S], got["hand." + S], shoulder, pelvis_pos, pelvis, trunk, parts=(3,))
+
+    # Where no elbow keeps the arm's skin out of the body (the hand at the belly, the fingers reaching past it,
+    # an arm across the chest or the chin), the hand is moved forward until one does (owner, 2026-10-06: the
+    # forehand's backswing took the fingers through the belly). In the two-handed strokes the left hand comes to
+    # the handle above the right, and is moved up the handle until neither hand is in the other's forearm.
+    shoulders = {"R": (r_shoulder, r_bend, True), "L": (l_shoulder, l_bend, float(both) >= 0.5)}
+    r_pts, r_skin = [], None
+    for S in ("R", "L"):
+        shoulder, bend, holds = shoulders[S]
+        target = hands[S]
+        up = None
+        if S == "L" and head_w is not None:
+            up = head_w - r_pts[0]
+            up = up / max(float(np.linalg.norm(up)), 1e-9)
+            for _ in range(30):
+                if min(float(np.linalg.norm(target - p)) for p in r_pts) >= 0.10:
+                    break
+                target = target + up * 0.01
+        best = None
+        for _ in range(16):
+            got, pts = solve(S, shoulder, bend, holds, target, [(p, 0.045) for p in r_pts] if S == "L" else None)  # a hand is 9 cm across
+            clr = arm_clear(S, shoulder, got)
+            apart = hands_apart(hand_skin(S, shoulder, got), r_skin) if S == "L" else 1.0
+            score = min(clr, apart)
+            if best is None or score > best[0]:
+                best = (score, got, pts)
+            if score >= 0:
+                break
+            target = target + (up * 0.01 if apart < clr and up is not None else front * 0.01)
+        _, got, pts = best
+        q.update(got)
+        if S == "R":
+            r_pts, r_skin = pts, hand_skin(S, shoulder, got)
     return {"root": [round(float(v), 4) for v in root], "q": q}
 
 
@@ -1649,11 +1807,11 @@ def tennis_forehand_sample(t):
     follow-through wraps across in front of the chest to finish beside the left shoulder, racket up."""
     return racket_flow([
         (0, ready_key()),
-        (0.28, key(-60, 8, -20, 20, (-0.30, -0.24, -0.18), (0.46, -0.14, 0.18), (-0.40, -0.60, -0.42), r_bend=(-1.0, -0.4, 0.1))),
+        (0.28, key(-60, 8, -20, 20, (-0.30, -0.24, -0.18), (0.50, -0.14, 0.26), (-0.40, -0.60, -0.42), r_bend=(-1.0, -0.4, 0.1))),
         (0.42, key(-30, 10, -22, 22, (-0.30, -0.44, 0.0), (0.36, -0.20, 0.30), (-0.52, -0.60, -0.36))),
         (0.52, key(5, 8, -18, 18, (-0.30, -0.32, 0.46), (0.06, -0.22, 0.22), (-0.73, -0.30, 0.54))),
-        (0.64, key(40, 6, -15, 15, (0.30, -0.06, 0.32), (0.05, -0.20, 0.22), (0.42, 0.30, 0.60), r_bend=(0.2, -1.0, -0.6))),
-        (0.78, key(30, 6, -15, 15, (0.28, 0.02, 0.24), (0.05, -0.20, 0.22), (0.20, 0.44, 0.36), r_bend=(0.2, -1.0, -0.6))),
+        (0.64, key(40, 6, -15, 15, (0.30, -0.06, 0.32), (0.05, -0.20, 0.22), (0.42, 0.30, 0.60), r_bend=(0.2, -1.0, 0.2))),
+        (0.78, key(30, 6, -15, 15, (0.28, 0.02, 0.24), (0.05, -0.20, 0.22), (0.20, 0.44, 0.36), r_bend=(0.2, -1.0, 0.2))),
         (1, ready_key()),
     ], t)
 
@@ -1668,7 +1826,7 @@ def tennis_backhand_sample(t):
         (0.3, key(70, 8, -22, 22, (0.19, -0.23, 0.37), (0.12, -0.30, 0.42), (0.30, -0.66, -0.12), **TWO)),
         (0.45, key(40, 10, -26, 26, (0.14, -0.27, 0.36), (0.10, -0.42, 0.42), (0.46, -0.70, 0.06), **TWO)),
         (0.55, key(-5, 8, -20, 20, (0.18, -0.30, 0.32), (0.04, -0.32, 0.38), (0.58, -0.30, 0.56), r_bend=(0.2, -1.0, -0.3), l_bend=(0.6, -1.0, -0.3), both=1)),
-        (0.75, key(-45, 6, -15, 15, (-0.08, 0.14, 0.16), (-0.30, 0.10, 0.20), (-0.20, 0.34, -0.20), r_bend=(-0.6, -1.0, -0.3), l_bend=(-0.3, -1.0, -0.3), both=1)),
+        (0.75, key(-45, 6, -15, 15, (0.02, 0.12, 0.34), (-0.24, 0.06, 0.44), (-0.16, 0.40, 0.10), r_bend=(-0.6, -1.0, -0.3), l_bend=(-0.3, -1.0, 0.1), both=1)),
         (1, ready_key()),
     ], t)
 
@@ -1682,7 +1840,8 @@ def tennis_serve_sample(t):
         (0.25, key(-60, -8, -30, 30, (-0.24, 0.30, -0.28), (0.06, 0.52, 0.12), (-0.20, 0.72, -0.42), r_bend=(-1.0, 0.2, -0.6), l_bend=(0.6, -0.2, -1.0))),
         (0.4, key(-45, -6, -14, 14, (-0.12, 0.10, -0.36), (0.08, 0.30, 0.10), (0.0, -0.30, -0.42), r_bend=(-1.0, 0.8, -0.3), l_bend=(0.6, -0.5, -1.0))),
         (0.5, key(-10, 6, -2, 2, (-0.06, 0.50, 0.16), (0.06, -0.20, 0.14), (0.0, 0.94, 0.26), r_bend=(-1.0, 0.2, -0.5))),
-        (0.7, key(15, 26, -10, 10, (0.24, -0.36, 0.30), (0.08, -0.30, 0.14), (0.52, -0.62, 0.52), r_bend=(0.3, -0.6, -1.0))),
+        (0.7, key(15, 26, -10, 10, (0.20, -0.33, 0.32), (0.08, -0.30, 0.14), (0.52, -0.62, 0.52), r_bend=(0.3, -0.6, -1.0))),
+        (0.85, key(-25, 12, -10, 10, (-0.16, -0.42, 0.18), (0.06, -0.36, 0.24), (-0.10, -0.66, 0.50))),  # the recovery comes down the right side
         (1, key(-60, 4, -8, 8, (-0.10, -0.42, 0.28), (0.02, -0.42, 0.32), (0.02, -0.62, 0.66))),
     ], t)
 
@@ -1710,7 +1869,7 @@ def pickleball_backhand_sample(t):
         (0, ready),
         (0.3, key(45, 10, -34, 34, (0.17, -0.24, 0.37), (0.10, -0.32, 0.42), (0.32, -0.56, 0.02), **TWO)),
         (0.5, key(-5, 8, -30, 30, (0.17, -0.31, 0.31), (0.02, -0.32, 0.36), (0.46, -0.32, 0.48), r_bend=(0.2, -1.0, -0.3), l_bend=(0.6, -1.0, -0.3), both=1)),
-        (0.7, key(-35, 6, -24, 24, (-0.06, 0.08, 0.18), (-0.28, 0.04, 0.22), (-0.18, 0.30, -0.10), r_bend=(-0.6, -1.0, -0.3), l_bend=(-0.3, -1.0, -0.3), both=1)),
+        (0.7, key(-35, 6, -24, 24, (0.06, 0.04, 0.38), (-0.14, 0.02, 0.42), (-0.06, 0.32, 0.10), r_bend=(-0.6, -1.0, -0.3), l_bend=(-0.2, -1.0, 0.4), both=1)),
         (1, ready),
     ], t)
 

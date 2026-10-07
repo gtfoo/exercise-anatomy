@@ -81,6 +81,31 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Racket strokes clear of the body, checked on the real mesh**
+      (2026-10-06). The owner: "they are still colliding, can you please do
+      detailed check and fix". The 10-04 fix had passed its own probe, so
+      the probe was wrong. A new check (~/.cache/ea-skin-check.py) poses
+      `figure-mixamo.glb` with the converted clip exactly as the site does,
+      fills the body solid on a 1 cm grid and reports every arm vertex 1 cm
+      or more inside it, naming where. It found up to 8.7 cm, from four
+      causes. (1) The designs aimed each bone as if it hung straight down
+      at rest; the figure's upper arm hangs 10 degrees off that and the
+      forearm 17, so the real elbow and wrist landed up to 9 cm from the
+      design. `rest_fix` corrects it; design and rig joints now agree
+      within 7 mm. (2) Capsules round the bones cannot see the skin of the
+      armpit, up to 14 cm off the axis, folding into the chest as the arm
+      crosses it. The design now skins a 6000-vertex sample of each arm
+      the way the rig does, by its own weights, against a signed distance
+      field of the torso (`arm_skin_clear`; `tools/myo/measure_torso.py`
+      writes `torso_sdf.npz` from `figure.glb`). (3) The head turns less
+      than the chest, so the chin met the arm in the two-handed finishes;
+      the head has its own field, carried by its own rotation. (4) Hands
+      met the other forearm on the handle; the left hand now joins above
+      the right and is kept off it (`hands_apart`). Where no elbow clears,
+      the hand is moved forward until one does. Both backhand finishes were
+      moved forward of the face. All six strokes: no frame of 65 has an
+      arm 1 cm into the body or the other arm.
+
 - [x] **Racket strokes clear of the body** (2026-10-04). The owner saw the
       arms passing through the body in the tennis strokes. A probe
       (~/.cache/ea-collide.py) found it in all six racket strokes, up to
