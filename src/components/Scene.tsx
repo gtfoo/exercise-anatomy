@@ -163,6 +163,31 @@ function BackWall({ z, height }: { z: number; height: number }) {
   );
 }
 
+/**
+ * A sit-in kayak round the figure and the water it floats in. Both are
+ * translucent and write no depth, and both draw after the figure, so they
+ * veil the legs and hips inside the hull and the blade under the surface but
+ * never hide a muscle.
+ */
+function Kayak({ seat, water }: { seat: number; water: number }) {
+  return (
+    <group renderOrder={10}>
+      <mesh position={[0, water - 0.02, 0.25]} scale={[0.32, water - seat + 0.16, 2.0]} renderOrder={10}>
+        <sphereGeometry args={[1, 48, 24]} />
+        <meshStandardMaterial color="#d9622b" roughness={0.6} transparent opacity={0.28} depthWrite={false} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh position={[0, water + 0.12, 0.08]} rotation-x={Math.PI / 2} scale={[0.27, 0.42, 1]} renderOrder={10}>
+        <torusGeometry args={[1, 0.05, 10, 48]} />
+        <meshStandardMaterial color="#2b2b2b" roughness={0.7} transparent opacity={0.5} depthWrite={false} />
+      </mesh>
+      <mesh position={[0, water, 0]} rotation-x={-Math.PI / 2} renderOrder={11}>
+        <planeGeometry args={[8, 8]} />
+        <meshStandardMaterial color="#3f86b5" roughness={0.3} transparent opacity={0.22} depthWrite={false} side={THREE.DoubleSide} />
+      </mesh>
+    </group>
+  );
+}
+
 function Scenery({ scenery }: { scenery: NonNullable<Exercise["scenery"]> }) {
   const plaster = useMemo(() => new THREE.MeshStandardMaterial({ color: "#d9d4cc", roughness: 0.95 }), []);
   if (scenery.kind === "wall") {
@@ -197,6 +222,7 @@ function Scenery({ scenery }: { scenery: NonNullable<Exercise["scenery"]> }) {
     );
   }
   if (scenery.kind === "backwall") return <BackWall z={scenery.z} height={scenery.height} />;
+  if (scenery.kind === "kayak") return <Kayak seat={scenery.seat} water={scenery.water} />;
   if (scenery.kind === "blocks") {
     const { height, spacing, z } = scenery;
     return (

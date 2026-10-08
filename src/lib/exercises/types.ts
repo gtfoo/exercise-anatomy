@@ -36,7 +36,7 @@ export type MuscleActivation = {
 export type Phase = { name: string; t0: number; t1: number };
 
 /** Switcher groups, in display order. */
-export const CATEGORIES = ["Atlas", "Legs and hips", "Push and pull", "Weights", "Core", "Cardio", "Racket sports", "Swimming", "Yoga", "Stretches"] as const;
+export const CATEGORIES = ["Atlas", "Legs and hips", "Push and pull", "Weights", "Core", "Cardio", "Racket sports", "Swimming", "Paddle sports", "Yoga", "Stretches"] as const;
 export type ExerciseCategory = (typeof CATEGORIES)[number];
 
 import type { MotionClip, MotionClip3D } from "@/lib/kinematics/types";
@@ -70,7 +70,7 @@ export type Exercise = {
   /** Half the distance between parallel bars, metres: where the hands rest. */
   barSpacing?: number;
   /** Equipment the viewer attaches to bones: to the hands, pedals to the feet, or a barbell drawn between the hands each frame. */
-  props?: "dumbbells" | "kettlebell" | "pedals" | "barbell" | "band" | "wheel" | "racket" | "paddle";
+  props?: "dumbbells" | "kettlebell" | "pedals" | "barbell" | "band" | "wheel" | "racket" | "paddle" | "kayak-paddle";
   /** Fixed scenery besides the floor: a wall to climb, a staircase, or a bicycle (drawn to tools/myo/designed_clip.py's BIKE_* constants). */
   scenery?:
     | {
@@ -91,7 +91,9 @@ export type Exercise = {
     /** Two yoga blocks on edge under the hands, `height` tall (designed_clip.py's BLOCK_H), at x = +-spacing and z. */
     | { kind: "blocks"; height: number; spacing: number; z: number }
     /** A wall behind the figure, its face at z (designed_clip.py's wall_angel_geometry), the slab behind it. */
-    | { kind: "backwall"; z: number; height: number };
+    | { kind: "backwall"; z: number; height: number }
+    /** A sit-in kayak round the figure, its seat at `seat`, and the water's surface at `water` (designed_clip.py's KAYAK_SEAT, KAYAK_WATER). */
+    | { kind: "kayak"; seat: number; water: number };
   /** Where the switcher lists it. */
   category: ExerciseCategory;
   /** Who captured the movement, when the clip came straight from a source file rather than through `motion`/`motion3d`. */

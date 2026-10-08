@@ -81,6 +81,47 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Kayaking** (2026-10-08), at the owner's request: the forward stroke in
+      a sit-in kayak, a new Paddle sports category. Designed
+      (`kayak_sample`): a stroke on the right then its mirror on the left, each
+      a catch by the feet with the trunk wound and the top hand at eye level, a
+      pull to the hip as the trunk unwinds, and an exit as the shaft rolls
+      over. The arms are solved by the racket strokes' whole-loop solver with
+      both hands on the shaft (`racket_flow` takes a body builder). The boat
+      floats with its seat 35 cm above the floor and the water at 50 cm, so
+      the blade never reaches the floor; hull and water are translucent and
+      draw after the figure, so they veil the legs but hide no muscle. The
+      paddle (`kayak-paddle`) is drawn between the hands each frame, its
+      blades square to the boat's travel. Activation is qualitative.
+
+- [x] **Racket strokes move smoothly** (2026-10-07). The owner: "the racket
+      swings are not uniform, they are moving in a weird way". A probe
+      (~/.cache/ea-smooth.py: each frame's elbow, wrist and racket head, and
+      each bone's turn from the frame before) found bones rolling up to 176
+      degrees in a frame, elbows leaping up to 35 cm and the racket head 95 cm.
+      Causes and fixes: each frame chose its own elbow and hand push in steps,
+      so neighbouring frames disagreed (the stroke is now solved as a whole
+      loop, `_racket_solve`: pushes spread over neighbouring frames, the elbow
+      path chosen over all frames at once, clearance a cost so a graze is
+      preferred to a leap); a bone's roll came from "keep its front toward the
+      chest's front", undefined when the arm points straight ahead, and taken
+      frame by frame (the same rolls, and the racket's for a holding hand, are
+      now carried continuously round the loop, `_continuous_x`, turning through
+      the poses where they are undefined; a hinge roll for the upper arm was
+      tried and creased the armpit on the rig, so it keeps its rest roll); the
+      racket head was splined as a point and
+      spun round the hand where it passed close (the racket's direction now
+      turns along arcs at a steady rate); a hand at full reach let the elbow
+      flip sides (targets kept within 97% of reach); and monotone splines
+      stopped every coordinate that turned back at a key, so the swing slowed
+      at contact and stopped dead after it (stroke keys now use `loop_spline`,
+      velocity carried through each key). The elbow candidates are judged with
+      the roll the final pose uses, and the built pose is checked again; a
+      frame still in the body has its hand pushed and the stroke re-solved. The
+      design's arm skin and torso are now weighted and labelled by the rig's own
+      skin weights (`measure_torso.py`): the design figure's weights put the
+      back of the armpit on the arm, the rig's on the spine.
+
 - [x] **Racket strokes clear of the body, checked on the real mesh**
       (2026-10-06). The owner: "they are still colliding, can you please do
       detailed check and fix". The 10-04 fix had passed its own probe, so

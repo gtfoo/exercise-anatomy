@@ -83,6 +83,56 @@ function attachBarbell(scene: THREE.Group): Barbell {
 }
 
 /**
+ * A kayak paddle: a 2.2 m shaft between the hands, placed each frame at their
+ * midpoint (the grip is centred) and pointed from one to the other, with a
+ * blade at each end whose face is kept square to the boat's travel (+z), as on
+ * an unfeathered paddle.
+ */
+function attachKayakPaddle(scene: THREE.Group): Barbell {
+  const shaftMat = new THREE.MeshStandardMaterial({ color: "#2b2b2b", roughness: 0.6, metalness: 0.2 });
+  const bladeMat = new THREE.MeshStandardMaterial({ color: "#e0a030", roughness: 0.7, side: THREE.DoubleSide });
+  const g = new THREE.Group();
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 2.2, 12), shaftMat);
+  shaft.rotation.z = Math.PI / 2;
+  g.add(shaft);
+  for (const x of [-0.88, 0.88]) {
+    const blade = new THREE.Mesh(new THREE.CircleGeometry(1, 32), bladeMat);
+    blade.scale.set(0.23, 0.085, 1); // 46 cm by 17 cm, its face the group's local z
+    blade.position.x = x;
+    g.add(blade);
+  }
+  scene.add(g);
+  const left = scene.getObjectByName("mixamorigLeftHand");
+  const right = scene.getObjectByName("mixamorigRightHand");
+  const L = new THREE.Vector3();
+  const R = new THREE.Vector3();
+  const x = new THREE.Vector3();
+  const y = new THREE.Vector3();
+  const z = new THREE.Vector3();
+  const basis = new THREE.Matrix4();
+  return {
+    update() {
+      if (!left || !right) return;
+      scene.updateMatrixWorld(true);
+      left.localToWorld(L.set(0, 0.08, 0.03)); // in the palm, as the barbell
+      right.localToWorld(R.set(0, 0.08, 0.03));
+      g.position.copy(L).add(R).multiplyScalar(0.5);
+      x.copy(R).sub(L).normalize();
+      z.set(0, 0, 1).addScaledVector(x, -x.z);
+      if (z.lengthSq() < 1e-6) z.set(0, 1, 0).addScaledVector(x, -x.y);
+      z.normalize();
+      y.crossVectors(z, x);
+      g.quaternion.setFromRotationMatrix(basis.makeBasis(x, y, z));
+    },
+    dispose() {
+      g.removeFromParent();
+      shaftMat.dispose();
+      bladeMat.dispose();
+    },
+  };
+}
+
+/**
  * A resistance band looped round both thighs just above the knees: a
  * flattened ring placed each frame between the two knees and pointed from
  * one to the other, so it stretches as the feet step apart.
@@ -273,7 +323,7 @@ function placeHolds(group: THREE.Group, holds: Hold[], front: number): () => voi
  * Returns the function that removes it again.
  */
 function attachProps(scene: THREE.Group, props: Exercise["props"]): () => void {
-  if (!props || props === "barbell" || props === "band" || props === "wheel") return () => {}; // placed per frame, see attachBarbell, attachBand and attachWheel
+  if (!props || props === "barbell" || props === "band" || props === "wheel" || props === "kayak-paddle") return () => {}; // placed per frame, see attachBarbell, attachBand, attachWheel and attachKayakPaddle
   const steel = new THREE.MeshStandardMaterial({
     color: "#4a4744",
     roughness: 0.5,
@@ -423,7 +473,16 @@ export default function NativeFigure({ exercise }: { exercise: Exercise }) {
     action.setLoop(THREE.LoopRepeat, Infinity);
     action.play();
     action.paused = true; // the transport drives time, not the clock
-    const barbell = exercise.props === "barbell" ? attachBarbell(scene) : exercise.props === "band" ? attachBand(scene) : exercise.props === "wheel" ? attachWheel(scene) : undefined;
+    const barbell =
+      exercise.props === "barbell"
+        ? attachBarbell(scene)
+        : exercise.props === "band"
+          ? attachBand(scene)
+          : exercise.props === "wheel"
+            ? attachWheel(scene)
+            : exercise.props === "kayak-paddle"
+              ? attachKayakPaddle(scene)
+              : undefined;
     const holds = wall?.holds && holdsGroup.current ? placeHolds(holdsGroup.current, findHolds(scene, action, mixer, clip.duration), wall.front) : () => {};
     live.current = {
       materials,

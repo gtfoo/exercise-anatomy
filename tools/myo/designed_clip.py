@@ -1491,7 +1491,8 @@ SHOULDER_SKIP = 0.12  # the top of the upper arm is the deltoid joining the shou
 SKIN_TOLERANCE = 0.005  # a resting arm's skin may press this far into the side
 FOREARM_MARGIN = 0.01  # how far the forearm and hand are kept off the body
 BELLY_TOP = 1.2  # the height (at rest) up to which the belly turns less than the chest
-FOREARM_SKIN = 0.035  # the forearm's skin from its bone, for keeping the other hand off it
+FOREARM_SKIN = 0.045  # the forearm's skin from its bone, for keeping the other hand off it (at 3.5 cm the rig
+# still showed the right fingers 1.7 cm into the left forearm as the hands met on a paddle, 2026-10-08)
 TORSO_FIELD, HEAD_FIELD, FIELD_VOX, NECK_J, HEAD_J, ARM_SKIN = _load_torso()
 FOREARM_RADIUS = 0.035  # for keeping the other hand off the forearm
 
@@ -1521,8 +1522,8 @@ def torso_push_front(p, pelvis_pos, qp, qs, radius):
     if torso_clear(pr, radius) >= 0:
         return p
     pr = pr.copy()
-    for _ in range(200):
-        pr[2] += 0.005
+    for _ in range(500):
+        pr[2] += 0.002
         if torso_clear(pr, radius) >= 0:
             break
     return back(pr)
@@ -1645,12 +1646,10 @@ def elbow_clear_of_torso(shoulder, hand, bend, clear_fn, avoid=None):
     return (best_clear or best_any)[1], wrist
 
 
-def racket_stage(yaw_deg, lean_deg, thigh_deg, shin_deg, r_hand, l_hand, hip_yaw=0.4, r_bend=(-0.6, -1.0, -0.4), l_bend=(0.6, -1.0, -0.4), head=None, both=False):
-    """One stage of a stroke, in the body's frame (x left, y up, z toward the net): the trunk's yaw and lean,
-    the knee bend, each hand's offset from its shoulder, and `head`, where the racket head is (offset from the
-    right shoulder). The racket runs out of the hand along the hand's palm axis, so the hand is cocked at the
-    wrist to lay it toward the head, up to WRIST_MAX. With `both` the left hand holds the handle just above the
-    right. Every hand is kept in front of the torso and every elbow placed so the arm clears it."""
+def _racket_body(yaw_deg, lean_deg, thigh_deg, shin_deg, r_hand, l_hand, hip_yaw=0.4, r_bend=(-0.6, -1.0, -0.4), l_bend=(0.6, -1.0, -0.4), rdir=None, both=0.0, **_):
+    """One stage of a stroke without its arms, in the body's frame (x left, y up, z toward the net): the trunk's
+    yaw and lean, the knee bend, each hand's offset from its shoulder, and `rdir`, the way the racket points
+    from the hand. With `both` the left hand holds the handle just above the right."""
     q = all_ident()
     yaw = q_axis([0, 1, 0], yaw_deg * DEG)
     trunk = qmul(yaw, rx(lean_deg * DEG))
@@ -1664,100 +1663,430 @@ def racket_stage(yaw_deg, lean_deg, thigh_deg, shin_deg, r_hand, l_hand, hip_yaw
     for S, sgn in (("L", 1), ("R", -1)):
         side = q_axis([0, 0, 1], sgn * ab)
         q["thigh." + S], q["shin." + S], q["foot." + S] = qmul(side, rx(thigh_deg * DEG)), qmul(side, rx(shin_deg * DEG)), IDENT
-    front = q_rot(yaw, np.array([0.0, 0.0, 1.0]))
-    r_shoulder = shoulder_from(pelvis_pos, trunk, "r")
-    head_w = r_shoulder + q_rot(yaw, np.asarray(head, dtype=float)) if head is not None else None
-    hands = {}
-    hands["R"] = torso_push_front(r_shoulder + q_rot(yaw, np.asarray(r_hand, dtype=float)), pelvis_pos, pelvis, trunk, 0.04)
-    l_shoulder = shoulder_from(pelvis_pos, trunk, "l")
-    hands["L"] = l_shoulder + q_rot(yaw, np.asarray(l_hand, dtype=float))
-    if both > 0 and head_w is not None:
-        rr = head_w - hands["R"]
-        on_handle = hands["R"] + rr / max(float(np.linalg.norm(rr)), 1e-9) * 0.11  # the top hand on the handle, a hand's width up
-        hands["L"] = hands["L"] + (on_handle - hands["L"]) * float(both)
-    hands["L"] = torso_push_front(hands["L"], pelvis_pos, pelvis, trunk, 0.04)
-    def solve(S, shoulder, bend, holds, target, avoid):
-        """One arm to a hand target: the elbow placed clear of the torso (and of `avoid`), the forearm along
-        elbow-to-hand, the hand cocked toward the racket head when it holds the racket; and where the hand's
-        own points (palm, knuckles, fingers) land."""
-        s = S.lower()
-        fix_up, fix_fo = rest_fix("shoulder." + s, "elbow." + s), rest_fix("elbow." + s, "wrist." + s)
+    sh = {"R": shoulder_from(pelvis_pos, trunk, "r"), "L": shoulder_from(pelvis_pos, trunk, "l")}
+    return {"q": q, "root": root, "pelvis_pos": pelvis_pos, "pelvis": pelvis, "trunk": trunk, "front": q_rot(yaw, np.array([0.0, 0.0, 1.0])),
+            "sh": sh, "r": q_rot(yaw, np.asarray(rdir, dtype=float) / float(np.linalg.norm(rdir))),
+            "hand_R": sh["R"] + q_rot(yaw, np.asarray(r_hand, dtype=float)), "hand_L": sh["L"] + q_rot(yaw, np.asarray(l_hand, dtype=float)),
+            "bend": {"R": q_rot(yaw, np.asarray(r_bend, dtype=float)), "L": q_rot(yaw, np.asarray(l_bend, dtype=float))},
+            # how much the left hand holds the racket: 0 free, 1 on the handle, eased in between
+            "both": float(both), "l_holds": float(np.clip((float(both) - 0.3) / 0.4, 0.0, 1.0)) ** 2 * (3 - 2 * float(np.clip((float(both) - 0.3) / 0.4, 0.0, 1.0)))}
 
-        def clear(elbow, wrist):
-            q_up = qmul(aim(elbow - shoulder, front), fix_up)
-            q_fo = qmul(aim(wrist - elbow, front), fix_fo)
-            return arm_skin_clear(s, q_up, q_fo, q_fo, shoulder, pelvis_pos, pelvis, trunk, q["neck"], q["head"], parts=(1, 2))
 
-        elbow, hand = elbow_clear_of_torso(shoulder, target, q_rot(yaw, np.asarray(bend, dtype=float)), clear, avoid)
-        out = {"upper_arm." + S: qmul(aim(elbow - shoulder, front), fix_up)}
-        d = hand - elbow
-        d = d / max(float(np.linalg.norm(d)), 1e-9)
-        h = d
-        if holds and head_w is not None:
-            r = head_w - hand
-            r = r / max(float(np.linalg.norm(r)), 1e-9)
-            h = d - np.dot(d, r) * r
-            if float(np.linalg.norm(h)) < 1e-4:
-                h = d
-            h = h / float(np.linalg.norm(h))
-            ang = math.acos(max(-1.0, min(1.0, float(np.dot(d, h)))))
-            if ang > WRIST_MAX:
-                axis = np.cross(d, h)
-                axis = axis / max(float(np.linalg.norm(axis)), 1e-9)
-                h = q_rot(q_axis(axis, WRIST_MAX), d)
-            out["forearm." + S] = qmul(frame_q(d, -r), fix_fo)
-            out["hand." + S] = out["fingers." + S] = frame_q(h, -r)  # left as designed: the racket runs along it
-        else:
-            out["forearm." + S] = qmul(aim(d, front), fix_fo)
-            out["hand." + S] = out["fingers." + S] = aim(d, front)
-        mcp = hand + q_rot(out["hand." + S], rig["mcp." + s] - rig["wrist." + s])
-        u = (mcp - hand) / max(float(np.linalg.norm(mcp - hand)), 1e-9)
-        return out, [hand, (hand + mcp) / 2, mcp, mcp + u * 0.045, mcp + u * 0.09]  # to the fingertips
+def _cyc_smooth(a, sigma, w=None):
+    """Gaussian smoothing of the rows of `a` (frames by values) around the loop, weighted by `w`."""
+    a = np.asarray(a, dtype=float).reshape(len(a), -1)
+    w = np.ones(len(a)) if w is None else np.asarray(w, dtype=float)
+    r = max(1, int(math.ceil(3 * sigma)))
+    num, den = np.zeros_like(a), np.zeros(len(a))
+    for o in range(-r, r + 1):
+        k = math.exp(-0.5 * (o / sigma) ** 2)
+        num += k * np.roll(a * w[:, None], -o, axis=0)
+        den += k * np.roll(w, -o)
+    return num / np.maximum(den, 1e-12)[:, None]
 
-    def arm_clear(S, shoulder, got):
-        """The arm's clearance from the body: the upper arm's skin may press SKIN_TOLERANCE in (its armpit folds
-        into the side however the arm moves); the forearm and hand keep FOREARM_MARGIN off (the rig's skin sits a
-        little deeper than this one's, and the sample of it is about 1 cm apart)."""
-        s = S.lower()
-        a = (got["upper_arm." + S], got["forearm." + S], got["hand." + S], shoulder, pelvis_pos, pelvis, trunk, q["neck"], q["head"])
-        return min(arm_skin_clear(s, *a, parts=(1,)) + SKIN_TOLERANCE, arm_skin_clear(s, *a, parts=(2, 3)) - FOREARM_MARGIN)
 
-    def hand_skin(S, shoulder, got):
-        return arm_skin_world(S.lower(), got["upper_arm." + S], got["forearm." + S], got["hand." + S], shoulder, pelvis_pos, pelvis, trunk, parts=(3,))
+def _cyc_envelope(a, radius):
+    """The running maximum around the loop, so a correction a frame needs is in place before and after it."""
+    return np.max([np.roll(a, o, axis=0) for o in range(-radius, radius + 1)], axis=0)
 
-    # Where no elbow keeps the arm's skin out of the body (the hand at the belly, the fingers reaching past it,
-    # an arm across the chest or the chin), the hand is moved forward until one does (owner, 2026-10-06: the
-    # forehand's backswing took the fingers through the belly). In the two-handed strokes the left hand comes to
-    # the handle above the right, and is moved up the handle until neither hand is in the other's forearm.
-    shoulders = {"R": (r_shoulder, r_bend, True), "L": (l_shoulder, l_bend, float(both) >= 0.5)}
-    r_pts, r_skin = [], None
-    for S in ("R", "L"):
-        shoulder, bend, holds = shoulders[S]
-        target = hands[S]
-        up = None
-        if S == "L" and head_w is not None:
-            up = head_w - r_pts[0]
-            up = up / max(float(np.linalg.norm(up)), 1e-9)
-            for _ in range(30):
-                if min(float(np.linalg.norm(target - p)) for p in r_pts) >= 0.10:
-                    break
-                target = target + up * 0.01
+
+def _cock(d, r):
+    """The hand's direction for a forearm along d holding a racket along r: the racket runs out of the palm, so
+    the hand lies across the racket, cocked from the forearm line by at most WRIST_MAX."""
+    h = d - np.dot(d, r) * r
+    n = float(np.linalg.norm(h))
+    h = d if n < 1e-6 else h / n
+    ang = math.acos(max(-1.0, min(1.0, float(np.dot(d, h)))))
+    if ang > WRIST_MAX:
+        axis = np.cross(d, h)
+        axis = axis / max(float(np.linalg.norm(axis)), 1e-9)
+        h = q_rot(q_axis(axis, WRIST_MAX), d)
+    return h
+
+
+def _frame_from(y_down, x):
+    """The rotation taking a bone's rest frame (down along -y) to point along y_down with its +x along x."""
+    y = -np.asarray(y_down, dtype=float)
+    y = y / float(np.linalg.norm(y))
+    x = np.asarray(x, dtype=float) - np.dot(x, y) * y
+    x = x / max(float(np.linalg.norm(x)), 1e-9)
+    return q_from_matrix(np.column_stack([x, y, np.cross(x, y)]))
+
+
+def _continuous_x(dirs, want, conf, sigma=1.0, want_b=None, blend=None):
+    """Each frame's x axis for a bone pointing along dirs[i], as near the wanted x as the neighbours allow: the
+    wanted angle about the bone, measured from a reference carried along the bone without twist (and closed
+    round the loop), smoothed with weights `conf`. With `want_b` and `blend`, the wanted angle is eased from
+    want's to want_b's by blend, along the arc that changes least from frame to frame. A bone's roll is undefined in some poses (an arm pointing
+    straight at the chest's front, a forearm along the racket), and taking it frame by frame flipped it by up
+    to 180 degrees between two frames (owner, 2026-10-07: the swings moved in a weird way)."""
+    n = len(dirs)
+    y = np.array([-v / float(np.linalg.norm(v)) for v in dirs])
+
+    def carry(x, y0, y1):
+        axis = np.cross(y0, y1)
+        sn = float(np.linalg.norm(axis))
+        if sn > 1e-9:
+            x = q_rot(q_axis(axis / sn, math.atan2(sn, float(np.dot(y0, y1)))), x)
+        x = x - np.dot(x, y1) * y1
+        return x / float(np.linalg.norm(x))
+
+    x0 = want[0] - np.dot(want[0], y[0]) * y[0]
+    if float(np.linalg.norm(x0)) < 1e-6:
+        x0 = np.cross(y[0], [0.0, 0.0, 1.0]) if abs(y[0][2]) < 0.9 else np.cross(y[0], [1.0, 0.0, 0.0])
+    ref = [x0 / float(np.linalg.norm(x0))]
+    for i in range(1, n):
+        ref.append(carry(ref[-1], y[i - 1], y[i]))
+    back = carry(ref[-1], y[-1], y[0])
+    hol = math.atan2(float(np.dot(np.cross(ref[0], back), y[0])), float(np.dot(ref[0], back)))
+    ref = [q_rot(q_axis(y[i], -hol * i / n), ref[i]) for i in range(n)]
+    def angles(wants):
+        ang, cs = np.zeros(n), np.zeros(n)
+        for i in range(n):
+            x = wants[i] - np.dot(wants[i], y[i]) * y[i]
+            cs[i] = float(np.linalg.norm(x))
+            if cs[i] > 1e-9:
+                x = x / cs[i]
+                ang[i] = math.atan2(float(np.dot(np.cross(ref[i], x), y[i])), float(np.dot(ref[i], x)))
+        return ang, cs
+
+    ang, cs = angles(want)
+    if want_b is not None:
+        ang_b, cs_b = angles(want_b)
+        diff = np.unwrap(ang_b - ang)
+        bl = np.asarray(blend, dtype=float)
+        ang = ang + bl * diff
+        cs = (1 - bl) * cs + bl * cs_b
+    sm = _smooth_angles(ang, cs * np.asarray(conf, dtype=float), sigma)
+    return [q_rot(q_axis(y[i], sm[i]), ref[i]) for i in range(n)]
+
+
+def _smooth_angles(ang, w, sigma):
+    """Angles round the loop, smoothed with weights w: unwrapped through the frames that are sure of theirs
+    (w at least a fifth of the most), filled in between them, then smoothed. Where an angle is undefined for a
+    few frames and comes back half a turn away, it turns through those frames instead of flipping in one."""
+    n = len(ang)
+    w = np.asarray(w, dtype=float)
+    sure = np.flatnonzero(w >= 0.2 * max(float(w.max()), 1e-9))
+    if len(sure) == 0:
+        return np.zeros(n)
+    steps = [math.atan2(math.sin(ang[sure[(k + 1) % len(sure)]] - ang[sure[k]]), math.cos(ang[sure[(k + 1) % len(sure)]] - ang[sure[k]])) for k in range(len(sure))]
+    unw = np.concatenate([[ang[sure[0]]], ang[sure[0]] + np.cumsum(steps[:-1])]) if len(sure) > 1 else np.array([ang[sure[0]]])
+    wind = float(sum(steps)) if len(sure) > 1 else 0.0  # whole turns round the loop
+    flat = unw - wind * sure / n
+    xs = np.concatenate([sure - n, sure, sure + n])
+    full = np.interp(np.arange(n), xs, np.concatenate([flat, flat, flat]))
+    sm = _cyc_smooth(full, sigma, w + 0.05 * max(float(w.max()), 1e-9))[:, 0]
+    return sm + wind * np.arange(n) / n
+
+
+def _front_x(v, front):
+    """A bone's x axis with its front (+z) kept toward the chest's front, as at rest; and how sure that is (it
+    is undefined for a bone pointing straight along the front)."""
+    y = -v / float(np.linalg.norm(v))
+    z = front - np.dot(front, y) * y
+    c = float(np.linalg.norm(z))
+    if c < 1e-6:
+        z = np.array([0.0, 1.0, 0.0]) - y[1] * y
+    z = z / float(np.linalg.norm(z))
+    return np.cross(y, z), c
+
+
+def _arm_q(S, shoulder, elbow, wrist, r, holds, front):
+    """An arm's bone rotations for testing an elbow, rolled as the final pose rolls them (_racket_arm_q): the
+    upper arm (and a free forearm and hand) with its front kept toward the chest's front, a holding forearm and
+    hand by the racket. The upper arm's roll decides how the armpit's skin folds: rolled as a hinge instead, a
+    serve's arm swung back creased 3 cm into the side on the rig (2026-10-07), so it keeps its rest roll."""
+    s = S.lower()
+    d = (wrist - elbow) / max(float(np.linalg.norm(wrist - elbow)), 1e-9)
+    q_up = qmul(_frame_from(elbow - shoulder, _front_x(elbow - shoulder, front)[0]), rest_fix("shoulder." + s, "elbow." + s))
+    if holds >= 0.5:
+        h = holds * _cock(d, r) + (1 - holds) * d
+        q_fo = qmul(_frame_from(d, -r), rest_fix("elbow." + s, "wrist." + s))
+        q_ha = _frame_from(h / float(np.linalg.norm(h)), -r)
+    else:
+        xf = _front_x(d, front)[0]
+        q_fo = qmul(_frame_from(d, xf), rest_fix("elbow." + s, "wrist." + s))
+        q_ha = _frame_from(d, xf)
+    return q_up, q_fo, q_ha
+
+
+ELBOW_STEPS = 72  # elbow positions tried on its circle, 5 degrees apart
+CORRIDOR = 8  # a hand is pushed forward until this many elbow positions (40 degrees of its circle) clear the
+# body: with one or two clear, the elbow was forced through a gap far from where it had been a frame before
+REACH = 0.97  # the hand kept within this much of the arm's length: at full reach the elbow's circle shrinks to a
+# point, and the elbow came out of it on the other side, the upper arm rolled half a turn in a frame
+
+
+def _elbow_table(S, f, target, r_skin=None):
+    """For one arm at one frame: the elbow on each of ELBOW_STEPS positions round its circle (starting at the
+    intended bend), the wrist, and each one's clearance (the upper arm's skin may press SKIN_TOLERANCE into the
+    body, where its armpit folds; the forearm and hand keep FOREARM_MARGIN off it, and off the other forearm)."""
+    s = S.lower()
+    shoulder = f["sh"][S]
+    d = target - shoulder
+    n = max(float(np.linalg.norm(d)), 1e-9)
+    u = d / n
+    dist = min(n, REACH * (L_UPPER + L_FORE))
+    a = (L_UPPER ** 2 - L_FORE ** 2 + dist ** 2) / (2 * dist)
+    h = math.sqrt(max(L_UPPER ** 2 - a * a, 0.0))
+    c, wrist = shoulder + u * a, shoulder + u * dist
+    e1 = f["bend"][S] - np.dot(f["bend"][S], u) * u
+    if float(np.linalg.norm(e1)) < 1e-6:
+        e1 = np.cross(u, [0.0, 0.0, 1.0])
+    e1 = e1 / float(np.linalg.norm(e1))
+    e2 = np.cross(u, e1)
+    holds = 1.0 if S == "R" else f["l_holds"]
+    r = f["r"]
+    elbows, clear, line, apart = [], [], [], []
+    args = (f["pelvis_pos"], f["pelvis"], f["trunk"], f["q"]["neck"], f["q"]["head"])
+    for k in range(ELBOW_STEPS):
+        th = 2 * math.pi * k / ELBOW_STEPS
+        elbow = c + h * (math.cos(th) * e1 + math.sin(th) * e2)
+        qa = _arm_q(S, shoulder, elbow, wrist, r, holds, f["front"])
+        clr = min(arm_skin_clear(s, *qa, shoulder, *args[:3], args[3], args[4], parts=(1,)) + SKIN_TOLERANCE,
+                  arm_skin_clear(s, *qa, shoulder, *args[:3], args[3], args[4], parts=(2, 3)) - FOREARM_MARGIN)
+        ap = 1.0
+        if r_skin is not None:
+            mine = arm_skin_world(s, *qa, shoulder, f["pelvis_pos"], f["pelvis"], f["trunk"], parts=(3,))
+            ap = hands_apart(mine, r_skin) - SKIN_TOLERANCE
+        apart.append(ap)
+        clr = min(clr, ap)
+        elbows.append(elbow)
+        clear.append(clr)
+        # how near the forearm lies to the racket's line: the racket leaves the palm across the hand, so a
+        # racket along the forearm wants the wrist bent 90 degrees, and as the forearm passes that line the
+        # hand swaps sides (the hand flipped over in a frame); kept off by the elbow's choice
+        dd = (wrist - elbow) / max(float(np.linalg.norm(wrist - elbow)), 1e-9)
+        line.append(holds * max(0.0, abs(float(np.dot(dd, r))) - math.cos(40 * DEG)) / (1 - math.cos(40 * DEG)))
+    return np.array(elbows), wrist, np.array(clear), np.array(line), np.array(apart)
+
+
+def _elbow_path(tables):
+    """The elbow at every frame, chosen over the whole loop at once: clear of the body, as near the intended bend
+    as that allows, and moving as little as possible from frame to frame (choosing each frame's elbow on its own
+    let it leap across its circle between frames). Clearance is a cost, not a wall: a centimetre within the
+    tolerances costs less than a leap of 10 cm, which a wall had forced wherever the clear region moved."""
+    n = len(tables)
+    E = [t[0] for t in tables]
+    unary = []
+    for elbows, _, clear, line, _ in tables:
+        dev = 1 - np.cos(2 * np.pi * np.arange(ELBOW_STEPS) / ELBOW_STEPS)
+        pen = np.maximum(0.0, -clear) / 0.01  # cm into the body (past the tolerances)
+        unary.append(3.0 * dev + 8.0 * line + 30.0 * np.minimum(pen, 1.0) + 400.0 * np.maximum(0.0, pen - 1.0))
+    order = list(range(n)) * 3  # the loop unrolled three times; the middle pass is kept
+    cost = unary[order[0]].copy()
+    back = []
+    for a, b in zip(order[:-1], order[1:]):
+        dist = np.sqrt(np.sum((E[a][:, None, :] - E[b][None, :, :]) ** 2, axis=2))
+        pair = (dist / 0.04) ** 2 + (np.maximum(0.0, dist - 0.07) / 0.01) ** 2  # a leap costs more than a graze
+        tot = cost[:, None] + pair
+        arg = np.argmin(tot, axis=0)
+        back.append(arg)
+        cost = tot[arg, np.arange(ELBOW_STEPS)] + unary[b]
+    k = int(np.argmin(cost))
+    path = [k]
+    for arg in reversed(back):
+        k = int(arg[k])
+        path.append(k)
+    path = path[::-1]
+    return [path[n + i] for i in range(n)]
+
+
+def _smooth_elbows(tables, path, sigma=1.2):
+    """The chosen elbows, smoothed over the loop and put back on each frame's circle; a frame keeps its chosen
+    elbow where the smoothed one would be less clear. The elbow's clear region can move fast (the hand swinging
+    behind the hip), and following it exactly left a one-frame hitch."""
+    n = len(tables)
+    E = np.array([tables[i][0][path[i]] for i in range(n)])
+    Es = _cyc_smooth(E, sigma)
+    out = []
+    for i in range(n):
+        el, _, clear = tables[i][0], tables[i][1], tables[i][2]
+        c = el.mean(axis=0)
+        rad = float(np.linalg.norm(el[0] - c))
+        nrm = np.cross(el[0] - c, el[ELBOW_STEPS // 4] - c)
+        nrm = nrm / max(float(np.linalg.norm(nrm)), 1e-12)
+        v = Es[i] - c
+        v = v - np.dot(v, nrm) * nrm
+        if rad < 1e-6 or float(np.linalg.norm(v)) < 1e-9:
+            out.append(E[i])
+            continue
+        p = c + rad * v / float(np.linalg.norm(v))
+        # its clearance, between the two candidates either side of it
+        ang = (np.arctan2(np.dot(np.cross(el[0] - c, p - c), nrm), np.dot(el[0] - c, p - c)) % (2 * np.pi)) / (2 * np.pi) * ELBOW_STEPS
+        k0 = int(math.floor(ang)) % ELBOW_STEPS
+        k1 = (k0 + 1) % ELBOW_STEPS
+        fr = ang - math.floor(ang)
+        clr = clear[k0] * (1 - fr) + clear[k1] * fr
+        out.append(p if clr >= min(0.0, float(clear[path[i]])) else E[i])
+    return out
+
+
+def _racket_solve(keys, body=None, params=None):
+    """A whole stroke, solved over its loop of N frames at once so that it moves smoothly (_racket_solve_once),
+    then checked as built: a frame whose arm still enters the body (or the other arm) has its hand pushed further
+    and the stroke is solved again, up to three times. `body` builds a frame from `params(keys, t)` (a racket
+    stroke's own by default; the kayak stroke has its own)."""
+    body, params = body or _racket_body, params or _racket_params
+    frames = [body(**params(keys, i / N)) for i in range(N)]
+    extra = {"R": np.zeros(N), "L": np.zeros(N), "up": np.zeros(N)}
+    for _ in range(4):
+        out, bad = _racket_solve_once(frames, extra)
+        if not bad:
+            break
+        for S, i, which in bad:
+            extra[which][i] += 0.02
+    RACKET_DEBUG[repr(keys)] = RACKET_DEBUG.pop("last")
+    return out
+
+
+def _arm_clear_final(S, f, q, r_skin=None):
+    """How far a built arm is from the body (and, for the left, the right hand from its forearm and back),
+    with the tolerances the elbow choice uses; and which of the two it was."""
+    s = S.lower()
+    a = (q["upper_arm." + S], q["forearm." + S], q["hand." + S], f["sh"][S], f["pelvis_pos"], f["pelvis"], f["trunk"], f["q"]["neck"], f["q"]["head"])
+    body = min(arm_skin_clear(s, *a, parts=(1,)) + SKIN_TOLERANCE, arm_skin_clear(s, *a, parts=(2, 3)) - FOREARM_MARGIN)
+    if r_skin is None:
+        return body, "body"
+    ap = hands_apart(arm_skin_world(s, *a[:7], parts=(3,)), r_skin) - SKIN_TOLERANCE
+    return (body, "body") if body <= ap else (ap, "apart")
+
+
+def _racket_solve_once(frames, extra):
+    """One solve of a stroke: the hand targets kept in front of the torso and pushed forward (the left hand
+    also up the handle, above the right) where too few elbow positions clear the body (CORRIDOR), plus
+    `extra`, the pushes spread over the neighbouring frames; the elbow path chosen over all frames
+    (_elbow_path); each bone's roll made continuous (_racket_arm_q). Returns the frames and the ones that,
+    as built, still have an arm in the body."""
+    fronts = [f["front"] for f in frames]
+    tR = [torso_push_front(f["hand_R"], f["pelvis_pos"], f["pelvis"], f["trunk"], 0.04) for f in frames]
+    pushR = np.zeros(N)
+    for i, f in enumerate(frames):
         best = None
         for _ in range(16):
-            got, pts = solve(S, shoulder, bend, holds, target, [(p, 0.045) for p in r_pts] if S == "L" else None)  # a hand is 9 cm across
-            clr = arm_clear(S, shoulder, got)
-            apart = hands_apart(hand_skin(S, shoulder, got), r_skin) if S == "L" else 1.0
-            score = min(clr, apart)
-            if best is None or score > best[0]:
-                best = (score, got, pts)
-            if score >= 0:
+            clr = _elbow_table("R", f, tR[i] + f["front"] * pushR[i])[2]
+            if (clr >= 0).sum() >= CORRIDOR:
                 break
-            target = target + (up * 0.01 if apart < clr and up is not None else front * 0.01)
-        _, got, pts = best
-        q.update(got)
-        if S == "R":
-            r_pts, r_skin = pts, hand_skin(S, shoulder, got)
-    return {"root": [round(float(v), 4) for v in root], "q": q}
+            if best is not None and np.sort(clr)[-CORRIDOR] < best + 0.002:
+                pushR[i] -= 0.01  # pushing further did not help: an arm at the side, not one in front of the body
+                break
+            best = float(np.sort(clr)[-CORRIDOR])
+            pushR[i] += 0.01
+    pushR = _cyc_smooth(_cyc_envelope(pushR + extra["R"], 3), 1.5)[:, 0]
+    tR = [tR[i] + fronts[i] * pushR[i] for i in range(N)]
+    tabR = [_elbow_table("R", frames[i], tR[i]) for i in range(N)]
+    pathR = _elbow_path(tabR)
+    elR = _smooth_elbows(tabR, pathR)
+    wrR = [tabR[i][1] for i in range(N)]
+    qR = _racket_arm_q("R", frames, elR, wrR, [1.0] * N)
+    r_skin = [arm_skin_world("r", qR[i]["upper_arm.R"], qR[i]["forearm.R"], qR[i]["hand.R"], frames[i]["sh"]["R"], frames[i]["pelvis_pos"], frames[i]["pelvis"], frames[i]["trunk"], parts=(3,)) for i in range(N)]
+    r_full = [(r_skin[i][0], r_skin[i][1], r_skin[i][2]) for i in range(N)]
+
+    tL, upL, pushL = [], np.zeros(N), np.zeros(N)
+    for i, f in enumerate(frames):
+        up = f["r"]
+        on_handle = wrR[i] + up * 0.11  # the top hand on the handle, a hand's width up
+        t = f["hand_L"] + (on_handle - f["hand_L"]) * f["both"]
+        tL.append(torso_push_front(t, f["pelvis_pos"], f["pelvis"], f["trunk"], 0.04))
+        hand_pts = r_skin[i][0]
+        while f["both"] > 0 and upL[i] < 0.3 and float(np.linalg.norm(hand_pts - (tL[i] + up * upL[i]), axis=1).min()) < 0.05:
+            upL[i] += 0.005  # the left hand comes to the handle above the right, never through it
+        best, last = None, None
+        for _ in range(24):
+            tab = _elbow_table("L", f, tL[i] + up * upL[i] + f["front"] * pushL[i], r_full[i])
+            if (tab[2] >= 0).sum() >= CORRIDOR:
+                break
+            score = float(np.sort(tab[2])[-CORRIDOR])
+            if best is not None and score < best + 0.002:
+                if last == "up":
+                    upL[i] -= 0.01
+                else:
+                    pushL[i] -= 0.01
+                break  # it did not help
+            best = score
+            # where the hands are what stops it (the right hand against the left forearm), the left hand goes
+            # further up the handle; where the body is, forward
+            if f["both"] > 0 and (tab[4] >= 0).sum() < CORRIDOR and upL[i] < 0.12:
+                upL[i] += 0.01
+                last = "up"
+            else:
+                pushL[i] += 0.01
+                last = "fwd"
+    upL = _cyc_smooth(_cyc_envelope(upL + extra["up"], 3), 1.5)[:, 0]
+    pushL = _cyc_smooth(_cyc_envelope(pushL + extra["L"], 3), 1.5)[:, 0]
+    for i, f in enumerate(frames):
+        tL[i] = tL[i] + f["r"] * upL[i] + f["front"] * pushL[i]
+    tabL = [_elbow_table("L", frames[i], tL[i], r_full[i]) for i in range(N)]
+    pathL = _elbow_path(tabL)
+    qL = _racket_arm_q("L", frames, _smooth_elbows(tabL, pathL), [tabL[i][1] for i in range(N)], [f["l_holds"] for f in frames])
+    out, bad = [], []
+    for i, f in enumerate(frames):
+        q = dict(f["q"])
+        q.update(qR[i])
+        q.update(qL[i])
+        out.append({"root": [round(float(v), 4) for v in f["root"]], "q": q})
+        cR, _ = _arm_clear_final("R", f, q)
+        if cR < -0.005:
+            bad.append(("R", i, "R"))
+        cL, why = _arm_clear_final("L", f, q, r_full[i])
+        if cL < -0.005:
+            bad.append(("L", i, "up" if why == "apart" and f["both"] > 0 else "L"))
+    RACKET_DEBUG["last"] = {"pushR": pushR, "pushL": pushL, "upL": upL, "tabR": tabR, "pathR": pathR, "tabL": tabL, "pathL": pathL, "tL": tL, "tR": tR, "bad": bad}
+    return out, bad
+
+
+RACKET_DEBUG = {}  # the last solve's working, for probes
+
+
+def _racket_arm_q(S, frames, elbows, wrists, holds):
+    """An arm's bone rotations over the loop from its joint positions: the upper arm keeping its rest roll
+    (front toward the chest's front), the forearm and hand rolled by the racket when the hand holds it (the
+    racket runs out of the palm) and like the upper arm when free, every roll continuous."""
+    s = S.lower()
+    n = len(frames)
+    sh = [f["sh"][S] for f in frames]
+    up = [elbows[i] - sh[i] for i in range(n)]
+    d = [(wrists[i] - elbows[i]) / max(float(np.linalg.norm(wrists[i] - elbows[i])), 1e-9) for i in range(n)]
+    r = [f["r"] for f in frames]
+    # the upper arm keeps its rest roll, front toward the chest's front (_arm_q says why), carried through the
+    # poses where that is undefined
+    want_x, conf = [], []
+    for i in range(n):
+        x, c = _front_x(up[i], frames[i]["front"])
+        want_x.append(x)
+        conf.append(c)
+    x_up = _continuous_x(up, want_x, conf)
+    free_x = [_front_x(d[i], frames[i]["front"]) for i in range(n)]
+    # the hand's direction: across the racket when it holds it, along the forearm when free, eased between
+    # which way round the racket the hand lies: toward the forearm, but where the forearm runs along the
+    # racket that is undefined, so it is followed round continuously (it had flipped to the other side)
+    across, conf_a = [], []
+    for i in range(n):
+        h = d[i] - np.dot(d[i], r[i]) * r[i]
+        across.append(h)
+        conf_a.append(float(np.linalg.norm(h)))
+    around = _continuous_x([-v for v in r], across, conf_a, sigma=1.5)
+    hdir = []
+    for i in range(n):
+        h = around[i]
+        ang = math.acos(max(-1.0, min(1.0, float(np.dot(d[i], h)))))
+        if ang > WRIST_MAX:
+            axis = np.cross(d[i], h)
+            axis = axis / max(float(np.linalg.norm(axis)), 1e-9)
+            h = q_rot(q_axis(axis, WRIST_MAX), d[i])
+        v = holds[i] * h + (1 - holds[i]) * d[i]
+        hdir.append(v / float(np.linalg.norm(v)))
+    # the forearm and hand: rolled with the racket (-x along it) when holding, else front kept forward
+    x_fo = _continuous_x(d, [x for x, _ in free_x], [c for _, c in free_x], want_b=[-v for v in r], blend=holds)
+    x_ha = _continuous_x(hdir, [x for x, _ in free_x], [c for _, c in free_x], want_b=[-v for v in r], blend=holds)
+    fix_up, fix_fo = rest_fix("shoulder." + s, "elbow." + s), rest_fix("elbow." + s, "wrist." + s)
+    out = []
+    for i in range(n):
+        q_ha = _frame_from(hdir[i], x_ha[i])
+        out.append({"upper_arm." + S: qmul(_frame_from(up[i], x_up[i]), fix_up), "forearm." + S: qmul(_frame_from(d[i], x_fo[i]), fix_fo),
+                    "hand." + S: q_ha, "fingers." + S: q_ha})
+    return out
 
 
 def racket_report(sample_fn, stages):
@@ -1772,23 +2101,99 @@ def racket_report(sample_fn, stages):
 
 
 def key(yaw, lean, thigh, shin, r_hand, l_hand, head, r_bend=(-0.6, -1.0, -0.4), l_bend=(0.6, -1.0, -0.4), both=0.0, hip_yaw=0.4):
-    """A stroke stage as parameters for racket_stage."""
+    """A stroke stage as parameters for _racket_body."""
     return dict(yaw_deg=yaw, lean_deg=lean, thigh_deg=thigh, shin_deg=shin, r_hand=tuple(r_hand), l_hand=tuple(l_hand), head=tuple(head), r_bend=tuple(r_bend), l_bend=tuple(l_bend), both=float(both), hip_yaw=hip_yaw)
 
 
-def racket_flow(keys, t):
-    """The stroke at t: every parameter follows a monotone spline through the stages and the pose is rebuilt at
-    each frame, so the arms clear the torso between the stages as well as at them (blending the bone rotations
-    between two clear stages had swung the arms through the chest)."""
-    names = keys[0][1].keys()
+def loop_spline(keys, t, monotone=False):
+    """A cubic through (t, value) keys from t=0 to t=1 that loops: the velocity carries on through every key
+    and round the loop (Bessel tangents from each key's neighbours, or with `monotone` the Fritsch-Butland
+    ones, for a value that only ever grows). Unlike `splined` it does not stop at a key where a value turns
+    back: a stroke's hand turns back at contact in one coordinate or another, and stopping there slowed the
+    swing at the very moment it should be fastest (owner, 2026-10-07: the swings were not uniform)."""
+    ts = [k[0] for k in keys]
+    vs = [k[1] for k in keys]
+    n = len(keys)
+    h = [ts[i + 1] - ts[i] for i in range(n - 1)]
+    d = [(vs[i + 1] - vs[i]) / h[i] if h[i] > 0 else 0.0 for i in range(n - 1)]
+    m = [0.0] * n
+
+    def tangent(d0, d1, h0, h1):
+        if not monotone:
+            return (h1 * d0 + h0 * d1) / (h0 + h1)
+        if d0 * d1 <= 0:
+            return 0.0
+        w1, w2 = 2 * h1 + h0, h1 + 2 * h0
+        return (w1 + w2) / (w1 / d0 + w2 / d1)
+
+    for i in range(1, n - 1):
+        m[i] = tangent(d[i - 1], d[i], h[i - 1], h[i])
+    m[0] = m[n - 1] = tangent(d[n - 2], d[0], h[n - 2], h[0])  # round the loop: the last segment meets the first
+    t = min(max(t, ts[0]), ts[-1])
+    for i in range(n - 1):
+        if t <= ts[i + 1] or i == n - 2:
+            u = (t - ts[i]) / h[i]
+            h00, h10, h01, h11 = 2 * u**3 - 3 * u**2 + 1, u**3 - 2 * u**2 + u, -2 * u**3 + 3 * u**2, u**3 - u**2
+            return h00 * vs[i] + h10 * m[i] * h[i] + h01 * vs[i + 1] + h11 * m[i + 1] * h[i]
+    return vs[-1]
+
+
+def _racket_params(keys, t):
+    """The stage parameters at t, on loop splines through the stages (a stroke starts and ends at the same
+    stage). The racket follows as a direction (from the stage's hand to its head), not as a head position: a
+    head splined on its own passed close by the hand and the racket spun round it in a few frames (owner,
+    2026-10-07)."""
     params = {}
-    for n in names:
-        v0 = keys[0][1][n]
+    for n, v0 in keys[0][1].items():
         if isinstance(v0, tuple):
-            params[n] = tuple(splined([(tk, d[n][i]) for tk, d in keys], t) for i in range(len(v0)))
+            params[n] = tuple(loop_spline([(tk, d[n][i]) for tk, d in keys], t) for i in range(len(v0)))
         else:
-            params[n] = splined([(tk, d[n]) for tk, d in keys], t)
-    return racket_stage(**params)
+            params[n] = loop_spline([(tk, d[n]) for tk, d in keys], t)
+    params["both"] = min(1.0, max(0.0, params["both"]))
+    # The direction turns along great-circle arcs from stage to stage, the angle turned so far splined in time,
+    # so the racket turns at a steady rate through each arc and without a stop at the stages it passes;
+    # splining the direction's components instead shrank it to nothing between stages 130-160 degrees apart.
+    dirs = []
+    for tk, d in keys:
+        v = np.asarray(d["head"], dtype=float) - np.asarray(d["r_hand"], dtype=float)
+        dirs.append(v / float(np.linalg.norm(v)))
+    arcs = [math.acos(max(-1.0, min(1.0, float(np.dot(dirs[i], dirs[i + 1]))))) for i in range(len(dirs) - 1)]
+    cum = [0.0]
+    for a in arcs:
+        cum.append(cum[-1] + a)
+    turned = loop_spline([(keys[i][0], cum[i]) for i in range(len(keys))], t, monotone=True)
+    turned = min(max(turned, 0.0), cum[-1])
+    j = 0
+    while j < len(arcs) - 1 and turned > cum[j + 1]:
+        j += 1
+    u = 0.0 if arcs[j] < 1e-9 else min(1.0, max(0.0, (turned - cum[j]) / arcs[j]))
+    a, b = dirs[j], dirs[j + 1]
+    if arcs[j] < 1e-6:
+        v = a
+    else:
+        v = (math.sin((1 - u) * arcs[j]) * a + math.sin(u * arcs[j]) * b) / math.sin(arcs[j])
+    params["rdir"] = tuple(float(x) for x in v)
+    return params
+
+
+_racket_cache = {}
+
+
+def racket_flow(keys, t, body=None, params=None):
+    """The stroke at t, from the stroke solved as a whole (_racket_solve, once per stroke): the parameters follow
+    splines through the stages, the pose is rebuilt at each frame so the arms clear the body between the stages
+    as well as at them, and every correction is made over the loop so that nothing jumps between frames."""
+    k = repr(keys)
+    if k not in _racket_cache:
+        _racket_cache[k] = _racket_solve(keys, body, params)
+    frames = _racket_cache[k]
+    x = (t % 1.0) * N
+    i = int(math.floor(x + 1e-9)) % N
+    f = x - math.floor(x + 1e-9)
+    if f < 1e-6:
+        return frames[i]
+    a, b = frames[i], frames[(i + 1) % N]
+    return {"root": [round(float(u + (v - u) * f), 4) for u, v in zip(a["root"], b["root"])], "q": {n: q_slerp(a["q"][n], b["q"][n], f) for n in a["q"]}}
 
 
 def ready_key(thigh=-18, shin=18, head=(0.14, 0.26, 0.36)):
@@ -2640,6 +3045,84 @@ def handstand_sample(t):
     return {"root": [round(float(v), 4) for v in root], "q": q}
 
 
+# ---------- kayaking: the forward stroke ----------
+# Sitting in a sit-in kayak (owner's request, 2026-10-08): the legs forward to the foot pegs with the knees a
+# little bent, a double-bladed paddle held with both hands. One cycle is a stroke on the right then one on the
+# left, the second the mirror of the first. The catch: the trunk wound so that side's shoulder is forward, the
+# lower hand reaching forward low, the top hand at about eye level, the blade put in by the feet. The pull: the
+# trunk unwinds, drawing the blade back to the hip. The exit: the blade lifts out at the hip as the shaft rolls
+# over to put the other blade forward. The boat floats with its seat KAYAK_SEAT above the floor and the water's
+# surface at KAYAK_WATER, deep enough that the blade never reaches the floor (the lake bed, seen through the
+# water). The arms are solved as the racket strokes are (_racket_solve_once), both hands holding the shaft.
+KAYAK_SEAT = 0.35
+KAYAK_WATER = 0.50
+KAYAK_HIP = KAYAK_SEAT + 0.10  # a seated hip joint sits this far above what it sits on (seated_twist_sample)
+KAYAK_PEGS = (0.15, KAYAK_SEAT + 0.12, 0.80)  # each ankle at a foot peg: out from the midline, up, forward
+
+
+def _kayak_body(yaw_deg, lean_deg, r_hand, l_hand, r_bend, l_bend, **_):
+    """One moment of the stroke without its arms: the trunk's yaw and lean over hips that stay in the seat, the
+    legs to the pegs, and both hands' places on the shaft (in the boat's frame: x left, y up, z forward)."""
+    q = all_ident()
+    yaw = q_axis([0, 1, 0], yaw_deg * DEG)
+    trunk = qmul(yaw, rx(lean_deg * DEG))
+    pelvis = qmul(q_axis([0, 1, 0], yaw_deg * 0.15 * DEG), rx(lean_deg * 0.3 * DEG))  # the hips stay in the seat
+    root, pelvis_pos = root_for_hip(np.array([0.0, KAYAK_HIP, 0.0]), pelvis)
+    q["pelvis"], q["spine"] = pelvis, trunk
+    q["neck"] = qmul(q_axis([0, 1, 0], yaw_deg * 0.5 * DEG), rx(lean_deg * 0.2 * DEG))
+    q["head"] = q_axis([0, 1, 0], yaw_deg * 0.2 * DEG)  # the eyes stay ahead, on the bow
+    up = np.array([0.0, 1.0, 0.0])
+    for S, sgn in (("L", 1), ("R", -1)):
+        hip = pelvis_pos + q_rot(pelvis, rig["hip." + S.lower()] - rig["pelvis"])
+        ankle = np.array([sgn * KAYAK_PEGS[0], KAYAK_PEGS[1], KAYAK_PEGS[2]])
+        knee = two_link_3d(hip, ankle, L_THIGH, L_SHIN, np.array([sgn * 0.4, 1.0, 0.0]))  # knees up and out, braced
+        q["thigh." + S] = aim(knee - hip, up)  # the kneecap up
+        q["shin." + S] = aim(ankle - knee, up)
+        q["foot." + S] = rx(-75 * DEG)  # the sole on the peg, toes up
+    sh = {"R": shoulder_from(pelvis_pos, trunk, "r"), "L": shoulder_from(pelvis_pos, trunk, "l")}
+    hR, hL = np.asarray(r_hand, dtype=float), np.asarray(l_hand, dtype=float)
+    r = (hL - hR) / float(np.linalg.norm(hL - hR))  # the shaft, from the right hand to the left
+    return {"q": q, "root": root, "pelvis_pos": pelvis_pos, "pelvis": pelvis, "trunk": trunk, "front": q_rot(yaw, np.array([0.0, 0.0, 1.0])),
+            "sh": sh, "r": r, "hand_R": hR, "hand_L": hL,
+            "bend": {"R": q_rot(yaw, np.asarray(r_bend, dtype=float)), "L": q_rot(yaw, np.asarray(l_bend, dtype=float))},
+            "both": 0.0, "l_holds": 1.0}  # both hands hold the shaft; each has its own place on it
+
+
+def kayak_key(yaw, lean, r_hand, l_hand, r_bend, l_bend):
+    return dict(yaw_deg=yaw, lean_deg=lean, r_hand=tuple(r_hand), l_hand=tuple(l_hand), r_bend=tuple(r_bend), l_bend=tuple(l_bend))
+
+
+def kayak_mirror(k):
+    """The same moment on the other side: left for right, x reversed."""
+    m = lambda v: (-v[0], v[1], v[2])
+    return kayak_key(-k["yaw_deg"], k["lean_deg"], m(k["l_hand"]), m(k["r_hand"]), m(k["l_bend"]), m(k["r_bend"]))
+
+
+LOWER_R, TOP_L = (-0.6, -1.0, -0.2), (0.8, -1.0, -0.1)  # the lower elbow down and out, the top one down and out
+KAYAK_RIGHT = [  # the right stroke; the left is its mirror half a cycle on
+    (0.0, kayak_key(40, 14, (-0.22, 0.72, 0.52), (0.16, 1.08, 0.40), LOWER_R, TOP_L)),  # catch by the right foot
+    (0.14, kayak_key(15, 10, (-0.26, 0.68, 0.22), (0.12, 1.06, 0.36), LOWER_R, TOP_L)),  # the pull
+    (0.27, kayak_key(-12, 8, (-0.34, 0.74, -0.02), (0.24, 0.98, 0.28), (-0.4, -1.0, -0.6), TOP_L)),  # the exit at the hip, the elbow back and down
+    (0.38, kayak_key(-28, 12, (-0.20, 0.95, 0.20), (0.25, 0.84, 0.40), (-0.8, -1.0, -0.1), (0.6, -1.0, -0.2))),  # over
+]
+
+
+def kayak_sample(t):
+    keys = KAYAK_RIGHT + [(0.5 + tk, kayak_mirror(k)) for tk, k in KAYAK_RIGHT] + [(1.0, KAYAK_RIGHT[0][1])]
+    return racket_flow(keys, t, body=_kayak_body, params=_kayak_params)
+
+
+def _kayak_params(keys, t):
+    """The stroke's parameters at t, each on a loop spline through the keys."""
+    params = {}
+    for n, v0 in keys[0][1].items():
+        if isinstance(v0, tuple):
+            params[n] = tuple(loop_spline([(tk, d[n][i]) for tk, d in keys], t) for i in range(len(v0)))
+        else:
+            params[n] = loop_spline([(tk, d[n]) for tk, d in keys], t)
+    return params
+
+
 CLIPS = {
     "stand": (stand_sample, "rest pose, tools/myo/designed_clip.py"),
     "plank": (plank_sample, "designed forearm plank, tools/myo/designed_clip.py"),
@@ -2675,6 +3158,7 @@ CLIPS = {
     "pickleball-forehand": (pickleball_forehand_sample, "designed stroke, tools/myo/designed_clip.py"),
     "pickleball-backhand": (pickleball_backhand_sample, "designed stroke, tools/myo/designed_clip.py"),
     "pickleball-serve": (pickleball_serve_sample, "designed stroke, tools/myo/designed_clip.py"),
+    "kayaking": (kayak_sample, "designed stroke, tools/myo/designed_clip.py"),
     "single-leg-rdl-knee-up": (single_leg_rdl_knee_up_sample, "designed movement, tools/myo/designed_clip.py"),
     "windshield-wipers": (windshield_wipers_sample, "designed movement, tools/myo/designed_clip.py"),
     "straight-leg-sit-up": (straight_leg_sit_up_sample, "designed movement, tools/myo/designed_clip.py"),
