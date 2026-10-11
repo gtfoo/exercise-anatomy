@@ -81,6 +81,29 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Tennis serve: the racket up at contact** (2026-10-11). The owner: all
+      strokes looked right except the serve. At contact the arm reached up but
+      the racket lay 49 degrees off upright, out to the side. The grip had the
+      handle square across the palm, so a racket in line with a straight arm
+      wanted a 90-degree wrist; a real grip lies diagonally across the palm,
+      heel of the hand to the base of the index finger. The racket now leaves
+      the thumb side tilted 30 degrees toward the fingers (`GRIP_ANGLE`, drawn
+      the same in NativeFigure), and the wrist bends 35 degrees toward the
+      little finger and 20 toward the thumb (it had 25 either way). Every serve
+      stage then fits within 2-17 degrees of its racket; contact points up.
+      Two more faults found on the way: the racket arm was also held to its
+      previous frame, so it lagged its own swing (at contact the racket was
+      still level); and the design's hand frame was 18 degrees off the rig's
+      (the rig's hand runs along the real hand, 13 degrees off straight down,
+      with a 12-degree roll), so the racket the design aimed was not the one
+      the site drew: the rig's hand axes are now used (`RIG_HAND_X/Y`, measured
+      constant from converted clips) and the two agree to 0 degrees. The
+      pickleball forehand got a unit-turn stage and its backswing the paddle
+      "pointed at the side wall" its description promised; its paddle had
+      swept through the hip on the way back. The upper arm is now kept 5 mm
+      clear of the body, not allowed 5 mm in (a serve's armpit had pressed 3
+      cm in), and the thigh is measured fuller at the hip.
+
 - [x] **Racket arms move as arms do** (2026-10-11). The owner: "the arms
       and rackets are twisting in a way which is impossible and not
       realistic". A probe of each joint against its range

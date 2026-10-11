@@ -348,14 +348,16 @@ function attachProps(scene: THREE.Group, props: Exercise["props"]): () => void {
     };
   }
   if (props === "racket" || props === "paddle") {
-    // Held in the right hand like a hammer: the handle runs out along the hand's local +x (across the palm, the
-    // dumbbell's axis), the head beyond it in the hand's x-y plane, so the face turns with the palm.
+    // Held in the right hand like a hammer: the handle runs out of the thumb side along the hand's local +x,
+    // tilted 30 degrees toward the fingers (+y) because it lies diagonally across the palm, the head beyond it in
+    // the hand's x-y plane, so the face turns with the palm (tools/myo/designed_clip.py's GRIP_ANGLE).
     const hand = scene.getObjectByName("mixamorigRightHand");
     if (hand) {
       const frame = new THREE.MeshStandardMaterial({ color: "#2b2b2b", roughness: 0.6 });
       const strings = new THREE.MeshStandardMaterial({ color: "#d8d8d0", roughness: 0.9, transparent: true, opacity: 0.55, side: THREE.DoubleSide });
       const g = new THREE.Group();
       g.position.set(0, 0.07, 0.03);
+      g.rotation.z = Math.PI / 6;
       if (props === "racket") {
         const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.28, 12), steel);
         handle.rotation.z = Math.PI / 2;
