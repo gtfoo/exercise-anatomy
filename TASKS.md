@@ -81,6 +81,33 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Racket arms move as arms do** (2026-10-11). The owner: "the arms
+      and rackets are twisting in a way which is impossible and not
+      realistic". A probe of each joint against its range
+      (~/.cache/ea-anat.py) found, in the clips then live, elbows bent up to
+      86 degrees sideways and 174 backwards, forearms turned up to 180 (about
+      85 is possible either side of thumb-up), wrists twisted up to 98; and
+      the left hand on a two-handed grip held the handle as the right hand's
+      copy, not its mirror, half a turn round. The upper arm, forearm and hand
+      had each been rolled by a rule of their own. Every racket arm, and both
+      kayak arms, are now built from an arm's joints (`_fk_arm`): the upper
+      arm's direction and its turn about its length, a hinge elbow, the
+      forearm's turn, the wrist's two bends, each within its range, the racket
+      fixed in the hand by the grip (out of the thumb side, mirrored for the
+      left hand). At each stage the joint angles are fitted (`_fit_arm`) to the
+      stage's hand and racket, clear of the body; between stages each joint
+      follows a spline, so the racket goes where the arm carries it. A hand
+      that must stay on something (the top hand on the handle, both hands on a
+      paddle) is kept there frame by frame, moved as little as it can be from
+      the splined angles and from the frame before. The racket or paddle is
+      now kept out of the body too: the pickleball forehand's paddle had gone
+      9 cm into the belly. The tennis forehand's backswing and finish stages
+      were corrected (the racket had been asked to lie along the forearm) and
+      a unit-turn stage added. All six strokes and the kayak: every joint in
+      range, no step between frames, no arm or racket in the body beyond a
+      1.2 cm armpit graze and, in two-handed shots, the hands touching for a
+      frame. The old reach-and-solve machinery was removed.
+
 - [x] **Kayaking** (2026-10-08), at the owner's request: the forward stroke in
       a sit-in kayak, a new Paddle sports category. Designed
       (`kayak_sample`): a stroke on the right then its mirror on the left, each
