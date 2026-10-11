@@ -1616,6 +1616,9 @@ def _cyc_smooth(a, sigma, w=None):
 # the upper arm, forearm and hand were each rolled by a rule of their own: elbows bent sideways and backwards,
 # forearms turned half round, and the left hand held a two-handed grip as the right's copy, not its mirror.
 TURN, WRIST_FLEX, WRIST_DEV, HUMERUS_IN, HUMERUS_OUT, ELBOW_MAX = 80.0, 65.0, 25.0, 90.0, 95.0, 145.0
+SERVE_HUMERUS_OUT = 130.0  # a serve's racket drop turns the arm well past 90 degrees outward (the shoulder blade and
+# trunk taking their part); a stroke asks for it with hum_out on its stages. Allowed to every stroke, it let the
+# forehand and backhand turn their arms out further than they need, and their armpits creased into the chest.
 WRIST_ULNAR, WRIST_RADIAL = 35.0, 20.0  # the wrist bends further toward the little finger than toward the thumb
 # The handle lies diagonally across the palm, from the heel of the hand to the base of the index finger, so the
 # racket leaves the thumb side tilted this far toward the fingers. Held square across the palm instead, a racket
@@ -1696,8 +1699,10 @@ def _fk_arm(S, f, plane, elev, turn, elbow, pron, wflex, wdev):
 
 # Each arm's joint ranges, in _fk_arm's order. The wrist's deviation is measured toward the hand's own +x: the
 # little finger's side on the right hand, the thumb's on the left (the rig's hands are not mirrored).
-_ARM = [(-60.0, 150.0), (0.0, 170.0), (-HUMERUS_IN, HUMERUS_OUT), (5.0, ELBOW_MAX), (-TURN, TURN), (-WRIST_FLEX, WRIST_FLEX)]
-ARM_BOUNDS = {"R": _ARM + [(-WRIST_RADIAL, WRIST_ULNAR)], "L": _ARM + [(-WRIST_ULNAR, WRIST_RADIAL)]}
+def arm_bounds(S, hum_out=HUMERUS_OUT):
+    """An arm's joint ranges in _fk_arm's order, the upper arm turning out as far as hum_out."""
+    arm = [(-60.0, 150.0), (0.0, 170.0), (-HUMERUS_IN, hum_out), (5.0, ELBOW_MAX), (-TURN, TURN), (-WRIST_FLEX, WRIST_FLEX)]
+    return arm + [(-WRIST_RADIAL, WRIST_ULNAR) if S == "R" else (-WRIST_ULNAR, WRIST_RADIAL)]
 ARM_SCALE = np.array([40.0, 40.0, 40.0, 40.0, 40.0, 30.0, 15.0])  # how far each joint moves before it is "a lot"
 
 
@@ -1778,25 +1783,34 @@ def _arm_cost(S, f, x, target=None, g=None, prior=None, prior_scale=None, other=
     return c
 
 
-def _fit_arm(S, f, target, g, prev=None, seed=0, other=None, g_weight=1.0):
-    """An arm's joint angles (_fk_arm) at a stage, each within its range (ARM_BOUNDS): the hand as near the
+def _fit_arm(S, f, target, g, prev=None, seed=0, other=None, g_weight=1.0, pose=None, hum_out=HUMERUS_OUT):
+    """An arm's joint angles (_fk_arm) at a stage, each within its range (arm_bounds): the hand as near the
     stage's hand as it can get, the racket (if it holds one, along g) as near the stage's way, clear of the body
-    and the other hand, comfortable, and not far from the previous stage's angles. A stage asking for what no arm
-    can do gets the nearest arm that can."""
+    and the other hand, comfortable, not far from the previous stage's angles, and near `pose` where it names a
+    joint (_fk_arm's order, None for a joint left free): how a stroke uses each joint at that stage, so that
+    among the arms that would put the racket there the one chosen moves as a player's does. A stage asking for
+    what no arm can do gets the nearest arm that can."""
     from scipy.optimize import minimize
     rng = np.random.default_rng(seed)
-    lo, hi = np.array([b[0] for b in ARM_BOUNDS[S]]), np.array([b[1] for b in ARM_BOUNDS[S]])
+    bounds = arm_bounds(S, hum_out)
+    lo, hi = np.array([b[0] for b in bounds]), np.array([b[1] for b in bounds])
     starts = ([np.asarray(prev, dtype=float)] if prev is not None else []) + [lo + (hi - lo) * rng.random(7) for _ in range(6)]
-    cost = lambda x: _arm_cost(S, f, x, target, g, prev, ARM_SCALE if prev is not None else None, other, g_weight)
+    base = lambda x: _arm_cost(S, f, x, target, g, prev, ARM_SCALE if prev is not None else None, other, g_weight)
+    if pose is None:
+        cost = base
+    else:
+        named = [(i, float(v)) for i, v in enumerate(pose) if v is not None]
+        cost = lambda x: base(x) + sum(((x[i] - v) / 25.0) ** 2 for i, v in named)
+        starts.insert(0, np.array([v if v is not None else (a + b) / 2 for v, (a, b) in zip(pose, bounds)], dtype=float))
     best = None
     for x0 in starts:
-        r = minimize(cost, x0, method="L-BFGS-B", bounds=ARM_BOUNDS[S], options={"maxiter": 200})
+        r = minimize(cost, x0, method="L-BFGS-B", bounds=bounds, options={"maxiter": 200})
         if best is None or r.fun < best.fun:
             best = r
     return best.x
 
 
-def _refine_arm(S, f, x0, target=None, g=None, other=None, last=None, g_weight=1.0):
+def _refine_arm(S, f, x0, target=None, g=None, other=None, last=None, g_weight=1.0, hum_out=HUMERUS_OUT):
     """An arm's angles near x0 (the stages' angles splined to this frame), moved only as far as needed to put the
     hand on its target (a handle or a paddle's shaft), the racket along g, and the arm clear of the body and
     the other hand. It starts from the previous frame's angles (last) and is kept near them too, so it stays
@@ -1811,7 +1825,7 @@ def _refine_arm(S, f, x0, target=None, g=None, other=None, last=None, g_weight=1
         last = np.asarray(last, dtype=float)
         cost = lambda x: _arm_cost(S, f, x, target, g, x0, ARM_SCALE * 0.5, other, g_weight) + float(np.sum(((x - last) / (ARM_SCALE * 0.25)) ** 2))
         start = last
-    return minimize(cost, start, method="L-BFGS-B", bounds=ARM_BOUNDS[S], options={"maxiter": 80}).x
+    return minimize(cost, start, method="L-BFGS-B", bounds=arm_bounds(S, hum_out), options={"maxiter": 80}).x
 
 
 HANDLE_GAP = 0.13  # the top hand on the handle, this far up it from the bottom hand (at 0.11 its fingers met the
@@ -1829,6 +1843,7 @@ def _racket_solve(keys, body=None, params=None, prop=None):
     other hand, each moved as little as it can be from its splined angles. `body` builds a frame from
     `params(keys, t)` (a racket stroke's own by default; the kayak stroke has its own)."""
     base, params = body or _racket_body, params or _racket_params
+    hum_out = keys[0][1].get("hum_out", HUMERUS_OUT)  # how far out this stroke turns the upper arm
     kayak = base is not _racket_body
 
     def body(**kw):
@@ -1853,11 +1868,11 @@ def _racket_solve(keys, body=None, params=None, prop=None):
             fitted.append((tk, dict(k, r_arm=fitted[0][1]["r_arm"], l_arm=fitted[0][1]["l_arm"])))
             continue
         f = body(**params(keys, tk))
-        xR = _fit_arm("R", f, f["hand_R"], f["g"]["R"], prev["R"], seed=j)
+        xR = _fit_arm("R", f, f["hand_R"], f["g"]["R"], prev["R"], seed=j, pose=k.get("r_pose"), hum_out=hum_out)
         qR, _, wrR = _fk_arm("R", f, *xR)
         qR["_wrist"] = wrR
         tL, gL, w = left_goal(f, qR)
-        xL = _fit_arm("L", f, tL, gL, prev["L"], seed=100 + j, other=qR, g_weight=w)
+        xL = _fit_arm("L", f, tL, gL, prev["L"], seed=100 + j, other=qR, g_weight=w, hum_out=hum_out)
         prev = {"R": xR, "L": xL}
         fitted.append((tk, dict(k, r_arm=tuple(round(float(v), 2) for v in xR), l_arm=tuple(round(float(v), 2) for v in xL))))
     # every frame
@@ -1871,14 +1886,14 @@ def _racket_solve(keys, body=None, params=None, prop=None):
             # a racket arm has nothing to stay on: it follows its own splined angles (already continuous), moved only
             # to keep clear; held to its previous frame as well, it lagged its own swing, and at a serve's contact
             # the racket was still level when it should have been upright
-            xR = _refine_arm("R", f, f["r_arm"], f["hand_R"] if kayak else None, f["g"]["R"] if kayak else None, last=lastR if kayak else None)
+            xR = _refine_arm("R", f, f["r_arm"], f["hand_R"] if kayak else None, f["g"]["R"] if kayak else None, last=lastR if kayak else None, hum_out=hum_out)
             qR, _, wrR = _fk_arm("R", f, *xR)
             lastR = xR
             qR["_wrist"] = wrR
             tL, gL, w = left_goal(f, qR)
             # the left hand eases onto and off the handle: its pull toward the handle and the racket's way grow
             # with how much it holds (switched on whole, they had turned the arm 40 degrees in a frame)
-            xL = _refine_arm("L", f, f["l_arm"], tL, gL, other=qR, last=lastL, g_weight=w)
+            xL = _refine_arm("L", f, f["l_arm"], tL, gL, other=qR, last=lastL, g_weight=w, hum_out=hum_out)
             lastL = xL
             xs.append((xR, xL))
     # the joint angles smoothed a little round the loop (a frame either way), so an arm letting go of a limit it
@@ -1925,12 +1940,14 @@ def _racket_way(S, q):
     return _qmat(q["hand." + S]) @ _racket_local(S)
 
 
-def key(yaw, lean, thigh, shin, r_hand, l_hand, head, r_bend=(-0.6, -1.0, -0.4), l_bend=(0.6, -1.0, -0.4), both=0.0, hip_yaw=0.4, r_arm=None):
+def key(yaw, lean, thigh, shin, r_hand, l_hand, head, r_bend=(-0.6, -1.0, -0.4), l_bend=(0.6, -1.0, -0.4), both=0.0, hip_yaw=0.4, r_arm=None, r_pose=None):
     """A stroke stage as parameters for _racket_body. `r_arm` gives the racket arm as joint angles (_fk_arm), and
     then r_hand and head only guide the left hand and the stage's racket for it."""
     k = dict(yaw_deg=yaw, lean_deg=lean, thigh_deg=thigh, shin_deg=shin, r_hand=tuple(r_hand), l_hand=tuple(l_hand), head=tuple(head), r_bend=tuple(r_bend), l_bend=tuple(l_bend), both=float(both), hip_yaw=hip_yaw)
     if r_arm is not None:
         k["r_arm"] = tuple(float(v) for v in r_arm)
+    if r_pose is not None:  # how the racket arm's joints are used at this stage (_fit_arm's pose), not splined
+        k["r_pose"] = r_pose
     return k
 
 
@@ -1974,6 +1991,8 @@ def _racket_params(keys, t):
     2026-10-07)."""
     params = {}
     for n, v0 in keys[0][1].items():
+        if n == "r_pose":  # a stage's guide for the fit (_fit_arm), not a parameter that moves
+            continue
         if isinstance(v0, tuple):
             params[n] = tuple(loop_spline([(tk, d[n][i]) for tk, d in keys], t) for i in range(len(v0)))
         else:
@@ -1981,7 +2000,7 @@ def _racket_params(keys, t):
     params["both"] = min(1.0, max(0.0, params["both"]))
     for n in ("r_arm", "l_arm"):  # each joint kept within its range where the spline overshoots between stages
         if n in params:
-            params[n] = tuple(float(np.clip(v, lo, hi)) for v, (lo, hi) in zip(params[n], ARM_BOUNDS[n[0].upper()]))
+            params[n] = tuple(float(np.clip(v, lo, hi)) for v, (lo, hi) in zip(params[n], arm_bounds(n[0].upper(), params.get("hum_out", HUMERUS_OUT))))
     # The direction turns along great-circle arcs from stage to stage, the angle turned so far splined in time,
     # so the racket turns at a steady rate through each arc and without a stop at the stages it passes;
     # splining the direction's components instead shrank it to nothing between stages 130-160 degrees apart.
@@ -2072,16 +2091,25 @@ def tennis_backhand_sample(t):
 def tennis_serve_sample(t):
     """A flat serve: sideways to the net, the toss arm rises straight as the racket arm comes up to the trophy
     position with the knees bent; the racket drops behind the back as the legs drive up; contact with the arm
-    fully extended above the head; the racket follows through across the body to the opposite hip."""
-    return racket_flow([
+    fully extended above the head; the racket follows through forward and down across the body to the opposite
+    hip. The racket is fastest at contact: a stage just after it (the arm still long, the forearm turning palm
+    down, the racket driving forward and down) keeps the swing going through the ball, where with the next stage
+    twice as far off the racket had peaked behind the head and slowed into contact (owner, 2026-10-11: the racket
+    did not move realistically). Each stage also says how the arm's joints are used there (r_pose: the upper arm
+    turning out to its furthest as the racket drops, then in through contact; the forearm turning palm down
+    through contact and after; the elbow straightening into the ball), so that the arm chosen to put the racket
+    at each stage moves as a server's does and the racket accelerates into the ball. The toss arm folds across the
+    front of the body after the toss, not against the chest."""
+    return racket_flow([(tk, dict(k, hum_out=SERVE_HUMERUS_OUT)) for tk, k in [
         (0, key(-60, 4, -8, 8, (-0.10, -0.42, 0.28), (0.02, -0.42, 0.32), (0.02, -0.62, 0.66))),
-        (0.25, key(-60, -8, -30, 30, (-0.24, 0.30, -0.28), (0.06, 0.52, 0.12), (-0.20, 0.72, -0.42), r_bend=(-1.0, 0.2, -0.6), l_bend=(0.6, -0.2, -1.0))),
-        (0.4, key(-45, -6, -14, 14, (-0.12, 0.10, -0.36), (0.08, 0.30, 0.10), (0.0, -0.30, -0.42), r_bend=(-1.0, 0.8, -0.3), l_bend=(0.6, -0.5, -1.0))),
-        (0.5, key(-10, 6, -2, 2, (-0.06, 0.50, 0.16), (0.06, -0.20, 0.14), (0.0, 0.94, 0.26), r_bend=(-1.0, 0.2, -0.5))),
-        (0.7, key(15, 26, -10, 10, (0.20, -0.33, 0.32), (0.08, -0.30, 0.14), (0.52, -0.62, 0.52), r_bend=(0.3, -0.6, -1.0))),
-        (0.85, key(-25, 12, -10, 10, (-0.16, -0.42, 0.18), (0.06, -0.36, 0.24), (-0.10, -0.66, 0.50))),  # the recovery comes down the right side
+        (0.25, key(-60, -8, -30, 30, (-0.24, 0.30, -0.28), (0.06, 0.52, 0.12), (-0.20, 0.72, -0.42), r_bend=(-1.0, 0.2, -0.6), l_bend=(0.6, -0.2, -1.0), r_pose=(None, None, 60, 100, 0, -20, None))),  # the trophy
+        (0.42, key(-45, -6, -14, 14, (-0.12, 0.10, -0.36), (0.08, 0.30, 0.10), (0.0, -0.30, -0.42), r_bend=(-1.0, 0.8, -0.3), l_bend=(0.6, -0.5, -1.0), r_pose=(None, None, 120, 105, -20, -45, None))),  # the drop: furthest out
+        (0.5, key(-10, 6, -2, 2, (-0.06, 0.50, 0.16), (0.08, -0.18, 0.24), (0.0, 0.94, 0.26), r_bend=(-1.0, 0.2, -0.5), r_pose=(None, None, 20, 15, 20, -15, None))),  # contact: turning in, palm turning down
+        (0.57, key(5, 18, -6, 6, (0.02, 0.0, 0.52), (0.10, -0.24, 0.26), (0.18, -0.36, 0.98), r_bend=(-0.6, -0.6, -0.5), r_pose=(None, None, -30, 25, 60, 5, None))),  # just past the ball
+        (0.72, key(15, 26, -10, 10, (0.20, -0.33, 0.32), (0.10, -0.28, 0.24), (0.52, -0.62, 0.52), r_bend=(0.3, -0.6, -1.0), r_pose=(None, None, -60, 40, 75, None, None))),
+        (0.86, key(-25, 12, -10, 10, (-0.16, -0.42, 0.18), (0.06, -0.36, 0.24), (-0.10, -0.66, 0.50))),  # the recovery comes down the right side
         (1, key(-60, 4, -8, 8, (-0.10, -0.42, 0.28), (0.02, -0.42, 0.32), (0.02, -0.62, 0.66))),
-    ], t)
+    ]], t)
 
 
 def pickleball_forehand_sample(t):
@@ -2957,7 +2985,7 @@ def _kayak_params(keys, t):
             params[n] = loop_spline([(tk, d[n]) for tk, d in keys], t)
     for n in ("r_arm", "l_arm"):  # each joint kept within its range where the spline overshoots
         if n in params:
-            params[n] = tuple(float(np.clip(v, lo, hi)) for v, (lo, hi) in zip(params[n], ARM_BOUNDS[n[0].upper()]))
+            params[n] = tuple(float(np.clip(v, lo, hi)) for v, (lo, hi) in zip(params[n], arm_bounds(n[0].upper(), params.get("hum_out", HUMERUS_OUT))))
     return params
 
 

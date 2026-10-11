@@ -81,6 +81,24 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Tennis serve: the racket swings like a serve** (2026-10-11). The
+      owner: "for tennis serve, the racket isn't moving in a realistic
+      manner". A trace of the racket head (~/.cache/ea-trace.py) showed why:
+      it all but stopped at the drop behind the back (3 cm a frame) and slowed
+      into contact (11 against a peak of 73), so the racket drifted up to the
+      ball instead of whipping through it. The serve now has a stage just past
+      the ball (0.57), and its trophy, drop, contact and follow-through stages
+      carry joint priors (`r_pose`) shaped like a real serve: the upper arm
+      turned well out at the drop (the racket hanging down the back), turning
+      in hard through contact. The head now gathers from the drop (12) to 51
+      a frame just before contact and keeps 39-45 through and past the ball.
+      The drop turns the upper arm out further than a groundstroke needs, so
+      that range (`SERVE_HUMERUS_OUT`, 130 degrees) is the serve's alone:
+      allowed to every stroke, it let the forehand and backhand armpits crease
+      4-5.6 cm into the chest. The toss arm moved forward after the toss to
+      keep its armpit clear. Every racket clip clears the body (rackets 0
+      frames; arms 1.2-2.9 cm at worst, the skin's own give).
+
 - [x] **Tennis serve: the racket up at contact** (2026-10-11). The owner: all
       strokes looked right except the serve. At contact the arm reached up but
       the racket lay 49 degrees off upright, out to the side. The grip had the
