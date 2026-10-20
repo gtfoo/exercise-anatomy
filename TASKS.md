@@ -112,7 +112,18 @@ letter and a one-line task strands the *why*.
       the chest. A sweep of poses (~/.cache/ea-cable-sweep.py) found the
       way out: the elbows bending from 35 to 60 degrees as the arms hug
       round, the upper arm turned in 25-50, the hands meeting in front of
-      the navel; clear of the body in every frame. In passing: the kayak had been drawn 30 cm under the
+      the navel. Then the face pull (owner: "looks quite off too"): aimed
+      at hands placed by eye, its upper arm had swung from 68 degrees in to
+      65 out, reached with the elbows bent 42 and finished with them 17 cm
+      forward. Its stages are now whole poses from the textbook (straight
+      arms angled 10 degrees out, the only reach that clears the armpit;
+      the finish with the upper arms level out to the sides, turned out 75,
+      forearms upright), each hand where its joints put it, and the hand
+      follows the joints between; a joint-path stage is no longer held near
+      the one before (that pull had kept the elbows forward). The rope is
+      45 cm a side, as real ones are (at 42 its clip came back to the face).
+      The crossover, re-solved without that hold, presses its armpit 1.2 cm
+      in for one frame, the skin's own give, as on the tennis strokes. In passing: the kayak had been drawn 30 cm under the
       figure (seat 0.05, water 0.2 in kayaking.ts against 0.35 and 0.50 in
       the clip); the boat and water now sit where the figure does.
       `from: owner, 2026-10-19 · "let's go" (row, pulldown, pushdown, crossover, face pull, Pallof)`

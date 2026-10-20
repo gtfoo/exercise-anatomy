@@ -233,7 +233,7 @@ function span(m: THREE.Mesh, a: THREE.Vector3, b: THREE.Vector3) {
   m.scale.set(1, len, 1);
 }
 
-const ROPE_HALF = 0.42; // each half of a triceps rope, from the clip to the knot below the hand
+const ROPE_HALF = 0.45; // each half of a triceps rope, from the clip to the knot below the hand (at 0.42 a face pull's clip came back to the face)
 const PLATE = 0.045; // a stack plate's thickness
 const STACK = 9; // plates left resting
 const LOAD = 4; // plates lifted with the cap

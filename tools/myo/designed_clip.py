@@ -3090,7 +3090,9 @@ def _cable_solve(keys, stance, path="hand"):
             fitted.append((tk, dict(k, r_arm=same["r_arm"])))
             continue
         f = body(**_cable_params(keys, tk))
-        x = _fit_arm("R", f, f["hand_R"], f["g"]["R"], prev, seed=j, pose=k.get("r_pose"))
+        # A stroke following its joints gives each stage as a whole pose, so a stage is not also held near the one
+        # before: that pull left a face pull's elbows 15 cm forward of where its finish put them.
+        x = _fit_arm("R", f, f["hand_R"], f["g"]["R"], prev if path == "hand" else None, seed=j, pose=k.get("r_pose"))
         prev = x
         fitted.append((tk, dict(k, r_arm=tuple(round(float(v), 2) for v in x))))
     last = None
@@ -3180,9 +3182,14 @@ def face_pull_sample(t):
     face with the elbows high and wide and the upper arms turned out, the hands finishing beside the ears; and
     back."""
     hip = (0.0, 0.84, -0.02)
-    reach = ckey(hip, -2, -5, 0, 0, (-0.12, 1.50, 0.42), (5, 95, 0, 10, 0, 0, None))
-    pulled = ckey(hip, -2, -6, 0, 0, (-0.38, 1.60, -0.02), (72, 86, 72, 105, 0, None, None))
-    return cable_flow([(0, reach), (0.42, pulled), (0.52, pulled), (1, reach)], STANDING, t)
+    # Each stage's hand is where its joints put it, and between them the hand follows the joints: the elbows
+    # flare out as they bend and the upper arm turns out 60 degrees, the movement itself (owner, 2026-10-20: it
+    # looked off; aimed at hands placed by eye, the arm had turned from 68 in to 65 out, reached with the elbows
+    # bent 42 degrees and finished with them 17 cm forward). Straight arms reaching to the pulley clear the
+    # armpit only angled 10 degrees out, so the rope's ends start a shoulder width apart.
+    reach = ckey(hip, -2, -5, 0, 0, (-0.268, 1.49, 0.43), (10, 96, 15, 8, 30, 0, None))
+    pulled = ckey(hip, -2, -6, 0, 0, (-0.405, 1.612, -0.052), (80, 90, 75, 100, 0, 0, None))
+    return cable_flow([(0, reach), (0.42, pulled), (0.52, pulled), (1, reach)], STANDING, t, path="joints")
 
 
 def pallof_press_sample(t):
