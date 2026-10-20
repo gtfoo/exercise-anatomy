@@ -81,6 +81,35 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Cable machine exercises** (2026-10-20), at the owner's request
+      ("are we able to add exercises with a cable machine? are we able to
+      find the movements?"). No free capture has a cable exercise (Mixamo's
+      fitness clips, CMU and ActorCore's free set have none), so all six are
+      designed, in a new Cable machine category: seated cable row (V-handle),
+      lat pulldown (wide bar), triceps pushdown (rope), cable crossover high
+      to low (a D-handle in each hand, two columns), face pull (rope) and
+      Pallof press (one handle, the pulley out to the left). Each is
+      symmetric, so `cable_flow` solves the right arm by its joints as the
+      racket strokes do and mirrors it to the left (solved apart, the two
+      could settle on different elbows). The hand follows a path splined
+      through the stages, except in the crossover, where it follows the
+      joints: held to the straight line between its stages, the elbows had
+      folded mid-sweep. Lessons: with the hands together the rig's straight
+      fingers cross the midline, so only the palm is kept to its own side
+      (held whole, the wrists bent back 40-50 degrees); a row's elbows can
+      only finish beside the trunk, not well behind it, or the forearms
+      would be in the flanks; a wide-grip pulldown ends with the forearms in
+      a V. The site draws the machine from `scenery: { kind: "cable" }`
+      (columns, pulleys, seat, foot plate, thigh pad) and, each frame from
+      the palms, the cable, the handle and a weight stack that rises half as
+      far as the cable is drawn out (`attachCable`). Checks: every frame
+      clear of the body on the real mesh, every joint in range, the
+      pulldown's bar 2 cm or more off the face and chest. Activation is
+      qualitative. In passing: the kayak had been drawn 30 cm under the
+      figure (seat 0.05, water 0.2 in kayaking.ts against 0.35 and 0.50 in
+      the clip); the boat and water now sit where the figure does.
+      `from: owner, 2026-10-19 · "let's go" (row, pulldown, pushdown, crossover, face pull, Pallof)`
+
 - [x] **Tennis serve: the racket swings like a serve** (2026-10-11). The
       owner: "for tennis serve, the racket isn't moving in a realistic
       manner". A trace of the racket head (~/.cache/ea-trace.py) showed why:

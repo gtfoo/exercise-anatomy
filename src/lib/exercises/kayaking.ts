@@ -30,8 +30,8 @@ export const kayaking: Exercise = {
   anchor: "free",
   props: "kayak-paddle",
   native: { clip: "/models/clips/kayaking.glb" },
-  scenery: { kind: "kayak", seat: 0.05, water: 0.2 }, // designed_clip.py's KAYAK_SEAT and KAYAK_WATER
-  camera: { position: [2.2, 1.5, 2.6], target: [0, 0.5, 0.2] },
+  scenery: { kind: "kayak", seat: 0.35, water: 0.5 }, // designed_clip.py's KAYAK_SEAT and KAYAK_WATER (the boat had been drawn 30 cm under the figure)
+  camera: { position: [2.2, 1.8, 2.6], target: [0, 0.8, 0.2] },
   disclaimer:
     "The forward stroke in a sit-in kayak: the trunk winds so one shoulder is forward, the blade goes in by the feet with the top hand at eye level, the trunk unwinds to draw it back to the hip, and it comes out as the shaft rolls over to the other side. A stroke on the right, then one on the left.",
   phases: [

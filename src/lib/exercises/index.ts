@@ -45,6 +45,7 @@ import { copenhagenPlank } from "./copenhagen-plank";
 import { catCow } from "./cat-cow";
 import { tennisForehand, tennisBackhand, tennisServe, pickleballForehand, pickleballBackhand, pickleballServe } from "./racket-sports";
 import { kayaking } from "./kayaking";
+import { cableRow, latPulldown, tricepsPushdown, cableCrossover, facePull, pallofPress } from "./cable";
 import { singleLegRdlKneeUp } from "./legs-more";
 import { windshieldWipers, straightLegSitUp, straightLegHold, vUp, shoulderTap, doubleLegLift, straightLegRaise } from "./core-sweat";
 import { pikePushUp } from "./push-more";
@@ -140,6 +141,12 @@ export const exercises: readonly Exercise[] = [
   pickleballBackhand,
   pickleballServe,
   kayaking,
+  cableRow,
+  latPulldown,
+  tricepsPushdown,
+  cableCrossover,
+  facePull,
+  pallofPress,
   singleLegRdlKneeUp,
   windshieldWipers,
   straightLegSitUp,

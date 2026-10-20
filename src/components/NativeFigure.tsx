@@ -220,6 +220,184 @@ function attachWheel(scene: THREE.Group): Barbell {
   };
 }
 
+type CableScenery = Extract<NonNullable<Exercise["scenery"]>, { kind: "cable" }>;
+
+const Y_AXIS = new THREE.Vector3(0, 1, 0);
+
+/** A cylinder one unit tall along y, set to run from a to b. */
+function span(m: THREE.Mesh, a: THREE.Vector3, b: THREE.Vector3) {
+  const d = new THREE.Vector3().subVectors(b, a);
+  const len = Math.max(d.length(), 1e-4);
+  m.position.copy(a).add(b).multiplyScalar(0.5);
+  m.quaternion.setFromUnitVectors(Y_AXIS, d.divideScalar(len));
+  m.scale.set(1, len, 1);
+}
+
+const ROPE_HALF = 0.42; // each half of a triceps rope, from the clip to the knot below the hand
+const PLATE = 0.045; // a stack plate's thickness
+const STACK = 9; // plates left resting
+const LOAD = 4; // plates lifted with the cap
+const RATIO = 0.5; // the stack rises half as far as the cable is drawn out, as on most cable stations (2:1); at 1:1 a crossover's plates rose a metre
+
+/**
+ * A cable machine's moving parts (tools/myo/designed_clip.py's cable exercises): the handle the hands hold, the
+ * cable from it to its pulley and on up the column, and the weight stack, whose top plates rise as the hands draw
+ * the cable out (RATIO). Everything is placed from the palms each frame (as the barbell is), so the
+ * handle stays in the hands whatever the clip does; the lift is measured against the shortest the cable gets in
+ * the cycle, found by sampling the clip once.
+ */
+function attachCable(scene: THREE.Group, scenery: CableScenery, action: THREE.AnimationAction, mixer: THREE.AnimationMixer, duration: number): Barbell {
+  const steel = new THREE.MeshStandardMaterial({ color: "#4a4744", roughness: 0.5, metalness: 0.6 });
+  const black = new THREE.MeshStandardMaterial({ color: "#1c1c1c", roughness: 0.6 });
+  const iron = new THREE.MeshStandardMaterial({ color: "#2f2d2b", roughness: 0.7, metalness: 0.3 });
+  const g = new THREE.Group();
+  scene.add(g);
+  const geos: THREE.BufferGeometry[] = [];
+  const keep = <T extends THREE.BufferGeometry>(geo: T): T => {
+    geos.push(geo);
+    return geo;
+  };
+  const tube = (r: number, mat: THREE.Material) => {
+    const m = new THREE.Mesh(keep(new THREE.CylinderGeometry(r, r, 1, 10)), mat);
+    g.add(m);
+    return m;
+  };
+  const left = scene.getObjectByName("mixamorigLeftHand");
+  const right = scene.getObjectByName("mixamorigRightHand");
+  const L = new THREE.Vector3();
+  const R = new THREE.Vector3();
+  const pulleys = scenery.pulleys.map((p) => new THREE.Vector3(...p.at));
+  const two = scenery.attachment === "handles";
+  // which pulley each cable runs to: with a D-handle in each hand, the one on that hand's side (the right is -x)
+  const used = two ? [pulleys.findIndex((p) => p.x < 0), pulleys.findIndex((p) => p.x >= 0)] : [0];
+
+  // the handle's parts
+  const rope = scenery.attachment === "rope";
+  const bar = scenery.attachment === "bar" ? tube(0.014, steel) : null;
+  const legs = scenery.attachment === "v-handle" || rope ? [tube(rope ? 0.012 : 0.011, rope ? black : steel), tube(rope ? 0.012 : 0.011, rope ? black : steel)] : [];
+  const knotGeo = keep(new THREE.SphereGeometry(0.024, 12, 8));
+  const knots = rope ? [new THREE.Mesh(knotGeo, black), new THREE.Mesh(knotGeo, black)] : [];
+  const ringGeo = keep(new THREE.TorusGeometry(0.06, 0.009, 8, 24));
+  const rings = scenery.attachment === "handle" ? [new THREE.Mesh(ringGeo, steel)] : two ? [new THREE.Mesh(ringGeo, steel), new THREE.Mesh(ringGeo, steel)] : [];
+  for (const m of [...knots, ...rings]) g.add(m);
+
+  // each cable: from the handle to its pulley, and from the column's top down to its lifted plates
+  const cables = used.map(() => ({ run: tube(0.004, black), riser: tube(0.004, black) }));
+  // each stack: beside its column, on the side away from the figure
+  const plateGeo = keep(new THREE.BoxGeometry(0.3, PLATE - 0.004, 0.12));
+  const stacks = used.map((i) => {
+    const post = scenery.pulleys[i].post;
+    const away = new THREE.Vector3(post[0], 0, post[1]);
+    if (away.lengthSq() < 1e-4) away.set(0, 0, 1);
+    away.normalize();
+    const base = new THREE.Vector3(post[0], 0, post[1]).addScaledVector(away, 0.2);
+    const top = Math.max(scenery.pulleys[i].at[1] + 0.15, 2.2);
+    const s = new THREE.Group();
+    s.position.copy(base);
+    s.rotation.y = Math.atan2(away.x, away.z);
+    for (let k = 0; k < STACK; k++) {
+      const plate = new THREE.Mesh(plateGeo, iron);
+      plate.position.y = PLATE * (k + 0.5);
+      s.add(plate);
+    }
+    const lifted = new THREE.Group();
+    for (let k = 0; k < LOAD; k++) {
+      const plate = new THREE.Mesh(plateGeo, iron);
+      plate.position.y = PLATE * (STACK + k + 0.5);
+      lifted.add(plate);
+    }
+    s.add(lifted);
+    const railGeo = keep(new THREE.CylinderGeometry(0.008, 0.008, top - 0.1, 8));
+    for (const x of [-0.12, 0.12]) {
+      const rail = new THREE.Mesh(railGeo, steel);
+      rail.position.set(x, (top - 0.1) / 2, 0);
+      s.add(rail);
+    }
+    g.add(s);
+    return { lifted, base, top, capY: PLATE * (STACK + LOAD) };
+  });
+
+  const palms = () => {
+    scene.updateMatrixWorld(true);
+    left!.localToWorld(L.set(0, 0.08, 0.03)); // in the palm, as the barbell
+    right!.localToWorld(R.set(0, 0.08, 0.03));
+  };
+  // where each cable leaves the handle
+  const ends = (): THREE.Vector3[] => {
+    if (two) return [R.clone(), L.clone()].map((h, c) => h.addScaledVector(pulleys[used[c]].clone().sub(h).normalize(), 0.11));
+    const mid = new THREE.Vector3().addVectors(L, R).multiplyScalar(0.5);
+    const toward = pulleys[0].clone().sub(mid).normalize();
+    if (scenery.attachment === "v-handle") return [mid.addScaledVector(toward, 0.12)];
+    if (rope) {
+      const half = L.distanceTo(R) / 2;
+      return [mid.addScaledVector(toward, Math.sqrt(Math.max(ROPE_HALF * ROPE_HALF - half * half, 0.0025)))];
+    }
+    if (scenery.attachment === "handle") return [mid.addScaledVector(toward, 0.11)];
+    return [mid];
+  };
+
+  // the shortest each cable gets through the cycle: there the stack rests
+  const shortest = used.map(() => Infinity);
+  if (left && right) {
+    const n = 48;
+    for (let k = 0; k < n; k++) {
+      action.time = (k / n) * duration;
+      mixer.update(0);
+      palms();
+      ends().forEach((e, c) => (shortest[c] = Math.min(shortest[c], e.distanceTo(pulleys[used[c]]))));
+    }
+  }
+
+  const across = new THREE.Vector3();
+  const y = new THREE.Vector3();
+  const z = new THREE.Vector3();
+  const xx = new THREE.Vector3();
+  const basis = new THREE.Matrix4();
+  const a = new THREE.Vector3();
+  const b = new THREE.Vector3();
+  return {
+    update() {
+      if (!left || !right) return;
+      palms();
+      const e = ends();
+      across.subVectors(L, R).normalize(); // the right palm to the left
+      if (bar) span(bar, a.copy(R).addScaledVector(across, -0.4), b.copy(L).addScaledVector(across, 0.4));
+      if (legs.length) {
+        span(legs[0], R, e[0]);
+        span(legs[1], L, e[0]);
+      }
+      knots.forEach((k, i) => {
+        const palm = i ? L : R;
+        k.position.copy(palm).addScaledVector(a.subVectors(palm, e[0]).normalize(), 0.07); // the knot below the fist
+      });
+      rings.forEach((ring, i) => {
+        // the D-handle's loop in the plane of the hands' line and its cable, the grip across the palm
+        const palm = two ? (i ? L : R) : a.addVectors(L, R).multiplyScalar(0.5);
+        y.subVectors(e[i], palm).normalize();
+        z.crossVectors(across, y).normalize();
+        xx.crossVectors(y, z);
+        ring.quaternion.setFromRotationMatrix(basis.makeBasis(xx, y, z));
+        ring.position.copy(palm).addScaledVector(y, 0.05);
+      });
+      cables.forEach((c, i) => {
+        const p = pulleys[used[i]];
+        span(c.run, e[i], p);
+        const st = stacks[i];
+        const lift = Math.max(0, e[i].distanceTo(p) - shortest[i]) * RATIO;
+        st.lifted.position.y = lift;
+        span(c.riser, a.set(st.base.x, st.capY + lift, st.base.z), b.set(st.base.x, st.top, st.base.z));
+      });
+    },
+    dispose() {
+      g.removeFromParent();
+      for (const geo of geos) geo.dispose();
+      steel.dispose();
+      black.dispose();
+      iron.dispose();
+    },
+  };
+}
+
 type Hold = { x: number; y: number; z: number; limb: "hand" | "foot" };
 
 /**
@@ -443,6 +621,7 @@ export default function NativeFigure({ exercise }: { exercise: Exercise }) {
   const live = useRef<Live | null>(null);
   const holdsGroup = useRef<THREE.Group>(null);
   const wall = exercise.scenery?.kind === "wall" ? exercise.scenery : null;
+  const cable = exercise.scenery?.kind === "cable" ? exercise.scenery : null;
 
   useEffect(() => {
     const materials = bindMaterials(scene, ids, boneIds);
@@ -484,7 +663,9 @@ export default function NativeFigure({ exercise }: { exercise: Exercise }) {
             ? attachWheel(scene)
             : exercise.props === "kayak-paddle"
               ? attachKayakPaddle(scene)
-              : undefined;
+              : cable
+                ? attachCable(scene, cable, action, mixer, clip.duration)
+                : undefined;
     const holds = wall?.holds && holdsGroup.current ? placeHolds(holdsGroup.current, findHolds(scene, action, mixer, clip.duration), wall.front) : () => {};
     live.current = {
       materials,
@@ -502,7 +683,7 @@ export default function NativeFigure({ exercise }: { exercise: Exercise }) {
       for (const m of Object.values(materials)) m.dispose();
       live.current = null;
     };
-  }, [scene, animations, ids, boneIds, clipUrl, exercise.props, wall]);
+  }, [scene, animations, ids, boneIds, clipUrl, exercise.props, wall, cable]);
 
   const setHovered = useViewer((s) => s.setHovered);
   const setSelected = useViewer((s) => s.setSelected);

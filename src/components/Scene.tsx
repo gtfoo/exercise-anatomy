@@ -188,6 +188,70 @@ function Kayak({ seat, water }: { seat: number; water: number }) {
   );
 }
 
+type CableScenery = Extract<NonNullable<Exercise["scenery"]>, { kind: "cable" }>;
+
+/**
+ * A cable machine's frame (tools/myo/designed_clip.py's cable constants): an upright for each pulley where its
+ * column stands, a beam out to a pulley that hangs away from it (a lat pulldown's, over the head), the pulley
+ * wheel, and the seat, foot plate or thigh pad the exercise uses. The cable, handle and weight stack move with
+ * the hands and are drawn by NativeFigure (attachCable).
+ */
+function CableMachine({ scenery }: { scenery: CableScenery }) {
+  const steel = useMemo(() => new THREE.MeshStandardMaterial({ color: "#5a5652", roughness: 0.45, metalness: 0.6 }), []);
+  const pad = useMemo(() => new THREE.MeshStandardMaterial({ color: "#2b2826", roughness: 0.85 }), []);
+  const { seat, footplate, kneePad } = scenery;
+  return (
+    <group>
+      {scenery.pulleys.map(({ at, post }, i) => {
+        const [x, y, z] = at;
+        const top = Math.max(y + 0.15, 2.2);
+        const away = Math.hypot(x - post[0], z - post[1]) > 0.05; // the pulley hangs from a beam, not on the upright
+        return (
+          <group key={i}>
+            <Tube a={[post[0], 0, post[1]]} b={[post[0], top, post[1]]} r={0.035} material={steel} />
+            {away ? (
+              <>
+                <Tube a={[post[0], top, post[1]]} b={[x, top, z]} r={0.03} material={steel} />
+                <Tube a={[x, top, z]} b={[x, y + 0.05, z]} r={0.012} material={steel} />
+              </>
+            ) : (
+              <Tube a={[post[0], y, post[1]]} b={[x, y, z]} r={0.015} material={steel} />
+            )}
+            <mesh material={steel} position={[x, y, z]} rotation-z={Math.PI / 2}>
+              <cylinderGeometry args={[0.045, 0.045, 0.025, 24]} />
+            </mesh>
+          </group>
+        );
+      })}
+      {seat && (
+        <group>
+          <mesh material={pad} position={[0, seat.top - 0.04, seat.z]}>
+            <boxGeometry args={[0.34, 0.08, seat.length]} />
+          </mesh>
+          <Tube a={[0, 0, seat.z]} b={[0, seat.top - 0.08, seat.z]} r={0.035} material={steel} />
+        </group>
+      )}
+      {footplate && (
+        <group position={[0, footplate.y, footplate.z]} rotation-x={-footplate.tilt}>
+          <mesh material={steel} position={[0, 0, 0.015]}>
+            <boxGeometry args={[0.46, 0.3, 0.03]} />
+          </mesh>
+          <Tube a={[0, -0.15, 0.03]} b={[0, -footplate.y, 0.03]} r={0.025} material={steel} />
+        </group>
+      )}
+      {kneePad && (
+        <group>
+          <mesh material={pad} position={[0, kneePad.y, kneePad.z]} rotation-z={Math.PI / 2}>
+            <cylinderGeometry args={[0.05, 0.05, 0.44, 24]} />
+          </mesh>
+          <Tube a={[0, kneePad.y, kneePad.z]} b={[0, kneePad.y, kneePad.z + 0.25]} r={0.02} material={steel} />
+          <Tube a={[0, kneePad.y, kneePad.z + 0.25]} b={[0, 0, kneePad.z + 0.25]} r={0.03} material={steel} />
+        </group>
+      )}
+    </group>
+  );
+}
+
 function Scenery({ scenery }: { scenery: NonNullable<Exercise["scenery"]> }) {
   const plaster = useMemo(() => new THREE.MeshStandardMaterial({ color: "#d9d4cc", roughness: 0.95 }), []);
   if (scenery.kind === "wall") {
@@ -223,6 +287,7 @@ function Scenery({ scenery }: { scenery: NonNullable<Exercise["scenery"]> }) {
   }
   if (scenery.kind === "backwall") return <BackWall z={scenery.z} height={scenery.height} />;
   if (scenery.kind === "kayak") return <Kayak seat={scenery.seat} water={scenery.water} />;
+  if (scenery.kind === "cable") return <CableMachine scenery={scenery} />;
   if (scenery.kind === "blocks") {
     const { height, spacing, z } = scenery;
     return (

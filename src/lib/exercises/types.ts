@@ -36,7 +36,7 @@ export type MuscleActivation = {
 export type Phase = { name: string; t0: number; t1: number };
 
 /** Switcher groups, in display order. */
-export const CATEGORIES = ["Atlas", "Legs and hips", "Push and pull", "Weights", "Core", "Cardio", "Racket sports", "Swimming", "Paddle sports", "Yoga", "Stretches"] as const;
+export const CATEGORIES = ["Atlas", "Legs and hips", "Push and pull", "Weights", "Cable machine", "Core", "Cardio", "Racket sports", "Swimming", "Paddle sports", "Yoga", "Stretches"] as const;
 export type ExerciseCategory = (typeof CATEGORIES)[number];
 
 import type { MotionClip, MotionClip3D } from "@/lib/kinematics/types";
@@ -93,7 +93,25 @@ export type Exercise = {
     /** A wall behind the figure, its face at z (designed_clip.py's wall_angel_geometry), the slab behind it. */
     | { kind: "backwall"; z: number; height: number }
     /** A sit-in kayak round the figure, its seat at `seat`, and the water's surface at `water` (designed_clip.py's KAYAK_SEAT, KAYAK_WATER). */
-    | { kind: "kayak"; seat: number; water: number };
+    | { kind: "kayak"; seat: number; water: number }
+    /**
+     * A cable machine (tools/myo/designed_clip.py's cable constants): a column for each pulley, and what the
+     * figure sits on or braces against. The cable, the handle and the weight stack, which rises as the cable is
+     * drawn out, are placed from the hands each frame (NativeFigure's attachCable).
+     */
+    | {
+        kind: "cable";
+        /** Each pulley, and where its column stands on the floor (x, z). */
+        pulleys: readonly { at: readonly [number, number, number]; post: readonly [number, number] }[];
+        /** What the hands hold: a V-handle, a wide bar, a rope, a D-handle in each hand (each on the pulley on its side), or one held in both. */
+        attachment: "v-handle" | "bar" | "rope" | "handles" | "handle";
+        /** A seat, its top at `top`, centred at z. */
+        seat?: { top: number; z: number; length: number };
+        /** A foot plate, the middle of its face at (y, z), tipped back `tilt` radians from upright. */
+        footplate?: { y: number; z: number; tilt: number };
+        /** A roller pad across the thighs, its axis at (y, z). */
+        kneePad?: { y: number; z: number };
+      };
   /** Where the switcher lists it. */
   category: ExerciseCategory;
   /** Who captured the movement, when the clip came straight from a source file rather than through `motion`/`motion3d`. */
