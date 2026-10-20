@@ -105,7 +105,14 @@ letter and a one-line task strands the *why*.
       far as the cable is drawn out (`attachCable`). Checks: every frame
       clear of the body on the real mesh, every joint in range, the
       pulldown's bar 2 cm or more off the face and chest. Activation is
-      qualitative. In passing: the kayak had been drawn 30 cm under the
+      qualitative. Addendum, same day (owner: "cable crossover shoulder
+      rotation a bit too much"): its upper arms had turned in 68-87 degrees,
+      the elbows up behind them, the only way this mesh let nearly straight
+      arms bring the hands together without the armpit creasing 2-3 cm into
+      the chest. A sweep of poses (~/.cache/ea-cable-sweep.py) found the
+      way out: the elbows bending from 35 to 60 degrees as the arms hug
+      round, the upper arm turned in 25-50, the hands meeting in front of
+      the navel; clear of the body in every frame. In passing: the kayak had been drawn 30 cm under the
       figure (seat 0.05, water 0.2 in kayaking.ts against 0.35 and 0.50 in
       the clip); the boat and water now sit where the figure does.
       `from: owner, 2026-10-19 · "let's go" (row, pulldown, pushdown, crossover, face pull, Pallof)`

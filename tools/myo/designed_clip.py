@@ -3163,11 +3163,15 @@ def triceps_pushdown_sample(t):
 
 def cable_crossover_sample(t):
     """Cable crossover, high to low: leaning forward a little between two columns, the arms sweep from wide and
-    high (the chest open) down and in until the hands meet in front of the hips, the elbows softly bent
-    throughout; and back up and out."""
+    high (the chest open) down and in, hugging round, until the hands come together in front of the navel;
+    and back up and out."""
     hip = (0.0, 0.83, -0.03)
-    wide = ckey(hip, 12, 18, 8, -6, (-0.56, 1.60, 0.02), (105, 122, None, 20, None, 0, None))
-    met = ckey(hip, 12, 18, 8, -6, (-0.06, 0.93, 0.42), (-20, 40, None, 20, None, 0, None))
+    # The upper arm turned in only 25-45 degrees, the elbows bending from 35 to 60 as the arms close (owner,
+    # 2026-10-20: the shoulders turned too far). With the arms nearly straight the hands could only meet with the
+    # upper arms turned in 70-90 degrees, the elbows up behind them; less turn and the armpit's skin creased
+    # 2-3 cm into the chest. Bent like this the hands come within 20 cm of each other with the armpit clear.
+    wide = ckey(hip, 12, 18, 8, -6, (-0.61, 1.58, 0.10), (115, 130, -25, 35, None, 0, None))
+    met = ckey(hip, 12, 18, 8, -6, (-0.12, 1.03, 0.45), (22, 51, -45, 62, 0, 0, None))
     return cable_flow([(0, wide), (0.42, met), (0.52, met), (1, wide)], STANDING_WIDE, t, path="joints")
 
 
