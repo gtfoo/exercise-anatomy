@@ -103,14 +103,18 @@ export type Exercise = {
         kind: "cable";
         /** Each pulley, and where its column stands on the floor (x, z). */
         pulleys: readonly { at: readonly [number, number, number]; post: readonly [number, number] }[];
-        /** What the hands hold: a V-handle, a wide bar, a rope, a D-handle in each hand (each on the pulley on its side), or one held in both. */
-        attachment: "v-handle" | "bar" | "rope" | "handles" | "handle";
+        /** What the cable pulls: a V-handle, a wide bar, a rope, a D-handle in each hand (each on the pulley on its side, or the far side's when `crossed`), one held in both, or a strap on the right ankle. */
+        attachment: "v-handle" | "bar" | "rope" | "handles" | "handle" | "ankle";
+        /** With a D-handle in each hand, each holds the cable from the pulley on the other side, the cables crossing in front. */
+        crossed?: boolean;
         /** A seat, its top at `top`, centred at z. */
         seat?: { top: number; z: number; length: number };
         /** A foot plate, the middle of its face at (y, z), tipped back `tilt` radians from upright. */
         footplate?: { y: number; z: number; tilt: number };
         /** A roller pad across the thighs, its axis at (y, z). */
         kneePad?: { y: number; z: number };
+        /** A grab bar across the column at (y, z), `half` its half width, for the hands to hold. */
+        handlebar?: { y: number; z: number; half: number };
       };
   /** Where the switcher lists it. */
   category: ExerciseCategory;

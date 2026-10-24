@@ -268,8 +268,15 @@ function attachCable(scene: THREE.Group, scenery: CableScenery, action: THREE.An
   const R = new THREE.Vector3();
   const pulleys = scenery.pulleys.map((p) => new THREE.Vector3(...p.at));
   const two = scenery.attachment === "handles";
-  // which pulley each cable runs to: with a D-handle in each hand, the one on that hand's side (the right is -x)
-  const used = two ? [pulleys.findIndex((p) => p.x < 0), pulleys.findIndex((p) => p.x >= 0)] : [0];
+  const ankle = scenery.attachment === "ankle";
+  // which pulley each cable runs to: with a D-handle in each hand, the one on that hand's side (the right is -x),
+  // or the other side's when the cables cross
+  const rightHands = (p: THREE.Vector3) => (scenery.crossed ? p.x >= 0 : p.x < 0); // the pulley the right hand takes
+  const used = two ? [pulleys.findIndex((p) => rightHands(p)), pulleys.findIndex((p) => !rightHands(p))] : [0];
+  const foot = ankle ? scene.getObjectByName("mixamorigRightFoot") : undefined;
+  const shin = ankle ? scene.getObjectByName("mixamorigRightLeg") : undefined;
+  const A = new THREE.Vector3();
+  const K = new THREE.Vector3();
 
   // the handle's parts
   const rope = scenery.attachment === "rope";
@@ -279,7 +286,10 @@ function attachCable(scene: THREE.Group, scenery: CableScenery, action: THREE.An
   const knots = rope ? [new THREE.Mesh(knotGeo, black), new THREE.Mesh(knotGeo, black)] : [];
   const ringGeo = keep(new THREE.TorusGeometry(0.06, 0.009, 8, 24));
   const rings = scenery.attachment === "handle" ? [new THREE.Mesh(ringGeo, steel)] : two ? [new THREE.Mesh(ringGeo, steel), new THREE.Mesh(ringGeo, steel)] : [];
-  for (const m of [...knots, ...rings]) g.add(m);
+  // an ankle strap: a cuff round the shin just above the ankle, the cable clipped to its front
+  const cuffGeo = keep(new THREE.TorusGeometry(0.05, 0.016, 8, 24));
+  const cuff = ankle ? new THREE.Mesh(cuffGeo, black) : null;
+  for (const m of [...knots, ...rings, ...(cuff ? [cuff] : [])]) g.add(m);
 
   // each cable: from the handle to its pulley, and from the column's top down to its lifted plates
   const cables = used.map(() => ({ run: tube(0.004, black), riser: tube(0.004, black) }));
@@ -321,9 +331,15 @@ function attachCable(scene: THREE.Group, scenery: CableScenery, action: THREE.An
     scene.updateMatrixWorld(true);
     left!.localToWorld(L.set(0, 0.08, 0.03)); // in the palm, as the barbell
     right!.localToWorld(R.set(0, 0.08, 0.03));
+    if (foot && shin) {
+      foot.getWorldPosition(A);
+      shin.getWorldPosition(K);
+      A.addScaledVector(K.sub(A).normalize(), 0.05); // the cuff, up the shin from the ankle
+    }
   };
   // where each cable leaves the handle
   const ends = (): THREE.Vector3[] => {
+    if (ankle) return [A.clone().addScaledVector(pulleys[0].clone().sub(A).normalize(), 0.05)];
     if (two) return [R.clone(), L.clone()].map((h, c) => h.addScaledVector(pulleys[used[c]].clone().sub(h).normalize(), 0.11));
     const mid = new THREE.Vector3().addVectors(L, R).multiplyScalar(0.5);
     const toward = pulleys[0].clone().sub(mid).normalize();
@@ -379,6 +395,11 @@ function attachCable(scene: THREE.Group, scenery: CableScenery, action: THREE.An
         ring.quaternion.setFromRotationMatrix(basis.makeBasis(xx, y, z));
         ring.position.copy(palm).addScaledVector(y, 0.05);
       });
+      if (cuff) {
+        // K is the unit direction up the shin (palms() left it so)
+        cuff.position.copy(A);
+        cuff.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), K);
+      }
       cables.forEach((c, i) => {
         const p = pulleys[used[i]];
         span(c.run, e[i], p);

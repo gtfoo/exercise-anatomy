@@ -3017,38 +3017,53 @@ PALLOF_PULLEY = (1.00, 1.22, 0.30)  # at chest height, out to the figure's left
 STAND_ANKLE = (0.11, 0.068, -0.03)
 
 
-def _cable_body(stance, hip, pelvis_deg, trunk_deg, neck_deg, head_deg, r_hand, g=None, r_arm=None, **_):
+def _cable_body(stance, hip, pelvis_deg, trunk_deg, neck_deg, head_deg, r_hand=None, g=None, r_arm=None, yaw_deg=0.0,
+                l_hand=None, gl=None, l_arm=None, r_ankle=None, r_foot=None, **_):
     """One moment of a cable exercise without its arms: the hips where `hip` puts them, tipped by pelvis_deg,
-    the trunk, neck and head each tipped forward (positive) or back, the legs from the hips to the ankles the
-    stance fixes (the knees bent toward its `knee`), the right wrist's place (r_hand) and, for a handle the hand
-    must lie along (a bar), the way its thumb side points (g, _racket_way). x left, y up, z ahead."""
+    the trunk, neck and head each tipped forward (positive) or back and turned by yaw_deg (positive to the left;
+    the pelvis turns the stance's hip_yaw share of it), the legs from the hips to the ankles the stance fixes
+    (the knees bent toward its `knee`) or, for a leg that moves, the right ankle at r_ankle with its foot turned
+    r_foot (rx, degrees), each wrist's place (r_hand; l_hand when the arms are solved apart) and, for a handle a
+    hand must lie along (a bar), the way its thumb side points (g, gl; _racket_way). x left, y up, z ahead."""
     q = all_ident()
-    pelvis, trunk = rx(pelvis_deg * DEG), rx(trunk_deg * DEG)
+    yaw = q_axis([0, 1, 0], yaw_deg * DEG)
+    pelvis = qmul(q_axis([0, 1, 0], yaw_deg * stance.get("hip_yaw", 0.4) * DEG), rx(pelvis_deg * DEG))
+    trunk = qmul(yaw, rx(trunk_deg * DEG))
     root, pelvis_pos = root_for_hip(np.asarray(hip, dtype=float), pelvis)
-    q["pelvis"], q["spine"], q["neck"], q["head"] = pelvis, trunk, rx(neck_deg * DEG), rx(head_deg * DEG)
+    q["pelvis"], q["spine"] = pelvis, trunk
+    q["neck"], q["head"] = qmul(yaw, rx(neck_deg * DEG)), qmul(yaw, rx(head_deg * DEG))  # the eyes on the hands
     ax, ay, az = stance["ankle"]
     kx, ky, kz = stance["knee"]
     for S, sgn in (("L", 1), ("R", -1)):
         h = pelvis_pos + q_rot(pelvis, rig["hip." + S.lower()] - rig["pelvis"])
-        ankle = np.array([sgn * ax, ay, az])
-        knee = two_link_3d(h, ankle, L_THIGH, L_SHIN, np.array([sgn * kx, ky, kz]))
+        moving = S == "R" and r_ankle is not None
+        ankle = np.asarray(r_ankle, dtype=float) if moving else np.array([sgn * ax, ay, az])
+        kb = stance.get("knee_R", stance["knee"]) if moving else (kx, ky, kz)
+        knee = two_link_3d(h, ankle, L_THIGH, L_SHIN, np.array([sgn * kb[0], kb[1], kb[2]]))
         q["thigh." + S] = aim(knee - h, (0.0, 1.0, 1.0))  # the kneecap ahead when standing, up when seated
         q["shin." + S] = aim(ankle - knee, (0.0, 1.0, 1.0))
-        q["foot." + S] = rx(stance.get("foot", 0.0) * DEG)
+        q["foot." + S] = rx((r_foot if moving and r_foot is not None else stance.get("foot", 0.0)) * DEG)
     sh = {"R": shoulder_from(pelvis_pos, trunk, "r"), "L": shoulder_from(pelvis_pos, trunk, "l")}
+    unit = lambda v: None if v is None else np.asarray(v, dtype=float) / float(np.linalg.norm(v))
     return {"q": q, "root": root, "pelvis_pos": pelvis_pos, "pelvis": pelvis, "trunk": trunk, "sh": sh,
-            "hand_R": np.asarray(r_hand, dtype=float), "g": {"R": None if g is None else np.asarray(g, dtype=float) / float(np.linalg.norm(g))},
-            "r_arm": r_arm, "midline": True}
+            "hand_R": None if r_hand is None else np.asarray(r_hand, dtype=float),
+            "hand_L": None if l_hand is None else np.asarray(l_hand, dtype=float),
+            "g": {"R": unit(g), "L": unit(gl)}, "r_arm": r_arm, "l_arm": l_arm,
+            "midline": stance.get("arms", "mirror") == "mirror"}
 
 
-def ckey(hip, pelvis, trunk, neck, head, r_hand, r_pose=None, g=None):
+def ckey(hip, pelvis, trunk, neck, head, r_hand, r_pose=None, g=None, yaw=None, l_hand=None, l_pose=None, gl=None, r_ankle=None, r_foot=None):
     """A cable exercise's stage: the right wrist's place, and how its joints are used there (r_pose, as _fit_arm's
-    pose: plane, elevation, humeral turn, elbow, forearm turn, wrist flexion, deviation; None leaves one free)."""
-    k = dict(hip=tuple(hip), pelvis_deg=float(pelvis), trunk_deg=float(trunk), neck_deg=float(neck), head_deg=float(head), r_hand=tuple(r_hand))
-    if r_pose is not None:
-        k["r_pose"] = tuple(r_pose)
-    if g is not None:
-        k["g"] = tuple(g)
+    pose: plane, elevation, humeral turn, elbow, forearm turn, wrist flexion, deviation; None leaves one free).
+    A stage given as a whole pose may leave r_hand None: the hand goes where the joints put it. The rest are
+    _cable_body's, for the exercises that need them."""
+    k = dict(hip=tuple(hip), pelvis_deg=float(pelvis), trunk_deg=float(trunk), neck_deg=float(neck), head_deg=float(head))
+    for n, v in (("r_hand", r_hand), ("r_pose", r_pose), ("g", g), ("l_hand", l_hand), ("l_pose", l_pose), ("gl", gl), ("r_ankle", r_ankle)):
+        if v is not None:
+            k[n] = tuple(v)
+    for n, v in (("yaw_deg", yaw), ("r_foot", r_foot)):
+        if v is not None:
+            k[n] = float(v)
     return k
 
 
@@ -3057,14 +3072,15 @@ def _cable_params(keys, t):
     reverses at its ends, and a held stage holds)."""
     params = {}
     for n, v0 in keys[0][1].items():
-        if n == "r_pose":
+        if n in ("r_pose", "l_pose"):
             continue
         if isinstance(v0, tuple):
             params[n] = tuple(loop_spline([(tk, d[n][i]) for tk, d in keys], t, monotone=True) for i in range(len(v0)))
         else:
             params[n] = loop_spline([(tk, d[n]) for tk, d in keys], t, monotone=True)
-    if "r_arm" in params:
-        params["r_arm"] = tuple(float(np.clip(v, lo, hi)) for v, (lo, hi) in zip(params["r_arm"], arm_bounds("R")))
+    for n in ("r_arm", "l_arm"):
+        if n in params:
+            params[n] = tuple(float(np.clip(v, lo, hi)) for v, (lo, hi) in zip(params[n], arm_bounds(n[0].upper())))
     return params
 
 
@@ -3083,35 +3099,49 @@ def _cable_solve(keys, stance, path="hand"):
     cm on the way); with "joints" it goes where the splined joints take it, on the arcs an arm makes (a
     crossover's sweep: held to the straight path between its stages, the elbows folded to cut the corner)."""
     body = lambda **kw: _cable_body(stance, **kw)
-    fitted, prev = [], None
+    two = stance.get("arms", "mirror") == "two"  # each arm solved on its own (a woodchop), not the right mirrored
+    rounded = lambda x: tuple(round(float(v), 2) for v in x)
+    fitted, prev, prevL = [], None, None
     for j, (tk, k) in enumerate(keys):
-        same = next((d for t0, d in fitted if {a: b for a, b in d.items() if a != "r_arm"} == k), None)
-        if same is not None:  # a held stage, or the closing one: the same arm
-            fitted.append((tk, dict(k, r_arm=same["r_arm"])))
+        same = next((d for t0, d in fitted if {a: b for a, b in d.items() if a not in ("r_arm", "l_arm")} == k), None)
+        if same is not None:  # a held stage, or the closing one: the same arms
+            fitted.append((tk, dict(k, **{n: same[n] for n in ("r_arm", "l_arm") if n in same})))
             continue
         f = body(**_cable_params(keys, tk))
         # A stroke following its joints gives each stage as a whole pose, so a stage is not also held near the one
         # before: that pull left a face pull's elbows 15 cm forward of where its finish put them.
         x = _fit_arm("R", f, f["hand_R"], f["g"]["R"], prev if path == "hand" else None, seed=j, pose=k.get("r_pose"))
         prev = x
-        fitted.append((tk, dict(k, r_arm=tuple(round(float(v), 2) for v in x))))
-    last = None
+        d = dict(k, r_arm=rounded(x))
+        if two:
+            # no keeping the left hand off the right forearm: the hands share the handle and touch, and held apart
+            # the left arm had fled up beside the head
+            xL = _fit_arm("L", f, f["hand_L"], f["g"]["L"], prevL if path == "hand" else None, seed=100 + j, pose=k.get("l_pose"))
+            prevL = xL
+            d["l_arm"] = rounded(xL)
+        fitted.append((tk, d))
+    last = lastL = None
     for _ in range(2):  # round the loop twice, so the last frame meets the first
-        xs = []
+        xs, xls = [], []
         for i in range(N):
             f = body(**_cable_params(fitted, i / N))
             x = _refine_arm("R", f, f["r_arm"], f["hand_R"] if path == "hand" else None, f["g"]["R"], last=last)
             last = x
             xs.append(x)
+            if two:
+                xL = _refine_arm("L", f, f["l_arm"], f["hand_L"] if path == "hand" else None, f["g"]["L"], last=lastL)
+                lastL = xL
+                xls.append(xL)
     X = _cyc_smooth(np.array(xs), 1.0)
+    XL = _cyc_smooth(np.array(xls), 1.0) if two else np.array([_mirror_arm(x) for x in X])
     out = []
     for i in range(N):
         f = body(**_cable_params(fitted, i / N))
         q = dict(f["q"])
         q.update(_fk_arm("R", f, *X[i])[0])
-        q.update(_fk_arm("L", f, *_mirror_arm(X[i]))[0])
+        q.update(_fk_arm("L", f, *XL[i])[0])
         out.append({"root": [round(float(v), 4) for v in f["root"]], "q": q})
-    CABLE_DEBUG[repr(keys)] = {"keys": fitted, "arm": X}
+    CABLE_DEBUG[repr(keys)] = {"keys": fitted, "arm": X, "arm_L": XL}
     return out
 
 
@@ -3203,6 +3233,89 @@ def pallof_press_sample(t):
     return cable_flow([(0, chest), (0.3, out), (0.62, out), (0.9, chest), (1, chest)], STANDING_WIDE, t)
 
 
+CURL_PULLEY = (0.0, 0.15, 0.55)  # low, the column just ahead
+STRAIGHT_ARM_PULLEY = (0.0, 2.00, 0.85)  # high, ahead
+RAISE_PULLEY = (0.45, 0.12, 0.35)  # each low pulley, either side and a little ahead; each hand takes the other side's
+KICKBACK_PULLEY = (0.0, 0.12, 0.60)  # low, the column ahead; the strap on the right ankle
+KICKBACK_BAR = (1.12, 0.68, 0.25)  # a grab bar across the column: its height, z and half its width (the hands on one
+# upright had crossed the forearms)
+CHOP_PULLEY = (-0.95, 1.95, 0.10)  # high, out to the figure's right
+KICKBACK = {"ankle": STAND_ANKLE, "knee": (0.0, 0.0, 1.0), "knee_R": (0.0, -1.0, 1.0)}
+CHOP_STANCE = {"ankle": (0.17, 0.068, -0.02), "knee": (0.15, 0.0, 1.0), "arms": "two", "hip_yaw": 0.45}
+CHOP_REACH = 0.525  # each wrist this far from its shoulder: the elbows bent about 20 degrees
+CHOP_HANDS = 0.035  # each wrist this far either side of the handle's line
+
+
+def cable_curl_sample(t):
+    """Cable curl, a straight bar on a low pulley, underhand: the upper arms still at the sides, the bar curled
+    from the thighs to the chest; a squeeze, and down under control."""
+    hip = (0.0, 0.85, -0.02)
+    down = ckey(hip, 0, 2, 0, 4, None, (5, 10, 0, 12, -75, 0, 0))
+    up = ckey(hip, 0, 2, 0, 4, None, (5, 22, 0, 130, -75, -10, 0))
+    return cable_flow([(0, down), (0.42, up), (0.5, up), (1, down)], STANDING, t, path="joints")
+
+
+def straight_arm_pulldown_sample(t):
+    """Straight-arm pulldown: hinged a little forward at the hips, arms straight, the bar swept from in front of
+    the head down to the thighs and back, the elbows never bending."""
+    hip = (0.0, 0.83, -0.08)
+    top = ckey(hip, 22, 28, 12, -8, None, (15, 128, 0, 12, 60, 0, 0))
+    low = ckey(hip, 22, 28, 12, -8, None, (15, 18, 0, 12, 60, 0, 0))
+    return cable_flow([(0, top), (0.42, low), (0.5, low), (1, top)], STANDING, t, path="joints")
+
+
+def cable_lateral_raise_sample(t):
+    """Cable lateral raise with both arms, the cables crossed: each hand holds the far pulley's cable, so the
+    pull is there from the bottom. The arms rise out to shoulder height a little ahead of the sides (the
+    shoulder blade's plane), elbows soft, and lower slowly."""
+    hip = (0.0, 0.85, -0.02)
+    down = ckey(hip, 0, 4, 0, 2, None, (-15, 15, 0, 15, 10, 0, 0))
+    up = ckey(hip, 0, 4, 0, 2, None, (60, 88, 0, 15, 50, 0, 0))
+    return cable_flow([(0, down), (0.42, up), (0.5, up), (1, down)], STANDING, t, path="joints")
+
+
+def glute_kickback_sample(t):
+    """Cable glute kickback, a strap on the right ankle: leaning forward with both hands on the column, the
+    right leg drives back and up from the hip with the knee nearly straight, a squeeze, and back under control.
+    One side; the left leg stands."""
+    hip = (0.0, 0.84, -0.02)
+    hands = (-0.16, 1.12, 0.60)  # on the grab bar, shoulder width
+    start = ckey(hip, 25, 30, 10, -12, hands, (5, None, 0, 30, 0, 0, None), r_ankle=(-0.10, 0.10, 0.02), r_foot=0)
+    kicked = ckey(hip, 25, 30, 10, -12, hands, (5, None, 0, 30, 0, 0, None), r_ankle=(-0.10, 0.30, -0.55), r_foot=40)
+    return cable_flow([(0, start), (0.4, kicked), (0.5, kicked), (1, start)], KICKBACK, t)
+
+
+def woodchop_sample(t):
+    """Cable woodchop, high to low: both hands on one handle up at the right, the trunk turned toward the
+    pulley; the trunk turns to the left and the arms, long, carry the handle down and across to outside the
+    left knee as the knees bend a little; and back up under control."""
+    # Each stage's handle is placed from that stage's own shoulders: out along `way` from between them, where
+    # each wrist is REACH from its shoulder, the hands side by side across it, so the arms are straight wherever
+    # the trunk has turned them (placed by eye, the targets sat inside arm's length and the elbows bent 40
+    # degrees). Halfway (mid) the handle passes in front at arm's length: held to the straight line from high
+    # right to low left it had cut across close to the chest and folded the elbows to 107 degrees. The trunk turns
+    # 55 degrees at the finish, so the right arm crosses the chest less. The upper arms' turn is left to the fit:
+    # reaching across, the right arm cannot turn in less than about 60 degrees without its armpit in the chest (no
+    # pose clears it even 1.2 cm in), and with the elbow straight that turn only rolls the arm.
+    arm = (None, None, None, 8, None, 0, None)
+
+    def stage(hip, pelvis, trunk, neck, head, yaw, way):
+        f = _cable_body(CHOP_STANCE, hip=hip, pelvis_deg=pelvis, trunk_deg=trunk, neck_deg=neck, head_deg=head, yaw_deg=yaw)
+        shR, shL = f["sh"]["R"], f["sh"]["L"]
+        d = np.asarray(way, dtype=float) / float(np.linalg.norm(way))
+        across = shL - shR
+        h = float(np.linalg.norm(across - np.dot(across, d) * d)) / 2
+        grip = (shR + shL) / 2 + d * math.sqrt(max(CHOP_REACH ** 2 - h ** 2, 0.01))
+        left = across / float(np.linalg.norm(across)) * CHOP_HANDS
+        r = lambda v: tuple(round(float(x), 4) for x in v)
+        return ckey(hip, pelvis, trunk, neck, head, r(grip - left), arm, yaw=yaw, l_hand=r(grip + left), l_pose=arm)
+
+    high = stage((0.0, 0.84, -0.02), 0, 0, 0, -8, -60, (-0.55, 0.65, 0.5))
+    mid = stage((0.0, 0.815, -0.02), 6, 7, 5, 4, -5, (0.05, -0.35, 1.0))
+    low = stage((0.0, 0.79, -0.02), 12, 15, 10, 15, 55, (0.55, -0.75, 0.35))
+    return cable_flow([(0, high), (0.22, mid), (0.45, low), (0.55, low), (0.78, mid), (1, high)], CHOP_STANCE, t)
+
+
 CLIPS = {
     "stand": (stand_sample, "rest pose, tools/myo/designed_clip.py"),
     "plank": (plank_sample, "designed forearm plank, tools/myo/designed_clip.py"),
@@ -3245,6 +3358,11 @@ CLIPS = {
     "cable-crossover": (cable_crossover_sample, "designed cable exercise, tools/myo/designed_clip.py"),
     "face-pull": (face_pull_sample, "designed cable exercise, tools/myo/designed_clip.py"),
     "pallof-press": (pallof_press_sample, "designed cable exercise, tools/myo/designed_clip.py"),
+    "cable-curl": (cable_curl_sample, "designed cable exercise, tools/myo/designed_clip.py"),
+    "straight-arm-pulldown": (straight_arm_pulldown_sample, "designed cable exercise, tools/myo/designed_clip.py"),
+    "cable-lateral-raise": (cable_lateral_raise_sample, "designed cable exercise, tools/myo/designed_clip.py"),
+    "glute-kickback": (glute_kickback_sample, "designed cable exercise, tools/myo/designed_clip.py"),
+    "woodchop": (woodchop_sample, "designed cable exercise, tools/myo/designed_clip.py"),
     "single-leg-rdl-knee-up": (single_leg_rdl_knee_up_sample, "designed movement, tools/myo/designed_clip.py"),
     "windshield-wipers": (windshield_wipers_sample, "designed movement, tools/myo/designed_clip.py"),
     "straight-leg-sit-up": (straight_leg_sit_up_sample, "designed movement, tools/myo/designed_clip.py"),

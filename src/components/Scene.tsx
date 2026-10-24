@@ -199,7 +199,7 @@ type CableScenery = Extract<NonNullable<Exercise["scenery"]>, { kind: "cable" }>
 function CableMachine({ scenery }: { scenery: CableScenery }) {
   const steel = useMemo(() => new THREE.MeshStandardMaterial({ color: "#5a5652", roughness: 0.45, metalness: 0.6 }), []);
   const pad = useMemo(() => new THREE.MeshStandardMaterial({ color: "#2b2826", roughness: 0.85 }), []);
-  const { seat, footplate, kneePad } = scenery;
+  const { seat, footplate, kneePad, handlebar } = scenery;
   return (
     <group>
       {scenery.pulleys.map(({ at, post }, i) => {
@@ -237,6 +237,13 @@ function CableMachine({ scenery }: { scenery: CableScenery }) {
             <boxGeometry args={[0.46, 0.3, 0.03]} />
           </mesh>
           <Tube a={[0, -0.15, 0.03]} b={[0, -footplate.y, 0.03]} r={0.025} material={steel} />
+        </group>
+      )}
+      {handlebar && (
+        <group>
+          <Tube a={[-handlebar.half, handlebar.y, handlebar.z]} b={[handlebar.half, handlebar.y, handlebar.z]} r={0.016} material={steel} />
+          <Tube a={[-handlebar.half, handlebar.y, handlebar.z]} b={[-handlebar.half, handlebar.y, handlebar.z + 0.1]} r={0.016} material={steel} />
+          <Tube a={[handlebar.half, handlebar.y, handlebar.z]} b={[handlebar.half, handlebar.y, handlebar.z + 0.1]} r={0.016} material={steel} />
         </group>
       )}
       {kneePad && (

@@ -232,3 +232,164 @@ export const pallofPress = cable(
     { id: "forearm-flexors", name: "Forearm flexors", group: "Arm", role: "stabiliser", note: "Hold the handle.", curve: FLAT(0.45) },
   ],
 );
+
+export const cableCurl = cable(
+  "cable-curl",
+  "Cable curl",
+  2400,
+  {
+    kind: "cable",
+    pulleys: [{ at: [0, 0.15, 0.55], post: [0, 0.7] }], // CURL_PULLEY
+    attachment: "bar",
+  },
+  { position: [2.6, 1.4, 1.6], target: [0, 1.0, 0.2] },
+  "Standing at a low pulley with a straight bar, underhand. The upper arms stay still at the sides while the bar is curled from the thighs to the chest; a squeeze, and down under control. The cable keeps the biceps loaded at the bottom, where a dumbbell's pull goes slack.",
+  [
+    { name: "curl", t0: 0, t1: 0.42 },
+    { name: "squeeze", t0: 0.42, t1: 0.5 },
+    { name: "lower", t0: 0.5, t1: 1 },
+  ],
+  [
+    { id: "biceps-brachii", name: "Biceps brachii", group: "Arm", role: "prime-mover", note: "Bends the elbow and keeps the palms turned up; loaded from the very bottom.", curve: WORK, stretch: t([0, 0.4], [0.3, 0.1], [0.42, 0], [0.5, 0], [0.8, 0.2], [1, 0.4]) },
+    { id: "brachialis", name: "Brachialis", group: "Arm", role: "prime-mover", note: "The elbow's main bender, under the biceps.", curve: WORK },
+    { id: "brachioradialis", name: "Brachioradialis", group: "Arm", role: "synergist", note: "Helps bend the elbow, most through the middle of the curl.", curve: scale(WORK, 0.7, 0.2) },
+    { id: "forearm-flexors", name: "Forearm flexors", group: "Arm", role: "synergist", note: "Hold the bar and keep the wrists from bending back.", curve: scale(WORK, 0.7, 0.4) },
+    { id: "anterior-deltoid", name: "Anterior deltoid", group: "Shoulder", role: "stabiliser", note: "Holds the upper arms still as the cable pulls the forearms down and forward.", curve: scale(WORK, 0.4, 0.2) },
+    { id: "triceps-long-head", name: "Triceps, long head", group: "Arm", role: "stabiliser", note: "Lengthened as the elbow bends; it lets go rather than works.", curve: FLAT(0.1), stretch: t([0, 0.1], [0.42, 0.55], [0.5, 0.55], [1, 0.1]) },
+    { id: "rectus-abdominis", name: "Rectus abdominis", group: "Trunk", role: "stabiliser", note: "Keeps the trunk from leaning back to swing the bar.", curve: FLAT(0.3) },
+    { id: "erector-spinae", name: "Erector spinae", group: "Trunk", role: "stabiliser", note: "Holds the trunk upright against the pull ahead.", curve: FLAT(0.35) },
+  ],
+);
+
+export const straightArmPulldown = cable(
+  "straight-arm-pulldown",
+  "Straight-arm pulldown",
+  2600,
+  {
+    kind: "cable",
+    pulleys: [{ at: [0, 2.0, 0.85], post: [0, 1.0] }], // STRAIGHT_ARM_PULLEY
+    attachment: "bar",
+  },
+  { position: [2.8, 1.5, 1.2], target: [0, 1.2, 0.3] },
+  "Standing at a high pulley, hinged a little forward at the hips, arms straight, an overhand grip on the bar. The bar sweeps from in front of the head down in an arc to the thighs, the elbows never bending, and back up under control: the back's work with the arms kept out of it.",
+  PULL_PHASES,
+  [
+    { id: "latissimus-dorsi", name: "Latissimus dorsi", group: "Back", role: "prime-mover", note: "Draws the straight arms down from in front of the head to the thighs; stretched at the top.", curve: WORK, stretch: LONG_AT_START },
+    { id: "teres-major", name: "Teres major", group: "Back", role: "prime-mover", note: "Brings the arm down with the latissimus.", curve: scale(WORK, 0.9, 0.2), stretch: scale(LONG_AT_START, 0.8) },
+    { id: "triceps-long-head", name: "Triceps, long head", group: "Arm", role: "synergist", note: "It crosses the shoulder, so it helps bring the arm down, and it keeps the elbow straight.", curve: scale(WORK, 0.7, 0.3) },
+    { id: "posterior-deltoid", name: "Posterior deltoid", group: "Shoulder", role: "synergist", note: "Takes the arm the last part of the way back to the thighs.", curve: scale(FINISH, 0.7, 0.15) },
+    { id: "pectoralis-major", name: "Pectoralis major", group: "Chest", role: "synergist", note: "Its lower fibres help bring the arms down from in front.", curve: scale(WORK, 0.5, 0.15) },
+    { id: "lower-trapezius", name: "Lower trapezius", group: "Back", role: "synergist", note: "Draws the shoulder blades down as the arms come down.", curve: scale(FINISH, 0.7, 0.2) },
+    { id: "rhomboids", name: "Rhomboids", group: "Back", role: "stabiliser", note: "Hold the shoulder blades in place against the pull.", curve: scale(FINISH, 0.5, 0.2) },
+    { id: "rectus-abdominis", name: "Rectus abdominis", group: "Trunk", role: "stabiliser", note: "Keeps the ribs down so the arms, not an arching back, move the bar.", curve: t([0, 0.3], [0.42, 0.55], [0.5, 0.55], [1, 0.3]) },
+    { id: "erector-spinae", name: "Erector spinae", group: "Trunk", role: "stabiliser", note: "Hold the back straight in the hinge.", curve: FLAT(0.4) },
+    { id: "forearm-flexors", name: "Forearm flexors", group: "Arm", role: "stabiliser", note: "Hold the bar.", curve: GRIP },
+  ],
+);
+
+const RAISE_PHASES = [
+  { name: "raise", t0: 0, t1: 0.42 },
+  { name: "hold", t0: 0.42, t1: 0.5 },
+  { name: "lower", t0: 0.5, t1: 1 },
+];
+
+export const cableLateralRaise = cable(
+  "cable-lateral-raise",
+  "Cable lateral raise",
+  2600,
+  {
+    kind: "cable",
+    pulleys: [
+      { at: [0.45, 0.12, 0.35], post: [0.57, 0.35] }, // RAISE_PULLEY, the figure's left
+      { at: [-0.45, 0.12, 0.35], post: [-0.57, 0.35] },
+    ],
+    attachment: "handles",
+    crossed: true,
+  },
+  { position: [1.0, 1.5, 3.2], target: [0, 1.15, 0.1] },
+  "Both arms, standing between two low pulleys with the cables crossed: each hand holds the far side's cable, so the pull is there from the very bottom. The arms rise out to shoulder height a little ahead of the sides, elbows soft and palms down, and lower slowly.",
+  RAISE_PHASES,
+  [
+    { id: "middle-deltoid", name: "Middle deltoid", group: "Shoulder", role: "prime-mover", note: "Raises the arm out to the side; the crossed cable loads it from the bottom.", curve: WORK, stretch: t([0, 0.3], [0.3, 0.05], [0.5, 0], [0.8, 0.15], [1, 0.3]) },
+    { id: "supraspinatus", name: "Supraspinatus", group: "Rotator cuff", role: "synergist", note: "Starts the raise and keeps the head of the arm in its socket.", curve: t([0, 0.55], [0.15, 0.8], [0.42, 0.7], [0.5, 0.65], [1, 0.55]) },
+    { id: "anterior-deltoid", name: "Anterior deltoid", group: "Shoulder", role: "synergist", note: "Helps, as the arms rise a little ahead of the sides.", curve: scale(WORK, 0.6, 0.2) },
+    { id: "posterior-deltoid", name: "Posterior deltoid", group: "Shoulder", role: "synergist", note: "Helps at the back of the shoulder.", curve: scale(WORK, 0.4, 0.15) },
+    { id: "upper-trapezius", name: "Upper trapezius", group: "Back", role: "synergist", note: "Turns the shoulder blade up as the arm passes halfway; kept quiet, not shrugging.", curve: scale(FINISH, 0.6, 0.15) },
+    { id: "serratus-anterior", name: "Serratus anterior", group: "Shoulder", role: "synergist", note: "Turns the shoulder blade up with the trapezius.", curve: scale(FINISH, 0.6, 0.15) },
+    { id: "lower-trapezius", name: "Lower trapezius", group: "Back", role: "stabiliser", note: "Steadies the shoulder blade as it turns.", curve: scale(FINISH, 0.45, 0.15) },
+    { id: "forearm-extensors", name: "Forearm extensors", group: "Arm", role: "stabiliser", note: "Keep the wrists straight under the handles.", curve: FLAT(0.3) },
+    { id: "erector-spinae", name: "Erector spinae", group: "Trunk", role: "stabiliser", note: "Keep the trunk tall, not leaning to throw the weight.", curve: FLAT(0.3) },
+  ],
+);
+
+// The kickback works the right leg only: each curve is the left side's, `right` the right's.
+const KICK = t([0, 0.25], [0.2, 0.7], [0.4, 1], [0.5, 0.95], [0.75, 0.55], [1, 0.25]);
+
+export const gluteKickback = cable(
+  "glute-kickback",
+  "Glute kickback",
+  2400,
+  {
+    kind: "cable",
+    pulleys: [{ at: [0, 0.12, 0.6], post: [0, 0.78] }], // KICKBACK_PULLEY
+    attachment: "ankle",
+    handlebar: { y: 1.12, z: 0.68, half: 0.25 }, // KICKBACK_BAR
+  },
+  { position: [3.0, 1.3, 0.6], target: [0, 0.75, 0.0] },
+  "A strap on the right ankle, a low pulley ahead. Leaning forward with both hands on the column, standing on the left leg, the right leg drives back and up from the hip with the knee nearly straight; a squeeze at the top without arching the back, and back under control. One side shown.",
+  [
+    { name: "kick back", t0: 0, t1: 0.4 },
+    { name: "squeeze", t0: 0.4, t1: 0.5 },
+    { name: "return", t0: 0.5, t1: 1 },
+  ],
+  [
+    { id: "gluteus-maximus", name: "Gluteus maximus", group: "Gluteals", role: "prime-mover", note: "Drives the right leg back from the hip: the exercise is for it. The left one steadies the standing hip.", curve: FLAT(0.3), right: KICK },
+    { id: "biceps-femoris", name: "Biceps femoris", group: "Hamstrings", role: "synergist", note: "Helps take the right thigh back.", curve: FLAT(0.25), right: scale(KICK, 0.7, 0.15) },
+    { id: "semitendinosus", name: "Semitendinosus", group: "Hamstrings", role: "synergist", note: "Hip extension with the glutes.", curve: FLAT(0.25), right: scale(KICK, 0.65, 0.15) },
+    { id: "semimembranosus", name: "Semimembranosus", group: "Hamstrings", role: "synergist", note: "Hip extension.", curve: FLAT(0.25), right: scale(KICK, 0.65, 0.15) },
+    { id: "adductor-magnus", name: "Adductor magnus", group: "Hamstrings", role: "synergist", note: "Its back part extends the hip.", curve: FLAT(0.15), right: scale(KICK, 0.5, 0.1) },
+    { id: "gluteus-medius", name: "Gluteus medius", group: "Gluteals", role: "stabiliser", note: "The left one holds the pelvis level over the standing leg.", curve: FLAT(0.6), right: scale(KICK, 0.4, 0.15) },
+    { id: "rectus-femoris", name: "Rectus femoris", group: "Quadriceps", role: "stabiliser", note: "The right one is lengthened at the top of the kick; the left helps hold the standing knee.", curve: FLAT(0.35), right: FLAT(0.1), stretchRight: t([0, 0.05], [0.4, 0.5], [0.5, 0.5], [1, 0.05]) },
+    { id: "vastus-lateralis", name: "Vastus lateralis", group: "Quadriceps", role: "stabiliser", note: "Holds the standing knee soft.", curve: FLAT(0.35), right: FLAT(0.05) },
+    { id: "gastrocnemius-medial", name: "Gastrocnemius, medial head", group: "Calves", role: "stabiliser", note: "Balance on the standing foot.", curve: FLAT(0.3), right: FLAT(0.05) },
+    { id: "erector-spinae", name: "Erector spinae", group: "Trunk", role: "stabiliser", note: "Hold the back flat in the lean; the hip, not the lower back, makes the kick.", curve: t([0, 0.35], [0.4, 0.5], [0.5, 0.5], [1, 0.35]) },
+    { id: "rectus-abdominis", name: "Rectus abdominis", group: "Trunk", role: "stabiliser", note: "Keeps the lower back from arching as the leg goes back.", curve: t([0, 0.3], [0.4, 0.5], [0.5, 0.5], [1, 0.3]) },
+    { id: "forearm-flexors", name: "Forearm flexors", group: "Arm", role: "stabiliser", note: "Hold the column.", curve: FLAT(0.3) },
+  ],
+);
+
+// The woodchop turns the trunk from the right to the left: the right external oblique and the left internal oblique
+// turn it. The curves are the left side's, `right` the right's.
+const CHOP = t([0, 0.35], [0.2, 0.8], [0.45, 1], [0.55, 0.9], [0.8, 0.55], [1, 0.35]);
+
+export const woodchop = cable(
+  "woodchop",
+  "Cable woodchop",
+  2600,
+  {
+    kind: "cable",
+    pulleys: [{ at: [-0.95, 1.95, 0.1], post: [-1.07, 0.1] }], // CHOP_PULLEY, out to the figure's right
+    attachment: "handle",
+  },
+  { position: [1.6, 1.6, 3.0], target: [-0.1, 1.2, 0.1] },
+  "High to low, the pulley up at the right. Both hands on the handle, the trunk turned toward the pulley; the trunk turns to the left and the arms, long, carry the handle down and across to outside the left knee as the knees bend a little; and back up under control. The turn comes from the trunk and hips, the arms only guide.",
+  [
+    { name: "chop", t0: 0, t1: 0.45 },
+    { name: "hold", t0: 0.45, t1: 0.55 },
+    { name: "return", t0: 0.55, t1: 1 },
+  ],
+  [
+    { id: "external-obliques", name: "External obliques", group: "Trunk", role: "prime-mover", note: "The right one turns the trunk to the left and draws it down.", curve: scale(CHOP, 0.45, 0.15), right: CHOP },
+    { id: "internal-obliques", name: "Internal obliques", group: "Trunk", role: "prime-mover", note: "The left one turns the trunk to the left with the right external oblique.", curve: CHOP, right: scale(CHOP, 0.45, 0.15) },
+    { id: "rectus-abdominis", name: "Rectus abdominis", group: "Trunk", role: "synergist", note: "Bends the trunk down a little as the handle comes low.", curve: scale(CHOP, 0.6, 0.2) },
+    { id: "transversus-abdominis", name: "Transversus abdominis", group: "Trunk", role: "stabiliser", note: "Braces the waist through the turn.", curve: scale(CHOP, 0.7, 0.3) },
+    { id: "latissimus-dorsi", name: "Latissimus dorsi", group: "Back", role: "synergist", note: "Draws the arms down from high.", curve: scale(CHOP, 0.6, 0.15), right: scale(CHOP, 0.75, 0.15) },
+    { id: "pectoralis-major", name: "Pectoralis major", group: "Chest", role: "synergist", note: "Carries the arms down and across, the left one most.", curve: scale(CHOP, 0.7, 0.15), right: scale(CHOP, 0.5, 0.15) },
+    { id: "serratus-anterior", name: "Serratus anterior", group: "Shoulder", role: "stabiliser", note: "Holds the shoulder blades to the ribs with the arms long.", curve: scale(CHOP, 0.45, 0.2) },
+    { id: "gluteus-maximus", name: "Gluteus maximus", group: "Hips and legs", role: "synergist", note: "Turns the hips with the trunk, pressing through the feet.", curve: scale(CHOP, 0.5, 0.15), right: scale(CHOP, 0.6, 0.15) },
+    { id: "gluteus-medius", name: "Gluteus medius", group: "Hips and legs", role: "stabiliser", note: "Steadies the pelvis as it turns over the feet.", curve: scale(CHOP, 0.45, 0.2) },
+    { id: "vastus-lateralis", name: "Vastus lateralis", group: "Hips and legs", role: "stabiliser", note: "Holds the knees as they bend at the bottom.", curve: t([0, 0.2], [0.45, 0.5], [0.55, 0.5], [1, 0.2]) },
+    { id: "erector-spinae", name: "Erector spinae", group: "Trunk", role: "stabiliser", note: "Brings the trunk back up and around under control.", curve: t([0, 0.35], [0.45, 0.35], [0.7, 0.6], [1, 0.35]) },
+    { id: "forearm-flexors", name: "Forearm flexors", group: "Arm", role: "stabiliser", note: "Hold the handle.", curve: GRIP },
+  ],
+);

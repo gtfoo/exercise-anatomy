@@ -10,6 +10,8 @@
   "/models/clips/bridge-pose.glb": "ac2186a5db",
   "/models/clips/burpee.glb": "365f06ca36",
   "/models/clips/cable-crossover.glb": "1f6b318083",
+  "/models/clips/cable-curl.glb": "d5cfe35655",
+  "/models/clips/cable-lateral-raise.glb": "da8bf8ae56",
   "/models/clips/cable-row.glb": "e8ecf4b9de",
   "/models/clips/calf-stretch.glb": "a43aac8799",
   "/models/clips/cat-cow.glb": "d0e6745c10",
@@ -31,6 +33,7 @@
   "/models/clips/freestyle.glb": "bc9ce75cd1",
   "/models/clips/front-lever.glb": "e8ecf33ad5",
   "/models/clips/glute-bridge.glb": "cf5068669d",
+  "/models/clips/glute-kickback.glb": "9111f8beda",
   "/models/clips/half-moon.glb": "37a505956b",
   "/models/clips/hamstring-stretch.glb": "ed56c000bd",
   "/models/clips/handstand.glb": "d8bd25eac0",
@@ -74,6 +77,7 @@
   "/models/clips/stairs.glb": "b4508a02d8",
   "/models/clips/stand.glb": "a5f1e2601c",
   "/models/clips/standing-leg-raise.glb": "6d9a83bfcb",
+  "/models/clips/straight-arm-pulldown.glb": "138c55e4d3",
   "/models/clips/straight-leg-hold.glb": "5c48850971",
   "/models/clips/straight-leg-raise.glb": "25e14e2da2",
   "/models/clips/straight-leg-sit-up.glb": "306140a86e",
@@ -92,5 +96,6 @@
   "/models/clips/warrior-3.glb": "58b1e66454",
   "/models/clips/wheel-pose.glb": "192e9d6591",
   "/models/clips/windshield-wipers.glb": "89da67812d",
+  "/models/clips/woodchop.glb": "4177e88c85",
   "/models/figure-mixamo.glb": "b3797f4f8c"
 }

@@ -81,6 +81,29 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Five more cable exercises** (2026-10-24), at the owner's request
+      ("work on next 5 cable machine exercises"): cable curl (straight bar,
+      underhand), straight-arm pulldown, cable lateral raise (both arms, the
+      cables crossed so the pull is there from the bottom), glute kickback
+      (a strap on the right ankle, hands on a grab bar across the column)
+      and woodchop (high right to low left). The cable solver now takes a
+      turning trunk (`yaw`), a right ankle that moves (`r_ankle`, `r_foot`)
+      and arms solved apart (`arms: "two"`, both hands on one handle); the
+      site draws crossed cables, an ankle cuff and a grab bar. Found on the
+      way: the kickback's hands on the column's one upright crossed the
+      forearms (the owner saw it), hence the bar; the woodchop's left hand
+      fled the handle while it was kept off the right forearm (hands on one
+      handle touch), its handle cut across the chest on a straight path
+      (now a stage in front at arm's length), and its stages are placed from
+      each stage's own shoulders. Limits of this mesh, measured with
+      ~/.cache/ea-cable-sweep.py: an arm reaching across the front cannot
+      turn in less than about 60 degrees without its armpit in the chest,
+      so the woodchop's arms bend about 45 degrees and the right upper arm
+      turns in fully; its clasped fingers rest up to 2.1 cm on the other
+      forearm. Every other frame of the five is clear of the body on the
+      real mesh, every joint in range. Activation is qualitative.
+      `from: owner, 2026-10-24`
+
 - [x] **Cable machine exercises** (2026-10-20), at the owner's request
       ("are we able to add exercises with a cable machine? are we able to
       find the movements?"). No free capture has a cable exercise (Mixamo's
