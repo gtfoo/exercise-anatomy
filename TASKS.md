@@ -81,6 +81,31 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Skiing and snowboarding** (2026-11-07), at the owner's request
+      ("let's do for skiing, the most common movements", then "snowboarding
+      too"), in a new Snow sports category, all designed: parallel turns
+      with pole plants, snowplough turns, the cross-country classic stride
+      and the downhill tuck; snowboard linked turns (heelside then toeside,
+      regular stance), the ollie and the heelside sideslip. Seen from the
+      rider, who stays in place while the snow goes by. They reuse the
+      cable solver through a stance `builder` (`_ski_body`, `_board_body`).
+      Skis are parented to the foot bone with a measured basis
+      (~/.cache/ea-footframe.py); the board is drawn between the feet each
+      frame; poles leave the fist opposite the racket's way. Found on the
+      way: the boards first sat under the snow (only their tips showed);
+      the snowplough's tips crossed (the owner saw it: feet 44 cm apart at
+      18 degrees; now 54 cm at 14, tips about 12 cm apart); holding the
+      poles hard to a planned line put the wrists at their limits, so
+      `g_weight` 0.35 lets a pole follow a comfortable wrist and the hand's
+      height places its tip (~/.cache/ea-cable-probe.py prints each tip's
+      height: plants land within a few cm, a pole leaving the snow dips up
+      to 10 cm, a basket's depth); a rider's back arm only hangs relaxed by
+      the back hip (aimed ahead of it, its armpit creased into the turned
+      chest). On the real mesh: parallel turns' armpit up to 1.6 cm, the
+      stride's swinging fingers up to 1.6 cm on the hip; the rest clear;
+      every joint in range. Activation is qualitative.
+      `from: owner, 2026-11-07`
+
 - [x] **Five more cable exercises** (2026-10-24), at the owner's request
       ("work on next 5 cable machine exercises"): cable curl (straight bar,
       underhand), straight-arm pulldown, cable lateral raise (both arms, the

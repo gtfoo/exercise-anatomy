@@ -419,6 +419,73 @@ function attachCable(scene: THREE.Group, scenery: CableScenery, action: THREE.An
   };
 }
 
+/**
+ * A snowboard under both feet (tools/myo/designed_clip.py's snowboarding): placed each frame between the two
+ * feet's points on the board's centre line, its length from the back (right) foot to the front (left), its face
+ * square to the feet's soles, so it rolls onto an edge and lifts its nose as the feet do. The point is the foot
+ * bone's floor point under the boot (as the skis use; ~/.cache/ea-footframe.py) moved 2 cm on toward the toes.
+ */
+function attachSnowboard(scene: THREE.Group): Barbell {
+  const deck = new THREE.MeshStandardMaterial({ color: "#2a6f8f", roughness: 0.5, metalness: 0.1 });
+  const black = new THREE.MeshStandardMaterial({ color: "#222222", roughness: 0.6 });
+  const g = new THREE.Group();
+  const LENGTH = 1.4;
+  const body = new THREE.Mesh(new THREE.BoxGeometry(LENGTH, 0.016, 0.26), deck);
+  g.add(body);
+  const kicks = [1, -1].map((sgn) => {
+    const k = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.016, 0.25), deck);
+    k.position.set(sgn * (LENGTH / 2 + 0.06), 0.028, 0);
+    k.rotation.z = sgn * 0.45; // nose and tail turned up
+    return k;
+  });
+  g.add(...kicks);
+  const bindings = [0, 1].map(() => {
+    const b = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.035, 0.27), black);
+    g.add(b);
+    return b;
+  });
+  scene.add(g);
+  const left = scene.getObjectByName("mixamorigLeftFoot");
+  const right = scene.getObjectByName("mixamorigRightFoot");
+  const L = new THREE.Vector3();
+  const R = new THREE.Vector3();
+  const nL = new THREE.Vector3();
+  const nR = new THREE.Vector3();
+  const x = new THREE.Vector3();
+  const y = new THREE.Vector3();
+  const z = new THREE.Vector3();
+  const q = new THREE.Quaternion();
+  const basis = new THREE.Matrix4();
+  const UP = new THREE.Vector3(0, -0.632, 0.775); // the foot bone's local direction of the sole's normal
+  return {
+    update() {
+      if (!left || !right) return;
+      scene.updateMatrixWorld(true);
+      left.localToWorld(L.set(0, 0.0815, -0.0214));
+      right.localToWorld(R.set(0, 0.0815, -0.0214));
+      nL.copy(UP).applyQuaternion(left.getWorldQuaternion(q));
+      nR.copy(UP).applyQuaternion(right.getWorldQuaternion(q));
+      x.subVectors(L, R);
+      const half = x.length() / 2;
+      x.normalize();
+      y.addVectors(nL, nR).addScaledVector(x, -x.dot(nL.clone().add(nR))).normalize();
+      z.crossVectors(x, y);
+      g.quaternion.setFromRotationMatrix(basis.makeBasis(x, y, z));
+      g.position.copy(L).add(R).multiplyScalar(0.5).addScaledVector(y, 0.01); // on the snow, sharing the soles' height
+      bindings[0].position.set(half, 0.02, 0);
+      bindings[1].position.set(-half, 0.02, 0);
+    },
+    dispose() {
+      g.removeFromParent();
+      body.geometry.dispose();
+      for (const k of kicks) k.geometry.dispose();
+      for (const b of bindings) b.geometry.dispose();
+      deck.dispose();
+      black.dispose();
+    },
+  };
+}
+
 type Hold = { x: number; y: number; z: number; limb: "hand" | "foot" };
 
 /**
@@ -522,7 +589,7 @@ function placeHolds(group: THREE.Group, holds: Hold[], front: number): () => voi
  * Returns the function that removes it again.
  */
 function attachProps(scene: THREE.Group, props: Exercise["props"]): () => void {
-  if (!props || props === "barbell" || props === "band" || props === "wheel" || props === "kayak-paddle") return () => {}; // placed per frame, see attachBarbell, attachBand, attachWheel and attachKayakPaddle
+  if (!props || props === "barbell" || props === "band" || props === "wheel" || props === "kayak-paddle" || props === "snowboard") return () => {}; // placed per frame, see attachBarbell, attachBand, attachWheel, attachKayakPaddle and attachSnowboard
   const steel = new THREE.MeshStandardMaterial({
     color: "#4a4744",
     roughness: 0.5,
@@ -544,6 +611,64 @@ function attachProps(scene: THREE.Group, props: Exercise["props"]): () => void {
     return () => {
       for (const g of added) g.removeFromParent();
       steel.dispose();
+    };
+  }
+  if (props === "skis" || props === "xc-skis") {
+    // A ski under each foot, fixed to the foot bone so it turns and rolls onto its edge with the foot. The Mixamo
+    // foot bone's own axes are tipped: at a flat-footed rest (measured from the rig, ~/.cache/ea-footframe.py) the
+    // world's left, up and forward are its local (-1, 0, 0), (0, -0.632, 0.775) and (0, 0.775, 0.632), and the
+    // floor under the middle of the boot is at local (0, 0.066, -0.034).
+    const alpine = props === "skis";
+    const base = new THREE.MeshStandardMaterial({ color: alpine ? "#c8452f" : "#2f5f9e", roughness: 0.5, metalness: 0.1 });
+    const black = new THREE.MeshStandardMaterial({ color: "#222222", roughness: 0.6 });
+    const basis = new THREE.Matrix4().makeBasis(new THREE.Vector3(-1, 0, 0), new THREE.Vector3(0, -0.632, 0.775), new THREE.Vector3(0, 0.775, 0.632));
+    const length = alpine ? 1.65 : 1.95;
+    const width = alpine ? 0.075 : 0.045;
+    for (const side of ["Left", "Right"]) {
+      const foot = scene.getObjectByName(`mixamorig${side}Foot`);
+      if (!foot) continue;
+      const g = new THREE.Group();
+      g.quaternion.setFromRotationMatrix(basis);
+      g.position.set(0, 0.066, -0.034);
+      const ski = new THREE.Mesh(new THREE.BoxGeometry(width, 0.016, length), base);
+      ski.position.set(0, 0.01, 0.04); // on the snow: the board shares the sole's height (below it, the snow hid it)
+      const tip = new THREE.Mesh(new THREE.BoxGeometry(width, 0.016, 0.14), base);
+      tip.position.set(0, 0.04, 0.04 + length / 2 + 0.055);
+      tip.rotation.x = -0.5; // the tip turned up
+      const binding = new THREE.Mesh(new THREE.BoxGeometry(width + 0.01, 0.03, 0.3), black);
+      binding.position.set(0, 0.03, 0.03);
+      g.add(ski, tip, binding);
+      foot.add(g);
+      added.push(g);
+    }
+    // A pole in each hand: it leaves the fist out of the little finger's side, the way a racket handle leaves the
+    // thumb's (the racket below; tools/myo/designed_clip.py's POLE), the grip above the thumb, a basket near the tip.
+    const POLE = 1.15;
+    for (const side of ["Left", "Right"]) {
+      const hand = scene.getObjectByName(`mixamorig${side}Hand`);
+      if (!hand) continue;
+      const g = new THREE.Group();
+      g.position.set(0, 0.07, 0.03);
+      g.rotation.z = side === "Right" ? Math.PI / 6 : -Math.PI / 6;
+      if (side === "Left") g.scale.x = -1; // the left hand's thumb side is its -x
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.006, POLE + 0.08, 10), steel);
+      shaft.rotation.z = Math.PI / 2;
+      shaft.position.x = (0.08 - POLE) / 2;
+      const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.16, 12), black);
+      grip.rotation.z = Math.PI / 2;
+      grip.position.x = 0.02;
+      const basket = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.008, 20), black);
+      basket.rotation.z = Math.PI / 2;
+      basket.position.x = -POLE + 0.09;
+      g.add(shaft, grip, basket);
+      hand.add(g);
+      added.push(g);
+    }
+    return () => {
+      for (const g of added) g.removeFromParent();
+      steel.dispose();
+      base.dispose();
+      black.dispose();
     };
   }
   if (props === "racket" || props === "paddle") {
@@ -684,9 +809,11 @@ export default function NativeFigure({ exercise }: { exercise: Exercise }) {
             ? attachWheel(scene)
             : exercise.props === "kayak-paddle"
               ? attachKayakPaddle(scene)
-              : cable
-                ? attachCable(scene, cable, action, mixer, clip.duration)
-                : undefined;
+              : exercise.props === "snowboard"
+                ? attachSnowboard(scene)
+                : cable
+                  ? attachCable(scene, cable, action, mixer, clip.duration)
+                  : undefined;
     const holds = wall?.holds && holdsGroup.current ? placeHolds(holdsGroup.current, findHolds(scene, action, mixer, clip.duration), wall.front) : () => {};
     live.current = {
       materials,

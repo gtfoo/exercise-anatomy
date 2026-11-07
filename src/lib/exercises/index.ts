@@ -45,6 +45,8 @@ import { copenhagenPlank } from "./copenhagen-plank";
 import { catCow } from "./cat-cow";
 import { tennisForehand, tennisBackhand, tennisServe, pickleballForehand, pickleballBackhand, pickleballServe } from "./racket-sports";
 import { kayaking } from "./kayaking";
+import { parallelTurns, snowplough, crossCountryClassic, skiTuck } from "./skiing";
+import { snowboardTurns, ollie, heelsideSlip } from "./snowboarding";
 import { cableRow, latPulldown, tricepsPushdown, cableCrossover, facePull, pallofPress, cableCurl, straightArmPulldown, cableLateralRaise, gluteKickback, woodchop } from "./cable";
 import { singleLegRdlKneeUp } from "./legs-more";
 import { windshieldWipers, straightLegSitUp, straightLegHold, vUp, shoulderTap, doubleLegLift, straightLegRaise } from "./core-sweat";
@@ -152,6 +154,13 @@ export const exercises: readonly Exercise[] = [
   cableLateralRaise,
   gluteKickback,
   woodchop,
+  parallelTurns,
+  snowplough,
+  crossCountryClassic,
+  skiTuck,
+  snowboardTurns,
+  ollie,
+  heelsideSlip,
   singleLegRdlKneeUp,
   windshieldWipers,
   straightLegSitUp,

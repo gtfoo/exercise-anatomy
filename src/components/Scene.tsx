@@ -259,6 +259,25 @@ function CableMachine({ scenery }: { scenery: CableScenery }) {
   );
 }
 
+/** Snow under the skier, and for a classic cross-country stride the track's two grooves. */
+function Snow({ tracks }: { tracks?: boolean }) {
+  return (
+    <group>
+      <mesh rotation-x={-Math.PI / 2} position={[0, 0.001, 0]}>
+        <planeGeometry args={[14, 14]} />
+        <meshStandardMaterial color="#f3f6f9" roughness={1} />
+      </mesh>
+      {tracks &&
+        [-0.1, 0.1].map((x) => (
+          <mesh key={x} rotation-x={-Math.PI / 2} position={[x, 0.0015, 0]}>
+            <planeGeometry args={[0.07, 14]} />
+            <meshStandardMaterial color="#d6dee6" roughness={1} />
+          </mesh>
+        ))}
+    </group>
+  );
+}
+
 function Scenery({ scenery }: { scenery: NonNullable<Exercise["scenery"]> }) {
   const plaster = useMemo(() => new THREE.MeshStandardMaterial({ color: "#d9d4cc", roughness: 0.95 }), []);
   if (scenery.kind === "wall") {
@@ -295,6 +314,7 @@ function Scenery({ scenery }: { scenery: NonNullable<Exercise["scenery"]> }) {
   if (scenery.kind === "backwall") return <BackWall z={scenery.z} height={scenery.height} />;
   if (scenery.kind === "kayak") return <Kayak seat={scenery.seat} water={scenery.water} />;
   if (scenery.kind === "cable") return <CableMachine scenery={scenery} />;
+  if (scenery.kind === "snow") return <Snow tracks={scenery.tracks} />;
   if (scenery.kind === "blocks") {
     const { height, spacing, z } = scenery;
     return (

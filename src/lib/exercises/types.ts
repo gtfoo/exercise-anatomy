@@ -36,7 +36,7 @@ export type MuscleActivation = {
 export type Phase = { name: string; t0: number; t1: number };
 
 /** Switcher groups, in display order. */
-export const CATEGORIES = ["Atlas", "Legs and hips", "Push and pull", "Weights", "Cable machine", "Core", "Cardio", "Racket sports", "Swimming", "Paddle sports", "Yoga", "Stretches"] as const;
+export const CATEGORIES = ["Atlas", "Legs and hips", "Push and pull", "Weights", "Cable machine", "Core", "Cardio", "Racket sports", "Swimming", "Paddle sports", "Snow sports", "Yoga", "Stretches"] as const;
 export type ExerciseCategory = (typeof CATEGORIES)[number];
 
 import type { MotionClip, MotionClip3D } from "@/lib/kinematics/types";
@@ -70,7 +70,7 @@ export type Exercise = {
   /** Half the distance between parallel bars, metres: where the hands rest. */
   barSpacing?: number;
   /** Equipment the viewer attaches to bones: to the hands, pedals to the feet, or a barbell drawn between the hands each frame. */
-  props?: "dumbbells" | "kettlebell" | "pedals" | "barbell" | "band" | "wheel" | "racket" | "paddle" | "kayak-paddle";
+  props?: "dumbbells" | "kettlebell" | "pedals" | "barbell" | "band" | "wheel" | "racket" | "paddle" | "kayak-paddle" | "skis" | "xc-skis" | "snowboard";
   /** Fixed scenery besides the floor: a wall to climb, a staircase, or a bicycle (drawn to tools/myo/designed_clip.py's BIKE_* constants). */
   scenery?:
     | {
@@ -94,6 +94,8 @@ export type Exercise = {
     | { kind: "backwall"; z: number; height: number }
     /** A sit-in kayak round the figure, its seat at `seat`, and the water's surface at `water` (designed_clip.py's KAYAK_SEAT, KAYAK_WATER). */
     | { kind: "kayak"; seat: number; water: number }
+    /** Snow under the figure; with `tracks`, the two grooves of a classic cross-country track. */
+    | { kind: "snow"; tracks?: boolean }
     /**
      * A cable machine (tools/myo/designed_clip.py's cable constants): a column for each pulley, and what the
      * figure sits on or braces against. The cable, the handle and the weight stack, which rises as the cable is

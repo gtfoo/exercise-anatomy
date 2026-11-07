@@ -3098,8 +3098,9 @@ def _cable_solve(keys, stance, path="hand"):
     splined through the stages' hands (a row's handle travels straight back; left to its joints it swung out 35
     cm on the way); with "joints" it goes where the splined joints take it, on the arcs an arm makes (a
     crossover's sweep: held to the straight path between its stages, the elbows folded to cut the corner)."""
-    body = lambda **kw: _cable_body(stance, **kw)
+    body = lambda **kw: stance.get("builder", _cable_body)(stance, **kw)
     two = stance.get("arms", "mirror") == "two"  # each arm solved on its own (a woodchop), not the right mirrored
+    gw = stance.get("g_weight", 1.0)  # how hard a hand is held to its handle's or pole's way
     rounded = lambda x: tuple(round(float(v), 2) for v in x)
     fitted, prev, prevL = [], None, None
     for j, (tk, k) in enumerate(keys):
@@ -3110,13 +3111,13 @@ def _cable_solve(keys, stance, path="hand"):
         f = body(**_cable_params(keys, tk))
         # A stroke following its joints gives each stage as a whole pose, so a stage is not also held near the one
         # before: that pull left a face pull's elbows 15 cm forward of where its finish put them.
-        x = _fit_arm("R", f, f["hand_R"], f["g"]["R"], prev if path == "hand" else None, seed=j, pose=k.get("r_pose"))
+        x = _fit_arm("R", f, f["hand_R"], f["g"]["R"], prev if path == "hand" else None, seed=j, pose=k.get("r_pose"), g_weight=gw)
         prev = x
         d = dict(k, r_arm=rounded(x))
         if two:
             # no keeping the left hand off the right forearm: the hands share the handle and touch, and held apart
             # the left arm had fled up beside the head
-            xL = _fit_arm("L", f, f["hand_L"], f["g"]["L"], prevL if path == "hand" else None, seed=100 + j, pose=k.get("l_pose"))
+            xL = _fit_arm("L", f, f["hand_L"], f["g"]["L"], prevL if path == "hand" else None, seed=100 + j, pose=k.get("l_pose"), g_weight=gw)
             prevL = xL
             d["l_arm"] = rounded(xL)
         fitted.append((tk, d))
@@ -3125,11 +3126,11 @@ def _cable_solve(keys, stance, path="hand"):
         xs, xls = [], []
         for i in range(N):
             f = body(**_cable_params(fitted, i / N))
-            x = _refine_arm("R", f, f["r_arm"], f["hand_R"] if path == "hand" else None, f["g"]["R"], last=last)
+            x = _refine_arm("R", f, f["r_arm"], f["hand_R"] if path == "hand" else None, f["g"]["R"], last=last, g_weight=gw)
             last = x
             xs.append(x)
             if two:
-                xL = _refine_arm("L", f, f["l_arm"], f["hand_L"] if path == "hand" else None, f["g"]["L"], last=lastL)
+                xL = _refine_arm("L", f, f["l_arm"], f["hand_L"] if path == "hand" else None, f["g"]["L"], last=lastL, g_weight=gw)
                 lastL = xL
                 xls.append(xL)
     X = _cyc_smooth(np.array(xs), 1.0)
@@ -3316,6 +3317,264 @@ def woodchop_sample(t):
     return cable_flow([(0, high), (0.22, mid), (0.45, low), (0.55, low), (0.78, mid), (1, high)], CHOP_STANCE, t)
 
 
+# ---------- skiing ----------
+# Designed (owner, 2026-11-07: "the most common movements"): no free capture skis. Seen from the skier, who stays
+# at the origin facing down the hill (+z) while the snow goes by, so a planted pole tip travels back as a planted
+# foot does. Each ski is fixed to its foot (NativeFigure), so it turns (yaw) and rolls onto its edge (edge,
+# positive with the top of the foot leaning to the figure's left) with the foot. The arms are solved by their
+# joints as the cable exercises' are (_cable_solve with this body), each hand to its place and each pole along the
+# line from its planned tip to the hand: a pole leaves the fist out of the little finger's side, the way a racket
+# handle leaves the thumb's (_racket_way), POLE from the palm.
+POLE = 1.15
+
+
+def _ski_body(stance, hip, pelvis_deg, trunk_deg, neck_deg, head_deg, l_ankle, r_ankle, l_yaw=0.0, r_yaw=0.0, l_edge=0.0,
+              r_edge=0.0, hip_turn=0.0, yaw_deg=0.0, r_hand=None, l_hand=None, g=None, gl=None, r_arm=None, l_arm=None, **_):
+    """One moment on skis without the arms: the hips at `hip`, tipped forward pelvis_deg and turned hip_turn, the
+    trunk tipped forward trunk_deg and turned yaw_deg (the upper body facing down the hill while the legs turn
+    under it), the neck and head tipped by their own angles (the eyes ahead), each leg from its hip to its ankle
+    with the knee bent the way its ski points and toward its edge, each foot turned and edged with its ski."""
+    q = all_ident()
+    pelvis = qmul(q_axis([0, 1, 0], hip_turn * DEG), rx(pelvis_deg * DEG))
+    trunk = qmul(q_axis([0, 1, 0], yaw_deg * DEG), rx(trunk_deg * DEG))
+    root, pelvis_pos = root_for_hip(np.asarray(hip, dtype=float), pelvis)
+    q["pelvis"], q["spine"] = pelvis, trunk
+    q["neck"] = qmul(q_axis([0, 1, 0], yaw_deg * 0.5 * DEG), rx(neck_deg * DEG))
+    q["head"] = rx(head_deg * DEG)  # the eyes down the hill whatever the trunk does
+    for S, ank, yw, ed in (("L", l_ankle, l_yaw, l_edge), ("R", r_ankle, r_yaw, r_edge)):
+        h = pelvis_pos + q_rot(pelvis, rig["hip." + S.lower()] - rig["pelvis"])
+        ankle = np.asarray(ank, dtype=float)
+        turn = q_axis([0, 1, 0], yw * DEG)
+        toward = np.asarray(q_rot(turn, [0.0, 0.0, 1.0])) + np.array([1.2 * math.sin(ed * DEG), 0.0, 0.0])
+        knee = two_link_3d(h, ankle, L_THIGH, L_SHIN, toward)
+        front = toward + np.array([0.0, 0.3, 0.0])
+        q["thigh." + S] = aim(knee - h, front)
+        q["shin." + S] = aim(ankle - knee, front)
+        q["foot." + S] = qmul(turn, q_axis([0, 0, 1], -ed * DEG))
+    sh = {"R": shoulder_from(pelvis_pos, trunk, "r"), "L": shoulder_from(pelvis_pos, trunk, "l")}
+    unit = lambda v: None if v is None else np.asarray(v, dtype=float) / float(np.linalg.norm(v))
+    return {"q": q, "root": root, "pelvis_pos": pelvis_pos, "pelvis": pelvis, "trunk": trunk, "sh": sh,
+            "hand_R": None if r_hand is None else np.asarray(r_hand, dtype=float),
+            "hand_L": None if l_hand is None else np.asarray(l_hand, dtype=float),
+            "g": {"R": unit(g), "L": unit(gl)}, "r_arm": r_arm, "l_arm": l_arm,
+            "midline": stance.get("arms", "mirror") == "mirror"}
+
+
+def skey(hip, pelvis, trunk, neck, head, l_ankle, r_ankle, r_hand, l_hand, r_tip, l_tip, yaws=(0.0, 0.0), edges=(0.0, 0.0),
+         hip_turn=0.0, yaw=0.0, r_pose=None, l_pose=None):
+    """A skiing stage. yaws and edges are (left, right). Each pole's way is from its planned tip to its wrist."""
+    unit = lambda v: tuple(float(x) for x in np.asarray(v, dtype=float) / float(np.linalg.norm(v)))
+    k = dict(hip=tuple(hip), pelvis_deg=float(pelvis), trunk_deg=float(trunk), neck_deg=float(neck), head_deg=float(head),
+             l_ankle=tuple(l_ankle), r_ankle=tuple(r_ankle), l_yaw=float(yaws[0]), r_yaw=float(yaws[1]),
+             l_edge=float(edges[0]), r_edge=float(edges[1]), hip_turn=float(hip_turn), yaw_deg=float(yaw),
+             r_hand=tuple(r_hand), l_hand=tuple(l_hand),
+             g=unit(np.asarray(r_hand) - np.asarray(r_tip)), gl=unit(np.asarray(l_hand) - np.asarray(l_tip)))
+    for n, v in (("r_pose", r_pose), ("l_pose", l_pose)):
+        if v is not None:
+            k[n] = tuple(v)
+    return k
+
+
+def ski_mirror(k):
+    """The same moment on the other side: left for right, x reversed, turns and edges the other way."""
+    m = lambda v: (-v[0], v[1], v[2])
+    out = dict(k)
+    out["hip"] = m(k["hip"])
+    out["l_ankle"], out["r_ankle"] = m(k["r_ankle"]), m(k["l_ankle"])
+    out["l_yaw"], out["r_yaw"] = -k["r_yaw"], -k["l_yaw"]
+    out["l_edge"], out["r_edge"] = -k["r_edge"], -k["l_edge"]
+    out["hip_turn"], out["yaw_deg"] = -k["hip_turn"], -k["yaw_deg"]
+    out["r_hand"], out["l_hand"] = m(k["l_hand"]), m(k["r_hand"])
+    out["g"], out["gl"] = m(k["gl"]), m(k["g"])
+    out.pop("r_pose", None), out.pop("l_pose", None)
+    if "l_pose" in k:
+        out["r_pose"] = k["l_pose"]
+    if "r_pose" in k:
+        out["l_pose"] = k["r_pose"]
+    return out
+
+
+# The poles held to their planned way only lightly: held hard, the wrists went to their limits (a tuck's poles
+# straight back under the arms, a stride's pole in line with the arm at the end of its push, where a skier opens
+# the hand and lets the strap hold it); the pole goes where a comfortable wrist points it.
+SKI_TWO = {"builder": _ski_body, "arms": "two", "g_weight": 0.35}
+SKI_MIRROR = {"builder": _ski_body, "arms": "mirror", "g_weight": 0.35}
+ELBOWS = (None, None, None, 95, None, 0, None)  # a skier's arms: forward, elbows bent
+
+
+def parallel_turns_sample(t):
+    """Linked parallel turns, a left then a right: at each transition the skis run flat down the hill under the
+    hips, the body tall, and the pole on the side of the coming turn is planted ahead; through the turn the legs
+    tip into it and the skis turn and roll onto their edges under a quiet upper body that keeps facing down the
+    hill, the hips low, the outside leg long and the inside leg bent."""
+    into_left = skey((0.0, 0.76, -0.05), 15, 22, 12, 5, (0.10, 0.068, 0.02), (-0.10, 0.068, -0.02),
+                     (-0.30, 0.98, 0.38), (0.30, 1.09, 0.48), (-0.33, 0.20, -0.45), (0.40, 0.16, 0.98), r_pose=ELBOWS, l_pose=(None, None, None, 70, None, 0, None))
+    left = skey((0.0, 0.70, -0.05), 18, 22, 12, 5, (-0.16, 0.068, 0.06), (-0.36, 0.068, -0.06),
+                (-0.28, 0.95, 0.42), (0.32, 1.00, 0.40), (-0.30, 0.25, -0.40), (0.36, 0.25, -0.40),
+                yaws=(28, 28), edges=(25, 25), hip_turn=12, r_pose=ELBOWS, l_pose=ELBOWS)
+    keys = [(0.0, into_left), (0.25, left), (0.5, ski_mirror(into_left)), (0.75, ski_mirror(left)), (1.0, into_left)]
+    return cable_flow(keys, SKI_TWO, t)
+
+
+def snowplough_sample(t):
+    """Snowplough turns: the ski tips together and the tails apart in a wedge, both skis on their inside edges, the
+    knees soft. To turn left the weight goes onto the right ski: the hips move over it and its knee bends and
+    presses; then the same to the right."""
+    # the tips 12 cm apart: the boards are 1.65 m, and with the feet 44 cm apart at 18 degrees they crossed
+    wedge = skey((0.0, 0.77, -0.04), 12, 18, 10, 4, (0.27, 0.068, 0.0), (-0.27, 0.068, 0.0),
+                 (-0.30, 0.95, 0.35), (0.30, 0.95, 0.35), (-0.40, 0.25, -0.45), (0.40, 0.25, -0.45),
+                 yaws=(-14, 14), edges=(-10, 10), r_pose=ELBOWS, l_pose=ELBOWS)
+    left = skey((-0.06, 0.75, -0.04), 14, 18, 10, 4, (0.27, 0.068, 0.02), (-0.27, 0.068, -0.02),
+                (-0.30, 0.94, 0.36), (0.30, 0.96, 0.34), (-0.40, 0.25, -0.45), (0.40, 0.25, -0.45),
+                yaws=(-11, 17), edges=(-6, 16), hip_turn=10, yaw=6, r_pose=ELBOWS, l_pose=ELBOWS)
+    keys = [(0.0, wedge), (0.25, left), (0.5, wedge), (0.75, ski_mirror(left)), (1.0, wedge)]
+    return cable_flow(keys, SKI_TWO, t)
+
+
+def xc_classic_sample(t):
+    """Cross-country classic, the diagonal stride: one ski glides forward under a bent knee while the other leg
+    kicks back long, and the opposite arm plants its pole ahead by the gliding foot and pushes back past the hip
+    to a long arm behind; then the other side. The trunk leans forward and turns a little with the stride."""
+    plant = skey((0.0, 0.76, 0.0), 10, 18, 8, 0, (0.10, 0.068, 0.36), (-0.10, 0.068, -0.36),
+                 (-0.22, 1.12, 0.50), (0.30, 0.84, -0.34), (-0.20, 0.0, 0.32), (0.36, 0.02, -0.95),
+                 hip_turn=-8, yaw=8, r_pose=(None, None, None, 30, None, 0, None), l_pose=(None, None, None, 10, None, 0, None))
+    passing = skey((0.0, 0.78, 0.0), 10, 18, 8, 0, (0.10, 0.068, 0.0), (-0.10, 0.09, 0.0),
+                   (-0.24, 0.92, 0.05), (0.32, 1.02, 0.30), (-0.26, 0.0, -0.60), (0.34, 0.45, -0.70),
+                   r_pose=(None, None, None, 40, None, 0, None), l_pose=(None, None, None, 30, None, 0, None))  # the swinging
+    # arm relaxed and long, its hand passing ahead at the hip and wide of it (aimed close in front of the chest, it
+    # folded to 117 degrees and pressed the hand into the chest; 6 cm closer in, its fingers brushed 3 cm into the hip)
+    keys = [(0.0, plant), (0.25, passing), (0.5, ski_mirror(plant)), (0.75, ski_mirror(passing)), (1.0, plant)]
+    return cable_flow(keys, SKI_TWO, t)
+
+
+def ski_tuck_sample(t):
+    """The downhill tuck: crouched deep, the back flat and near level, the head up to look ahead, the hands
+    together in front of the chin with the elbows ahead of the knees, the poles tucked back under the arms. A
+    hold, absorbing a little as the snow goes by."""
+    def tuck(hip_y):
+        return skey((0.0, hip_y, -0.16), 55, 68, -30, -50, (0.11, 0.068, 0.03), (-0.11, 0.068, 0.03),
+                    (-0.10, 0.80, 0.55), (0.10, 0.80, 0.55), (-0.45, 0.72, -0.47), (0.45, 0.72, -0.47),
+                    r_pose=(5, 105, -15, 115, 70, 0, 0))  # the arms forward (left free, the fit once swung them up and out)
+    return cable_flow([(0.0, tuck(0.52)), (0.5, tuck(0.50)), (1.0, tuck(0.52))], SKI_MIRROR, t)
+
+
+# ---------- snowboarding ----------
+# Designed (owner, 2026-11-07: "let's do for snowboarding too"): the rider stands across the board, regular stance
+# (the left foot forward, toward +x, the way the board runs), facing +z (the toe side) with the head turned to look
+# down the board. Each stage gives the board's middle on the snow (board), its roll onto an edge (edge, positive
+# onto the toe edge) and the nose's lift (nose); the feet are fixed to it, STANCE apart, the front foot turned
+# toward the nose and the back foot a little toward the tail (duck). NativeFigure draws the board between the feet.
+# The hands are placed relative to the hips.
+BOARD_STANCE = 0.26  # each ankle this far along the board from its middle
+BOARD_HALF = 0.775  # half the board's length
+DUCK = (15.0, -6.0)  # the front (left) and back (right) feet's turn toward the nose
+BOARD_ANKLE = (0.068, -0.05)  # an ankle's height over the board, and its place behind the board's centre line
+
+
+def _board_frame(edge, nose):
+    """The board's rotation: rolled onto an edge about its length, then the nose lifted."""
+    return qmul(q_axis([0, 0, 1], nose * DEG), rx(edge * DEG))
+
+
+def _board_body(stance, hip, pelvis_deg, trunk_deg, neck_deg, head_deg, board, edge=0.0, nose=0.0, hip_turn=0.0, yaw_deg=0.0,
+                head_yaw=0.0, r_hand=None, l_hand=None, r_arm=None, l_arm=None, **_):
+    """One moment on a snowboard without the arms: the hips at `hip`, tipped forward pelvis_deg and turned
+    hip_turn toward the nose, the trunk tipped trunk_deg and turned yaw_deg, the head turned head_yaw to look down
+    the board, the feet fixed to the board (_board_frame) at their stance, each knee bent over its toes."""
+    q = all_ident()
+    pelvis = qmul(q_axis([0, 1, 0], hip_turn * DEG), rx(pelvis_deg * DEG))
+    trunk = qmul(q_axis([0, 1, 0], yaw_deg * DEG), rx(trunk_deg * DEG))
+    root, pelvis_pos = root_for_hip(np.asarray(hip, dtype=float), pelvis)
+    q["pelvis"], q["spine"] = pelvis, trunk
+    q["neck"] = qmul(q_axis([0, 1, 0], (yaw_deg + head_yaw) * 0.5 * DEG), rx(neck_deg * DEG))
+    q["head"] = qmul(q_axis([0, 1, 0], head_yaw * DEG), rx(head_deg * DEG))
+    B = _board_frame(edge, nose)
+    mid = np.asarray(board, dtype=float)
+    for S, sgn, duck in (("L", 1, DUCK[0]), ("R", -1, DUCK[1])):
+        h = pelvis_pos + q_rot(pelvis, rig["hip." + S.lower()] - rig["pelvis"])
+        ankle = mid + np.asarray(q_rot(B, [sgn * BOARD_STANCE, BOARD_ANKLE[0], BOARD_ANKLE[1]]))
+        foot = qmul(B, q_axis([0, 1, 0], duck * DEG))
+        toward = np.asarray(q_rot(foot, [sgn * 0.25, 0.0, 1.0]))  # the knee over the toes, a little out
+        knee = two_link_3d(h, ankle, L_THIGH, L_SHIN, toward)
+        front = toward + np.array([0.0, 0.3, 0.0])
+        q["thigh." + S] = aim(knee - h, front)
+        q["shin." + S] = aim(ankle - knee, front)
+        q["foot." + S] = foot
+    sh = {"R": shoulder_from(pelvis_pos, trunk, "r"), "L": shoulder_from(pelvis_pos, trunk, "l")}
+    hip_pos = np.asarray(hip, dtype=float)
+    return {"q": q, "root": root, "pelvis_pos": pelvis_pos, "pelvis": pelvis, "trunk": trunk, "sh": sh,
+            "hand_R": None if r_hand is None else hip_pos + np.asarray(r_hand, dtype=float),
+            "hand_L": None if l_hand is None else hip_pos + np.asarray(l_hand, dtype=float),
+            "g": {"R": None, "L": None}, "r_arm": r_arm, "l_arm": l_arm, "midline": False}
+
+
+def bkey(hip, pelvis, trunk, neck, head, r_hand, l_hand, board=(0.0, 0.0, 0.0), edge=0.0, nose=0.0, hip_turn=15.0, yaw=20.0,
+         head_yaw=55.0, r_pose=None, l_pose=None):
+    """A snowboarding stage; the hands are offsets from the hips."""
+    k = dict(hip=tuple(hip), pelvis_deg=float(pelvis), trunk_deg=float(trunk), neck_deg=float(neck), head_deg=float(head),
+             board=tuple(board), edge=float(edge), nose=float(nose), hip_turn=float(hip_turn), yaw_deg=float(yaw),
+             head_yaw=float(head_yaw), r_hand=tuple(r_hand), l_hand=tuple(l_hand))
+    for n, v in (("r_pose", r_pose), ("l_pose", l_pose)):
+        if v is not None:
+            k[n] = tuple(v)
+    return k
+
+
+def tail_pivot(nose, z=0.0):
+    """The board's middle with its nose lifted `nose` degrees about its tail on the snow."""
+    a = nose * DEG
+    return (-BOARD_HALF + BOARD_HALF * math.cos(a), BOARD_HALF * math.sin(a), z)
+
+
+BOARD_TWO = {"builder": _board_body, "arms": "two"}
+RELAXED = (None, None, None, 40, None, 0, None)
+# the back arm hangs relaxed by the back hip (aimed 33 cm out from the hips' middle it stuck out sideways with the
+# elbow high; aimed ahead of the hip, it reached across the turned trunk and its armpit creased into the chest)
+BACK_ARM = (20, 15, None, 30, None, 0, None)
+BACK_HAND = (-0.27, 0.08, 0.0)
+
+
+def snowboard_turns_sample(t):
+    """Linked turns, a heelside then a toeside: in the heelside turn the board rolls onto its heel edge, the hips
+    sit back over the heels with the knees bent; across the flat transition the rider rises, then the board rolls
+    onto its toe edge with the knees pressed forward over the toes and the trunk leaning in. The trunk and head stay
+    turned toward the nose; the front hand leads over the nose, the back hand by the back hip."""
+    flat = bkey((0.01, 0.76, -0.02), 15, 20, 5, 0, BACK_HAND, (0.40, 0.16, 0.30), r_pose=BACK_ARM, l_pose=RELAXED)
+    heel = bkey((0.02, 0.70, -0.16), 10, 15, 5, 0, BACK_HAND, (0.40, 0.25, 0.34), board=(0.0, 0.0, 0.02), edge=-22,
+                r_pose=BACK_ARM, l_pose=RELAXED)
+    toe = bkey((0.0, 0.70, 0.12), 25, 30, 15, -20, BACK_HAND, (0.38, 0.15, 0.30), board=(0.0, 0.0, -0.02), edge=22,
+               yaw=18, r_pose=BACK_ARM, l_pose=RELAXED)
+    return cable_flow([(0.0, flat), (0.25, heel), (0.5, flat), (0.75, toe), (1.0, flat)], BOARD_TWO, t)
+
+
+def ollie_sample(t):
+    """An ollie on flat snow: from riding, the rider sinks to load, pulls the front foot up as the back foot snaps
+    the tail (the nose rises about the tail on the snow), springs and tucks both knees up so the board lifts level
+    under the feet, then lands flat and absorbs deep, and rises to ride on."""
+    ride = bkey((0.0, 0.76, -0.02), 15, 20, 5, 0, BACK_HAND, (0.40, 0.16, 0.30), r_pose=BACK_ARM, l_pose=RELAXED)
+    load = bkey((0.0, 0.62, 0.0), 28, 35, 15, -10, BACK_HAND, (0.35, 0.08, 0.15), r_pose=BACK_ARM, l_pose=RELAXED)
+    pop = bkey((0.0, 0.92, 0.0), 18, 22, 5, 0, (-0.40, 0.30, 0.15), (0.48, 0.35, 0.25), board=tail_pivot(18), nose=18,
+               r_pose=RELAXED, l_pose=RELAXED)
+    air = bkey((0.0, 0.98, 0.0), 22, 28, 10, -5, (-0.45, 0.25, 0.20), (0.50, 0.30, 0.30), board=(0.0, 0.40, 0.0),
+               r_pose=RELAXED, l_pose=RELAXED)
+    fall = bkey((0.0, 0.84, 0.0), 18, 24, 8, 0, (-0.42, 0.20, 0.20), (0.48, 0.25, 0.28), board=(0.0, 0.16, 0.0), nose=-4,
+                r_pose=RELAXED, l_pose=RELAXED)
+    land = bkey((0.0, 0.64, 0.0), 30, 36, 15, -10, (-0.30, 0.10, 0.18), (0.44, 0.12, 0.26), r_pose=RELAXED, l_pose=RELAXED)
+    rise = bkey((0.0, 0.74, -0.01), 18, 24, 8, 0, BACK_HAND, (0.41, 0.15, 0.29), r_pose=BACK_ARM, l_pose=RELAXED)
+    keys = [(0.0, ride), (0.18, load), (0.3, pop), (0.42, air), (0.56, fall), (0.68, land), (0.85, rise), (1.0, ride)]
+    return cable_flow(keys, BOARD_TWO, t)
+
+
+def heelside_slip_sample(t):
+    """The heelside sideslip: the board across the slope on its heel edge, the rider facing down the hill, sliding
+    straight down; to slow down the rider sinks and sets the edge harder, then rises a little and lets it flatten
+    to slide on."""
+    def slip(hip_y, hip_z, edge, trunk):
+        return bkey((0.0, hip_y, hip_z), trunk - 6, trunk, 5, 0, (-0.35, 0.22, 0.30), (0.35, 0.22, 0.30), board=(0.0, 0.0, 0.0),
+                    edge=edge, hip_turn=0, yaw=5, head_yaw=15, r_pose=RELAXED, l_pose=RELAXED)
+    return cable_flow([(0.0, slip(0.74, -0.10, -14, 16)), (0.5, slip(0.66, -0.16, -28, 22)), (1.0, slip(0.74, -0.10, -14, 16))], BOARD_TWO, t)
+
+
 CLIPS = {
     "stand": (stand_sample, "rest pose, tools/myo/designed_clip.py"),
     "plank": (plank_sample, "designed forearm plank, tools/myo/designed_clip.py"),
@@ -3363,6 +3622,13 @@ CLIPS = {
     "cable-lateral-raise": (cable_lateral_raise_sample, "designed cable exercise, tools/myo/designed_clip.py"),
     "glute-kickback": (glute_kickback_sample, "designed cable exercise, tools/myo/designed_clip.py"),
     "woodchop": (woodchop_sample, "designed cable exercise, tools/myo/designed_clip.py"),
+    "parallel-turns": (parallel_turns_sample, "designed skiing, tools/myo/designed_clip.py"),
+    "snowplough": (snowplough_sample, "designed skiing, tools/myo/designed_clip.py"),
+    "cross-country-classic": (xc_classic_sample, "designed skiing, tools/myo/designed_clip.py"),
+    "ski-tuck": (ski_tuck_sample, "designed skiing, tools/myo/designed_clip.py"),
+    "snowboard-turns": (snowboard_turns_sample, "designed snowboarding, tools/myo/designed_clip.py"),
+    "ollie": (ollie_sample, "designed snowboarding, tools/myo/designed_clip.py"),
+    "heelside-slip": (heelside_slip_sample, "designed snowboarding, tools/myo/designed_clip.py"),
     "single-leg-rdl-knee-up": (single_leg_rdl_knee_up_sample, "designed movement, tools/myo/designed_clip.py"),
     "windshield-wipers": (windshield_wipers_sample, "designed movement, tools/myo/designed_clip.py"),
     "straight-leg-sit-up": (straight_leg_sit_up_sample, "designed movement, tools/myo/designed_clip.py"),
