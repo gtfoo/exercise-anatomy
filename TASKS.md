@@ -81,6 +81,26 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Backstroke** (2026-11-14), at the owner's request ("add swimming
+      backstroke"), captured: CMU subject 126 (the freestyle's swimmer)
+      trials 1 and 2 are "Back Stroke"; the owner approved fetching both
+      from the Hugging Face mirror into the gitignored `tools/mocap/in/`.
+      Trial 1, frames 217-297, mimed lying on a bench: the trunk flat and
+      the arms circling well, but the legs hung off the bench's end and the
+      head was lifted to look at the feet. `tools/mocap/backstroke_kick.py`
+      keeps the arms, shoulders, trunk and its roll, lets the head follow
+      the trunk, hangs a designed six-beat flutter kick from the captured
+      pelvis, and opens each arm up to 32 degrees from the side while it
+      points toward the feet (the captured hand went 6.7 cm into this
+      figure's wider hip; at 14 degrees still 3.7 cm). Chain: extract_pose3d
+      --range 217:297 to tools/mocap/out/backstroke-captured-3d.json, the
+      kick script to src/lib/motion/backstroke-3d.json, convert_clip
+      --anchor free --loop-blend 6. On the real mesh the armpit presses up
+      to 1.7 cm in for 3 frames as the arm starts its recovery; every other
+      frame is clear. The page says which parts are captured and which
+      designed. Activation is qualitative.
+      `from: owner, 2026-11-14`
+
 - [x] **Skiing and snowboarding** (2026-11-07), at the owner's request
       ("let's do for skiing, the most common movements", then "snowboarding
       too"), in a new Snow sports category, all designed: parallel turns

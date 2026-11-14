@@ -41,6 +41,7 @@ Cuts in use (CMU FBX from Hugging Face `gbionics/cmu-fbx`, 30 fps):
 | forward lunge | (designed, `tools/myo/designed_clip.py`) | | 144_17 frames 168-252 was tried: back thigh 28° out |
 | push-up | (designed) | | no free floor push-up exists |
 | freestyle | 126_12 | 297:364 | free, root offset y 0.216 |
+| backstroke | 126_01 | 217:297 | free, loop blend 6; mimed lying on a bench, so the legs and head are replaced and the arms opened at the finish () |
 
 Mixamo clips (owner's downloads, converted straight from the FBX with
 `convert_clip.py --fbx`): Air Squat, Swimming breaststroke (61:121, root

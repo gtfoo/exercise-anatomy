@@ -9,6 +9,7 @@ import { lSit } from "./l-sit";
 import { clamshell } from "./clamshell";
 import { lateralRaise } from "./lateral-raise";
 import { breaststroke } from "./breaststroke";
+import { backstroke } from "./backstroke";
 import { atlas } from "./atlas";
 import { kettlebellSwing } from "./kettlebell-swing";
 import { bicycleCrunch } from "./bicycle-crunch";
@@ -94,6 +95,7 @@ export const exercises: readonly Exercise[] = [
   // Swimming
   freestyle,
   breaststroke,
+  backstroke,
   // Yoga
   boatPose,
   warrior1,
