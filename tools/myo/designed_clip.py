@@ -3575,6 +3575,39 @@ def heelside_slip_sample(t):
     return cable_flow([(0.0, slip(0.74, -0.10, -14, 16)), (0.5, slip(0.66, -0.16, -28, 22)), (1.0, slip(0.74, -0.10, -14, 16))], BOARD_TWO, t)
 
 
+# ---------- overhead dumbbell triceps extension ----------
+# Designed (owner, 2026-11-15: "both one arm and two arms"), with the cable solver's arms (cable_flow, no cable):
+# standing tall, the upper arm held up beside the head while only the elbow bends, lowering the dumbbell behind
+# the head and pressing it back up. Two arms share one dumbbell held upright, the palms cupped under its top plate
+# (NativeFigure draws it hanging between the palms), so they mirror; one arm holds its own, the other hand on the
+# hip, so the arms are solved apart. The hand targets were placed from the joints: the upper arm near vertical
+# (the elbow 28 cm over the shoulder), the forearm folded back behind the head.
+TRICEPS_ONE = {"ankle": STAND_ANKLE, "knee": (0.0, 0.0, 1.0), "arms": "two"}
+
+
+def overhead_triceps_two_sample(t):
+    """Two-handed overhead triceps extension: one dumbbell in both hands above the head, lowered behind the head
+    by bending the elbows, the upper arms still and pointing up, and pressed back to straight arms."""
+    hip = (0.0, 0.85, -0.02)
+    # The upper arms point up and a little out at both ends, so only the elbows move: left free at the top, the fit
+    # crossed the arms in over the head, and from there the forearms could not fold back past it
+    top = ckey(hip, 0, -2, 0, 4, (-0.08, 1.88, 0.0), (40, None, 0, 15, None, -45, None))
+    low = ckey(hip, 0, -2, 0, 6, (-0.08, 1.52, -0.22), (45, None, 0, 135, None, -45, None))
+    return cable_flow([(0, top), (0.45, low), (0.55, low), (1, top)], STANDING, t)
+
+
+def overhead_triceps_one_sample(t):
+    """One-arm overhead triceps extension, the right arm: the dumbbell above the head in a neutral grip, lowered
+    behind the head by bending the elbow, the upper arm still beside the head, and pressed back up; the left hand
+    on the hip."""
+    hip = (0.0, 0.85, -0.02)
+    hip_hand = (0.22, 1.02, 0.0)
+    rest = (90, 35, None, 100, None, 0, None)
+    top = ckey(hip, 0, -2, 0, 4, (-0.12, 1.91, 0.0), (45, None, 0, 10, 0, 0, None), l_hand=hip_hand, l_pose=rest)
+    low = ckey(hip, 0, -2, 0, 6, (-0.03, 1.50, -0.20), (None, None, 0, 135, 0, 0, None), l_hand=hip_hand, l_pose=rest)
+    return cable_flow([(0, top), (0.45, low), (0.55, low), (1, top)], TRICEPS_ONE, t)
+
+
 CLIPS = {
     "stand": (stand_sample, "rest pose, tools/myo/designed_clip.py"),
     "plank": (plank_sample, "designed forearm plank, tools/myo/designed_clip.py"),
@@ -3629,6 +3662,8 @@ CLIPS = {
     "snowboard-turns": (snowboard_turns_sample, "designed snowboarding, tools/myo/designed_clip.py"),
     "ollie": (ollie_sample, "designed snowboarding, tools/myo/designed_clip.py"),
     "heelside-slip": (heelside_slip_sample, "designed snowboarding, tools/myo/designed_clip.py"),
+    "overhead-triceps-extension": (overhead_triceps_two_sample, "designed dumbbell lift, tools/myo/designed_clip.py"),
+    "one-arm-overhead-triceps-extension": (overhead_triceps_one_sample, "designed dumbbell lift, tools/myo/designed_clip.py"),
     "single-leg-rdl-knee-up": (single_leg_rdl_knee_up_sample, "designed movement, tools/myo/designed_clip.py"),
     "windshield-wipers": (windshield_wipers_sample, "designed movement, tools/myo/designed_clip.py"),
     "straight-leg-sit-up": (straight_leg_sit_up_sample, "designed movement, tools/myo/designed_clip.py"),

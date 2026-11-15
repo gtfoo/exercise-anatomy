@@ -81,6 +81,21 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Overhead dumbbell triceps extensions** (2026-11-15), at the
+      owner's request ("both one arm and two arms"), in Weights, designed
+      with the cable solver's arms: the two-handed one mirrored, one
+      dumbbell held upright in both palms (`overhead-dumbbell`, drawn
+      hanging between them each frame); the one-arm one (the right) solved
+      apart, its own dumbbell (`dumbbell`, the right hand only) and the left
+      hand on the hip. Found on the way: left free at the top, the two-arm
+      fit crossed the upper arms in over the head, and from there the
+      forearms could not fold back past it, so the arms never came down;
+      both ends now hold the upper arms up and a little out. The elbows
+      bend from 26-37 degrees (a soft lockout) to about 132; clear of the
+      body and head in every frame, every joint in range. Activation is
+      qualitative; the long head's stretch is drawn.
+      `from: owner, 2026-11-15`
+
 - [x] **Backstroke** (2026-11-14), at the owner's request ("add swimming
       backstroke"), captured: CMU subject 126 (the freestyle's swimmer)
       trials 1 and 2 are "Back Stroke"; the owner approved fetching both

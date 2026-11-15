@@ -10,6 +10,7 @@ import { clamshell } from "./clamshell";
 import { lateralRaise } from "./lateral-raise";
 import { breaststroke } from "./breaststroke";
 import { backstroke } from "./backstroke";
+import { overheadTricepsExtension, oneArmOverheadTricepsExtension } from "./triceps-extension";
 import { atlas } from "./atlas";
 import { kettlebellSwing } from "./kettlebell-swing";
 import { bicycleCrunch } from "./bicycle-crunch";
@@ -96,6 +97,8 @@ export const exercises: readonly Exercise[] = [
   freestyle,
   breaststroke,
   backstroke,
+  overheadTricepsExtension,
+  oneArmOverheadTricepsExtension,
   // Yoga
   boatPose,
   warrior1,

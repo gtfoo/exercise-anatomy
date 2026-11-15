@@ -69,8 +69,8 @@ export type Exercise = {
   barHeight?: number;
   /** Half the distance between parallel bars, metres: where the hands rest. */
   barSpacing?: number;
-  /** Equipment the viewer attaches to bones: to the hands, pedals to the feet, or a barbell drawn between the hands each frame. */
-  props?: "dumbbells" | "kettlebell" | "pedals" | "barbell" | "band" | "wheel" | "racket" | "paddle" | "kayak-paddle" | "skis" | "xc-skis" | "snowboard";
+  /** Equipment the viewer attaches to bones: to the hands (`dumbbell`: the right hand's only), pedals to the feet, or a barbell drawn between the hands each frame (`overhead-dumbbell`: one dumbbell held upright in both palms). */
+  props?: "dumbbells" | "kettlebell" | "pedals" | "barbell" | "band" | "wheel" | "racket" | "paddle" | "kayak-paddle" | "skis" | "xc-skis" | "snowboard" | "dumbbell" | "overhead-dumbbell";
   /** Fixed scenery besides the floor: a wall to climb, a staircase, or a bicycle (drawn to tools/myo/designed_clip.py's BIKE_* constants). */
   scenery?:
     | {

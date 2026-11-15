@@ -486,6 +486,41 @@ function attachSnowboard(scene: THREE.Group): Barbell {
   };
 }
 
+/**
+ * One dumbbell held upright in both hands, the palms cupped under its top plate (an overhead triceps extension):
+ * placed each frame at the palms' midpoint, hanging straight down from them whatever the arms do.
+ */
+function attachOverheadDumbbell(scene: THREE.Group): Barbell {
+  const steel = new THREE.MeshStandardMaterial({ color: "#4a4744", roughness: 0.5, metalness: 0.6 });
+  const g = new THREE.Group();
+  const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.3, 16), steel);
+  handle.position.y = -0.12;
+  const top = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.045, 6), steel);
+  top.position.y = 0.035; // resting on the palms
+  const bottom = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.045, 6), steel);
+  bottom.position.y = -0.27;
+  g.add(handle, top, bottom);
+  scene.add(g);
+  const left = scene.getObjectByName("mixamorigLeftHand");
+  const right = scene.getObjectByName("mixamorigRightHand");
+  const L = new THREE.Vector3();
+  const R = new THREE.Vector3();
+  return {
+    update() {
+      if (!left || !right) return;
+      scene.updateMatrixWorld(true);
+      left.localToWorld(L.set(0, 0.07, 0.03)); // in the palm, as the barbell
+      right.localToWorld(R.set(0, 0.07, 0.03));
+      g.position.copy(L).add(R).multiplyScalar(0.5);
+    },
+    dispose() {
+      g.removeFromParent();
+      for (const m of [handle, top, bottom]) m.geometry.dispose();
+      steel.dispose();
+    },
+  };
+}
+
 type Hold = { x: number; y: number; z: number; limb: "hand" | "foot" };
 
 /**
@@ -589,7 +624,7 @@ function placeHolds(group: THREE.Group, holds: Hold[], front: number): () => voi
  * Returns the function that removes it again.
  */
 function attachProps(scene: THREE.Group, props: Exercise["props"]): () => void {
-  if (!props || props === "barbell" || props === "band" || props === "wheel" || props === "kayak-paddle" || props === "snowboard") return () => {}; // placed per frame, see attachBarbell, attachBand, attachWheel, attachKayakPaddle and attachSnowboard
+  if (!props || props === "barbell" || props === "band" || props === "wheel" || props === "kayak-paddle" || props === "snowboard" || props === "overhead-dumbbell") return () => {}; // placed per frame, see attachBarbell, attachBand, attachWheel, attachKayakPaddle, attachSnowboard and attachOverheadDumbbell
   const steel = new THREE.MeshStandardMaterial({
     color: "#4a4744",
     roughness: 0.5,
@@ -734,7 +769,7 @@ function attachProps(scene: THREE.Group, props: Exercise["props"]): () => void {
       steel.dispose();
     };
   }
-  for (const side of ["Left", "Right"]) {
+  for (const side of props === "dumbbell" ? ["Right"] : ["Left", "Right"]) {
     const hand = scene.getObjectByName(`mixamorig${side}Hand`);
     if (!hand) continue;
     const g = new THREE.Group();
@@ -811,6 +846,8 @@ export default function NativeFigure({ exercise }: { exercise: Exercise }) {
               ? attachKayakPaddle(scene)
               : exercise.props === "snowboard"
                 ? attachSnowboard(scene)
+                : exercise.props === "overhead-dumbbell"
+                  ? attachOverheadDumbbell(scene)
                 : cable
                   ? attachCable(scene, cable, action, mixer, clip.duration)
                   : undefined;
