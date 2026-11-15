@@ -11,6 +11,7 @@ import { lateralRaise } from "./lateral-raise";
 import { breaststroke } from "./breaststroke";
 import { backstroke } from "./backstroke";
 import { overheadTricepsExtension, oneArmOverheadTricepsExtension } from "./triceps-extension";
+import { flutterKicks, dragonFlag } from "./flutter-dragon";
 import { atlas } from "./atlas";
 import { kettlebellSwing } from "./kettlebell-swing";
 import { bicycleCrunch } from "./bicycle-crunch";
@@ -99,6 +100,8 @@ export const exercises: readonly Exercise[] = [
   backstroke,
   overheadTricepsExtension,
   oneArmOverheadTricepsExtension,
+  flutterKicks,
+  dragonFlag,
   // Yoga
   boatPose,
   warrior1,

@@ -81,6 +81,22 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Flutter kicks and the dragon flag** (2026-11-15), at the owner's
+      request, in Core, designed. Flutter kicks: on the back, the head
+      lifted, the straight legs 20 degrees off the floor scissoring 8 either
+      side, toes pointed. Dragon flag: on a bench, the body straight from
+      the neck's base to the toes, lowered from 75 to 10 degrees and raised,
+      the hands on the bench's end behind the head. Found on the way: the
+      flag's first pivot (the shoulder joints) swung the rigid trunk's neck
+      base 7 cm into the bench, so it pivots at C7; its arms, first aimed
+      straight at a grip by the ears, came out with the elbows bent 140
+      degrees backwards (ea-anat), so they are solved by their joints
+      (`_dragon_body` through the cable solver, mirrored) to a grip at the
+      bench's end; with the upper-arm turn pinned (left free it swung 90
+      degrees at the top). Clear of the body in every frame, every joint in
+      range. Activation is qualitative.
+      `from: owner, 2026-11-15`
+
 - [x] **Overhead dumbbell triceps extensions** (2026-11-15), at the
       owner's request ("both one arm and two arms"), in Weights, designed
       with the cable solver's arms: the two-handed one mirrored, one

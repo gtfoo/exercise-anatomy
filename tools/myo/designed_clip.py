@@ -3608,6 +3608,68 @@ def overhead_triceps_one_sample(t):
     return cable_flow([(0, top), (0.45, low), (0.55, low), (1, top)], TRICEPS_ONE, t)
 
 
+# ---------- flutter kicks, dragon flag ----------
+# Designed (owner, 2026-11-15). Both lie on the back, head to -Z, feet to +Z (supine_sample's convention): a
+# bone's rx angle of -90 points it along +Z, and -90 - a raises it a degrees off the floor.
+FLUTTER_LIFT = 20.0  # the legs' middle, degrees off the floor
+FLUTTER_KICK = 8.0  # each leg's swing either side of it
+FLUTTER_BEATS = 2  # scissors per loop
+
+
+def flutter_kicks_sample(t):
+    """Flutter kicks: lying on the back, the head lifted a little to look along the body, the hands by the hips,
+    the straight legs held just off the floor and scissoring in small alternating kicks, the toes pointed."""
+    s = supine_sample()
+    q = s["q"]
+    q["neck"], q["head"] = rx(-75 * DEG), rx(-62 * DEG)  # chin toward the chest, the head off the floor
+    set_arms(q, -90 * DEG, -90 * DEG, palm_down=True)  # palms down by the hips
+    swing = FLUTTER_KICK * math.sin(2 * math.pi * FLUTTER_BEATS * t)
+    for S, sgn in (("L", 1), ("R", -1)):
+        a = (-90.0 - FLUTTER_LIFT - sgn * swing) * DEG
+        q["thigh." + S], q["shin." + S], q["foot." + S] = rx(a), rx(a), rx(a + 70 * DEG)  # straight, toes pointed
+    return s
+
+
+DRAGON_BENCH = (0.45, -0.25, 1.2)  # the bench's top, the middle of its length (z) and its length
+DRAGON_PIVOT = (0.51, -0.50)  # the neck's base (C7): its height and z, on the bench, the pivot. Pivoting about the
+# shoulder joints, the rigid trunk swung the neck's base 7 cm down into the bench as the body rose.
+
+
+def _dragon_body(stance, theta, r_hand, r_arm=None, **_):
+    """The dragon flag at theta degrees above the bench, without the arms: the body straight from the neck's base to
+    the toes, pivoting there on the bench, the neck and head lying along the bench; and the right wrist's place on
+    the bench's edge by the ear. The arms are solved by their joints (_cable_solve), mirrored: aimed straight at the
+    grip, the elbows had come out bent 140 degrees backwards."""
+    q = all_ident()
+    a = (-90.0 - theta) * DEG
+    body = rx(a)
+    q["pelvis"] = q["spine"] = body
+    q["neck"], q["head"] = rx(-92 * DEG), rx(-90 * DEG)  # the head flat on the bench
+    for S in ("L", "R"):
+        q["thigh." + S], q["shin." + S], q["foot." + S] = body, body, rx(a + 70 * DEG)
+    c7 = np.array([0.0, DRAGON_PIVOT[0], DRAGON_PIVOT[1]])
+    rest = rig["c7"] - (rig["hip.l"] + rig["hip.r"]) / 2
+    hip = c7 - np.asarray(q_rot(body, rest))
+    root, pelvis_pos = root_for_hip(hip, body)
+    sh = {"R": shoulder_from(pelvis_pos, body, "r"), "L": shoulder_from(pelvis_pos, body, "l")}
+    return {"q": q, "root": root, "pelvis_pos": pelvis_pos, "pelvis": body, "trunk": body, "sh": sh,
+            "hand_R": np.asarray(r_hand, dtype=float), "g": {"R": None, "L": None}, "r_arm": r_arm, "midline": True}
+
+
+DRAGON_STANCE = {"builder": _dragon_body, "arms": "mirror"}
+DRAGON_GRIP = (-0.15, DRAGON_BENCH[0] + 0.05, -0.82)  # the right wrist at the bench's end behind the head (by
+# the ear, the elbows had to bend to their limit)
+DRAGON_ARM = (20, 145, 10, 95, None, 0, None)  # the arms up past the head, the elbows bent and pointing up
+
+
+def dragon_flag_sample(t):
+    """Dragon flag: lying on a bench, gripping it beside the head, the body held straight from the shoulders to the
+    toes and raised high; lowered slowly as one piece, pivoting on the upper back, until it hovers just above the
+    bench, and raised again."""
+    key = lambda theta: dict(theta=float(theta), r_hand=DRAGON_GRIP, r_pose=DRAGON_ARM)
+    return cable_flow([(0.0, key(75)), (0.6, key(10)), (0.7, key(10)), (1.0, key(75))], DRAGON_STANCE, t)
+
+
 CLIPS = {
     "stand": (stand_sample, "rest pose, tools/myo/designed_clip.py"),
     "plank": (plank_sample, "designed forearm plank, tools/myo/designed_clip.py"),
@@ -3664,6 +3726,8 @@ CLIPS = {
     "heelside-slip": (heelside_slip_sample, "designed snowboarding, tools/myo/designed_clip.py"),
     "overhead-triceps-extension": (overhead_triceps_two_sample, "designed dumbbell lift, tools/myo/designed_clip.py"),
     "one-arm-overhead-triceps-extension": (overhead_triceps_one_sample, "designed dumbbell lift, tools/myo/designed_clip.py"),
+    "flutter-kicks": (flutter_kicks_sample, "designed movement, tools/myo/designed_clip.py"),
+    "dragon-flag": (dragon_flag_sample, "designed movement, tools/myo/designed_clip.py"),
     "single-leg-rdl-knee-up": (single_leg_rdl_knee_up_sample, "designed movement, tools/myo/designed_clip.py"),
     "windshield-wipers": (windshield_wipers_sample, "designed movement, tools/myo/designed_clip.py"),
     "straight-leg-sit-up": (straight_leg_sit_up_sample, "designed movement, tools/myo/designed_clip.py"),
