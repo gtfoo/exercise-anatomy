@@ -7,6 +7,7 @@ import * as THREE from "three";
 import type { Exercise } from "@/lib/exercises/types";
 import { useViewer } from "@/lib/store";
 import { bindMaterials, paintMaterials, partView, viewFor, type FigureMaterials } from "./figureMaterials";
+import { nerveOf } from "@/lib/nerves";
 import hashes from "@/lib/model-hashes.json";
 
 /**
@@ -875,8 +876,10 @@ export default function NativeFigure({ exercise }: { exercise: Exercise }) {
   const setHovered = useViewer((s) => s.setHovered);
   const setSelected = useViewer((s) => s.setSelected);
   const tab = useViewer((s) => s.tab);
-  // On a page with several lists only the open tab's parts respond to the pointer: its bones, ligaments, tendons or muscles.
-  const pickable = (id: string) => partView(id) === viewFor(exercise, tab);
+  // On a page with several lists only the open tab's parts respond to the pointer: its bones, ligaments, tendons or
+  // muscles. Nerves have no meshes: on their tab a muscle stands for the nerve that supplies it in full.
+  const view = viewFor(exercise, tab);
+  const pickId = (id: string): string | null => (view === "nerves" ? (partView(id) === "muscles" ? nerveOf(exercise.nerves, id) : null) : partView(id) === view ? id : null);
 
   useFrame(() => {
     const l = live.current;
@@ -896,8 +899,8 @@ export default function NativeFigure({ exercise }: { exercise: Exercise }) {
       <primitive
         object={scene}
         onPointerOver={(e: { object: THREE.Object3D; stopPropagation: () => void }) => {
-          const id = e.object.userData.partId as string | null;
-          if (!id || !pickable(id)) return;
+          const id = pickId((e.object.userData.partId as string | null) ?? "");
+          if (!id) return;
           e.stopPropagation();
           setHovered(id);
           document.body.style.cursor = "pointer";
@@ -907,8 +910,8 @@ export default function NativeFigure({ exercise }: { exercise: Exercise }) {
           document.body.style.cursor = "auto";
         }}
         onClick={(e: { object: THREE.Object3D; stopPropagation: () => void }) => {
-          const id = e.object.userData.partId as string | null;
-          if (!id || !pickable(id)) return;
+          const id = pickId((e.object.userData.partId as string | null) ?? "");
+          if (!id) return;
           e.stopPropagation();
           setSelected(id);
         }}

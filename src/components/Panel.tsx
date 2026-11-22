@@ -12,6 +12,9 @@ import { useViewer } from "@/lib/store";
 
 type Named = { id: string; name: string; group: string; note: string };
 
+/** "a", "a and b", "a, b and c". */
+const listed = (names: readonly string[]) => (names.length < 2 ? names.join("") : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`);
+
 /** The atlas's bones or ligaments under their groups, in the order the list gives them. */
 function byGroup(items: readonly Named[]): [string, Named[]][] {
   const by = new Map<string, Named[]>();
@@ -39,7 +42,8 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
   const boneTab = !!exercise.bones && tab === "bones";
   const ligamentTab = !!exercise.ligaments && tab === "ligaments";
   const tendonTab = !!exercise.tendons && tab === "tendons";
-  const muscleTab = !boneTab && !ligamentTab && !tendonTab;
+  const nerveTab = !!exercise.nerves && tab === "nerves";
+  const muscleTab = !boneTab && !ligamentTab && !tendonTab && !nerveTab;
   const setSelected = useViewer((s) => s.setSelected);
   const rightOpen = useViewer((s) => s.rightOpen);
   const setRightOpen = useViewer((s) => s.setRightOpen);
@@ -60,6 +64,8 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
   const boneDetail = exercise.bones?.find((b) => b.id === selected);
   const ligamentDetail = exercise.ligaments?.find((b) => b.id === selected);
   const tendonDetail = exercise.tendons?.find((b) => b.id === selected);
+  const nerveDetail = exercise.nerves?.find((n) => n.id === selected);
+  const muscleName = (id: string) => (MUSCLES.find((m) => m.id === id)?.name ?? id).toLowerCase();
 
   // Every muscle is listed under its atlas group (src/lib/muscles.ts), so the
   // same muscle never sits under "calf" on one page and "ankle" on another;
@@ -89,7 +95,10 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
   const boneGroups = useMemo(() => byGroup(exercise.bones ?? []), [exercise]);
   const ligamentGroups = useMemo(() => byGroup(exercise.ligaments ?? []), [exercise]);
   const tendonGroups = useMemo(() => byGroup(exercise.tendons ?? []), [exercise]);
-  const tabs = (["muscles", "bones", "ligaments", "tendons"] as const).filter((k) => k === "muscles" || (k === "bones" ? !!exercise.bones : k === "ligaments" ? !!exercise.ligaments : !!exercise.tendons));
+  const nerveGroups = useMemo(() => byGroup(exercise.nerves ?? []), [exercise]);
+  const tabs = (["muscles", "bones", "ligaments", "tendons", "nerves"] as const).filter(
+    (k) => k === "muscles" || (k === "bones" ? !!exercise.bones : k === "ligaments" ? !!exercise.ligaments : k === "tendons" ? !!exercise.tendons : !!exercise.nerves),
+  );
 
   return (
     <aside
@@ -197,7 +206,8 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
               role="tab"
               aria-selected={tab === k}
               onClick={() => setTab(k)}
-              className={`flex-1 rounded px-1 py-1 text-xs capitalize transition-colors sm:text-sm ${tab === k ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-800"}`}
+              // Five tabs fit the panel's width only at the small size.
+              className={`flex-auto rounded px-0.5 py-1 text-xs capitalize transition-colors ${tabs.length > 4 ? "" : "sm:text-sm"} ${tab === k ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-800"}`}
             >
               {k}
             </button>
@@ -250,6 +260,19 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
         </section>
       )}
 
+      {nerveDetail && (
+        <section className="rounded-md border border-zinc-200 bg-zinc-50 p-3 text-sm">
+          <div className="flex items-baseline justify-between gap-2">
+            <h3 className="font-medium text-zinc-900">{nerveDetail.name}</h3>
+            <span className="text-right text-[10px] uppercase tracking-wide text-zinc-500">{nerveDetail.group} · nerve</span>
+          </div>
+          <p className="mt-1 leading-relaxed text-zinc-700">{nerveDetail.note}</p>
+          {nerveDetail.muscles.length > 0 && <p className="mt-1 text-xs text-zinc-600">Supplies the {listed(nerveDetail.muscles.map(muscleName))}.</p>}
+          {!!nerveDetail.partly?.length && <p className="mt-1 text-xs text-zinc-600">Supplies part of the {listed(nerveDetail.partly.map(muscleName))} (paler red).</p>}
+          <p className="mt-2 text-xs text-zinc-500">The model has no nerves to draw; the muscles this nerve supplies are lit instead.</p>
+        </section>
+      )}
+
       {muscleTab &&
         groups.map(([group, muscles]) => (
         <section key={group}>
@@ -292,8 +315,8 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
         </section>
       ))}
 
-      {(boneTab || ligamentTab || tendonTab) &&
-        (boneTab ? boneGroups : ligamentTab ? ligamentGroups : tendonGroups).map(([group, bones]) => (
+      {(boneTab || ligamentTab || tendonTab || nerveTab) &&
+        (boneTab ? boneGroups : ligamentTab ? ligamentGroups : tendonTab ? tendonGroups : nerveGroups).map(([group, bones]) => (
         <section key={`${tab}-${group}`}>
           <h2 className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500">{group}</h2>
           <ul className="flex flex-col">

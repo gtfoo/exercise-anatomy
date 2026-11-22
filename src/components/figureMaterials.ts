@@ -30,17 +30,19 @@ const key = (id: string, side: "L" | "R") => `${id}_${side}`;
 const isBone = (id: string) => id.startsWith("bone-") || id === "skeleton";
 const isLigament = (id: string) => id.startsWith("lig-") || id === "ligaments";
 const isTendon = (id: string) => id.startsWith("tendon-");
-export type PartView = "muscles" | "bones" | "ligaments" | "tendons";
+const isNerve = (id: string) => id.startsWith("nerve-");
+export type PartView = "muscles" | "bones" | "ligaments" | "tendons" | "nerves";
 
 /** The tab a page shows: the one asked for when the page has that list, else the muscles. */
 export function viewFor(exercise: Exercise, tab: PartView): PartView {
-  const has = tab === "bones" ? !!exercise.bones : tab === "ligaments" ? !!exercise.ligaments : tab === "tendons" ? !!exercise.tendons : true;
+  const has =
+    tab === "bones" ? !!exercise.bones : tab === "ligaments" ? !!exercise.ligaments : tab === "tendons" ? !!exercise.tendons : tab === "nerves" ? !!exercise.nerves : true;
   return has ? tab : "muscles";
 }
 
-/** Which tab of the atlas a part belongs to: its bones, ligaments or tendons, or (everything else) its muscles. */
+/** Which tab of the atlas a part belongs to: its bones, ligaments, tendons or nerves, or (everything else) its muscles. */
 export function partView(id: string): PartView {
-  return isBone(id) ? "bones" : isLigament(id) ? "ligaments" : isTendon(id) ? "tendons" : "muscles";
+  return isBone(id) ? "bones" : isLigament(id) ? "ligaments" : isTendon(id) ? "tendons" : isNerve(id) ? "nerves" : "muscles";
 }
 
 /**
@@ -97,6 +99,7 @@ export function bindMaterials(scene: THREE.Group, ids: Set<string>, boneIds: Set
 }
 
 const hot = new THREE.Color(HOT);
+const cold = new THREE.Color(COLD);
 const highlight = new THREE.Color(HIGHLIGHT);
 const bone = new THREE.Color(BONE);
 const ligament = new THREE.Color(LIGAMENT);
@@ -104,8 +107,28 @@ const tendon = new THREE.Color(TENDON);
 
 /** Per-frame colours: activation ramp per side, hover/selection glow, and the focus fade. */
 export function paintMaterials(materials: FigureMaterials, exercise: Exercise, t: number, hovered: string | null, selected: string | null, view: PartView = "muscles") {
-  const boneView = view !== "muscles"; // the bones, ligaments and tendons tabs ghost the muscles alike
+  const boneView = view === "bones" || view === "ligaments" || view === "tendons"; // those tabs ghost the muscles alike
+  // The nerves tab has no nerve meshes: a nerve is shown through the muscles it supplies, red in full, paler in part.
+  const nerveView = view === "nerves";
+  const nerve = nerveView ? exercise.nerves?.find((n) => n.id === selected) : undefined;
+  const hoverNerve = nerveView ? exercise.nerves?.find((n) => n.id === hovered) : undefined;
+  const supply = (n: typeof nerve, id: string) => (!n ? 0 : n.muscles.includes(id) ? 1 : n.partly?.includes(id) ? 0.5 : 0);
   for (const m of exercise.muscles) {
+    if (nerveView) {
+      const s = supply(nerve, m.id);
+      for (const side of ["L", "R"] as const) {
+        const mat = materials[key(m.id, side)];
+        if (!mat) continue;
+        mat.color.copy(cold).lerp(hot, s);
+        if (supply(hoverNerve, m.id) > 0) mat.emissive.copy(highlight).multiplyScalar(0.35);
+        else mat.emissive.copy(hot).multiplyScalar(s * 0.3);
+        // With a nerve picked, only its muscles stay solid; the others fade and stop writing depth, as in focus mode.
+        const faded = !!nerve && s === 0;
+        mat.opacity = faded ? 0.12 : 1;
+        mat.depthWrite = !faded;
+      }
+      continue;
+    }
     for (const side of ["L", "R"] as const) {
       const mat = materials[key(m.id, side)];
       if (!mat) continue;

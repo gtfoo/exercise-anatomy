@@ -8,8 +8,8 @@ type ViewerState = {
   hovered: string | null;
   selected: string | null;
   /** On a page with both lists (the atlas): which one the panel shows and the figure lets the reader pick. */
-  tab: "muscles" | "bones" | "ligaments" | "tendons";
-  setTab: (tab: "muscles" | "bones" | "ligaments" | "tendons") => void;
+  tab: "muscles" | "bones" | "ligaments" | "tendons" | "nerves";
+  setTab: (tab: "muscles" | "bones" | "ligaments" | "tendons" | "nerves") => void;
   /** The exercise panel (left) and the muscle panel (right) on wide screens; both collapse to a tab. */
   leftOpen: boolean;
   rightOpen: boolean;
