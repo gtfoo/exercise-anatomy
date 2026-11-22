@@ -46,6 +46,7 @@ export const MUSCLES: readonly MuscleInfo[] = [
   { id: "gluteus-maximus", name: "Gluteus maximus", group: "Gluteals", note: "The largest hip extensor: standing up, climbing, driving forward." },
   { id: "gluteus-medius", name: "Gluteus medius", group: "Gluteals", note: "Abducts the hip and levels the pelvis when standing on one leg." },
   { id: "gluteus-minimus", name: "Gluteus minimus", group: "Gluteals", note: "Deep to gluteus medius; abducts and steadies the hip." },
+  { id: "tensor-fasciae-latae", name: "Tensor fasciae latae", group: "Gluteals", note: "At the front of the outer hip: flexes, abducts and turns the hip in, and tightens the iliotibial band that runs down the outside of the thigh to the knee." },
   // Adductors
   { id: "adductor-magnus", name: "Adductor magnus", group: "Adductors", note: "The largest adductor; its back part also extends the hip." },
   { id: "adductor-longus", name: "Adductor longus", group: "Adductors", note: "Pulls the thigh inward and helps flex the hip." },

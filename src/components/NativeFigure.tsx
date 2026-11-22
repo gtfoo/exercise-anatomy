@@ -6,7 +6,7 @@ import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import type { Exercise } from "@/lib/exercises/types";
 import { useViewer } from "@/lib/store";
-import { bindMaterials, paintMaterials, type FigureMaterials } from "./figureMaterials";
+import { bindMaterials, paintMaterials, partView, type FigureMaterials } from "./figureMaterials";
 import hashes from "@/lib/model-hashes.json";
 
 /**
@@ -799,13 +799,15 @@ export default function NativeFigure({ exercise }: { exercise: Exercise }) {
   const { animations } = useGLTF(clipUrl);
   const ids = useMemo(() => new Set(exercise.muscles.map((m) => m.id)), [exercise]);
   const boneIds = useMemo(() => new Set((exercise.bones ?? []).map((b) => b.id)), [exercise]);
+  const ligamentIds = useMemo(() => new Set((exercise.ligaments ?? []).map((b) => b.id)), [exercise]);
+  const tendonIds = useMemo(() => new Set((exercise.tendons ?? []).map((b) => b.id)), [exercise]);
   const live = useRef<Live | null>(null);
   const holdsGroup = useRef<THREE.Group>(null);
   const wall = exercise.scenery?.kind === "wall" ? exercise.scenery : null;
   const cable = exercise.scenery?.kind === "cable" ? exercise.scenery : null;
 
   useEffect(() => {
-    const materials = bindMaterials(scene, ids, boneIds);
+    const materials = bindMaterials(scene, ids, boneIds, ligamentIds, tendonIds);
     const props = attachProps(scene, exercise.props);
     // A converted clip carries position and scale tracks for every bone, baked
     // from the rig it was converted against; only the rotations and the hips'
@@ -868,19 +870,19 @@ export default function NativeFigure({ exercise }: { exercise: Exercise }) {
       for (const m of Object.values(materials)) m.dispose();
       live.current = null;
     };
-  }, [scene, animations, ids, boneIds, clipUrl, exercise.props, wall, cable]);
+  }, [scene, animations, ids, boneIds, ligamentIds, tendonIds, clipUrl, exercise.props, wall, cable]);
 
   const setHovered = useViewer((s) => s.setHovered);
   const setSelected = useViewer((s) => s.setSelected);
   const tab = useViewer((s) => s.tab);
-  // On a page with both lists only the open tab's parts respond to the pointer: bones on the bones tab, muscles on the other.
-  const pickable = (id: string) => !exercise.bones || id.startsWith("bone-") === (tab === "bones");
+  // On a page with several lists only the open tab's parts respond to the pointer: its bones, ligaments, tendons or muscles.
+  const pickable = (id: string) => !exercise.bones || partView(id) === tab;
 
   useFrame(() => {
     const l = live.current;
     if (!l) return;
     const { t, hovered, selected, tab } = useViewer.getState();
-    paintMaterials(l.materials, exercise, t, hovered, selected, !!exercise.bones && tab === "bones");
+    paintMaterials(l.materials, exercise, t, hovered, selected, exercise.bones ? tab : "muscles");
     // Scrub: the clip's last frame equals its first for a loop, so t = 1 wraps to 0.
     l.action.time = (t % 1) * l.duration;
     l.mixer.update(0);

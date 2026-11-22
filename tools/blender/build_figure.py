@@ -75,6 +75,9 @@ TARGETS = {
     "lower-trapezius": ["Ascending part of trapezius muscle"],
     "middle-trapezius": ["Transverse part of trapezius muscle"],
     "rhomboids": ["Rhomboid major muscle", "Rhomboid minor muscle"],
+    # Named 2026-11-22 (owner: "do we have tensor fasciae latae?"): until then CONTEXT_EXCLUDE's "fascia" caught its
+    # name, and the front of the hip had no muscle at all.
+    "tensor-fasciae-latae": ["Tensor fasciae latae"],
     "pectoralis-major": ["Sternocostal head of pectoralis major muscle", "Clavicular head of pectoralis major muscle"],
     "triceps-long-head": ["Long head of triceps brachii"],
     # The owner's list of 2026-09-11: the rest of the triceps, the deep chest and
@@ -126,6 +129,8 @@ LABEL_SUFFIX = re.compile(r"\.(j|i|g|o[lr]|e\d?[lr])$")
 BUDGET_TARGET = 9000  # verts per target muscle (both sides together)
 BUDGET_CONTEXT = 220000
 BUDGET_SKELETON = 100000
+BUDGET_LIGAMENTS = 45000
+BUDGET_TENDONS = 30000  # the separate tendons, aponeuroses, retinacula and tendon sheaths (section 2c)  # the joints' ligaments, capsules, labra, menisci and discs (section 2b), shared by size
 BLEND_WIDTH = 0.08  # metres of effective distance over which muscle weights blend between two bones
 
 # Envelope radius per bone: a vertex within this distance of the segment is "on"
@@ -291,6 +296,47 @@ for mid, bases in TARGETS.items():
     targets[mid] = names
     print("%-24s <- %s" % (mid, names))
 
+
+# The tendons that the atlas models apart from their muscles go out the same way, "tendon-<id>" or
+# "tendon-<id>_L/_R" (owner, 2026-11-22: "now add tendons"), with ids matching src/lib/tendons.ts: the calcaneal
+# tendon and the iliotibial tract (until now drawn as resting muscle), the aponeuroses, retinacula and tendon
+# sheaths (until now left out with the fasciae). Most tendons are part of their muscle's mesh in this atlas (the
+# quadriceps and patellar tendons, the biceps' and the hamstrings'), and go on being drawn with it. The fasciae
+# and the scalp's aponeurosis stay out: they wrap whole muscles, or the skull, and would cover them.
+TENDON_GROUPS = [
+    ("achilles", True, r"^calcaneal tendon$"),
+    ("it-band", True, r"^iliotibial tract$"),
+    ("thoracolumbar-fascia", True, r"^(anterior|middle|posterior) layer of thoracolumbar fascia$"),
+    ("linea-alba", False, r"^linea alba$"),
+    ("inguinal-ligament", True, r"^inguinal ligament$"),
+    ("plantar-fascia", True, r"^(plantar aponeurosis|superficial transverse metatarsal ligament)$"),
+    ("palmar-aponeurosis", True, r"^(palmar aponeurosis|superficial transverse metacarpal ligament)$"),
+    ("wrist-retinacula", True, r"^(flexor|extensor) retinaculum of wrist$"),
+    ("ankle-retinacula", True, r"^((superior|inferior) extensor retinaculum of ankle|flexor retinaculum of ankle|(superior|inferior) fibular retinaculum)$"),
+    ("patellar-retinacula", True, r"^(lateral|medial) patellar retinaculum$"),
+    ("toe-extensor-tendons", True, r"^tendon of extensor digitorum longus$"),
+    ("hand-tendon-sheaths", True, r"^(common flexor tendon sheath|tendon sheath - abd\. pollicis longus - ext\. pollicis brevis|tendon sheath of (extensor carpi ulnaris|extensor digiti minimi manus|extensor digitorum and extensor indicis|extensor pollicis longus|extensors carpi radialis|flexor carpi radialis|flexor pollicis longus)|synovial sheaths of digits of hand|cruciform part of fibrous sheath of digit of hand)$"),
+    ("foot-tendon-sheaths", True, r"^(common tendon sheath of fibularis muscles|plantar tendon sheath of fibularis longus muscle|tendon sheath of (extensor digitorum longus|extensor hallucis longus|flexor digitorum longus|flexor hallucis longus|tibialis anterior|tibialis posterior muscle))$"),
+    ("biceps-tendon-sheath", True, r"^intertubercular tendon sheath$"),
+    ("digastric-tendon", True, r"^intermediate tendon of digastric muscle$"),
+]
+TENDON_GROUPS = [(gid, sided, re.compile(rx, re.I)) for gid, sided, rx in TENDON_GROUPS]
+tendon_members = {}
+for o in inv["objects"]:
+    if not (real_mesh(o) and in_collection(o, "4: Muscular system")) or o["name"] in used:
+        continue
+    n = o["name"]
+    base = re.sub(r"\.[lr]$", "", n)
+    side = "L" if n.endswith(".l") else "R" if n.endswith(".r") else None
+    for gid, sided, rx in TENDON_GROUPS:
+        if rx.search(base):
+            key = "tendon-%s_%s" % (gid, side) if sided and side else "tendon-%s" % gid
+            tendon_members.setdefault(key, []).append(n)
+            break
+for names in tendon_members.values():
+    used.update(names)  # out of the resting context muscles: the calcaneal tendon and iliotibial tract were in it
+print("tendon groups: %d, %d source meshes" % (len(tendon_members), sum(len(v) for v in tendon_members.values())))
+
 context_names = [
     o["name"]
     for o in inv["objects"]
@@ -382,6 +428,108 @@ for key, names in bone_members.items():
     built.append(obj)
 print("bone groups: %d" % len(bone_members))
 
+# The joints go out the same way, "lig-<id>" or "lig-<id>_L/_R" (owner, 2026-11-22: ligaments on the atlas page):
+# the ligaments, capsules, labra, menisci and intervertebral discs of the atlas's "3: Joints" collection, grouped
+# by joint as an anatomy chart labels them, with ids matching src/lib/ligaments.ts. They cross joints, so they are
+# weighted like muscles, blended between the bones on either side, not rigid like bones. Left out: the larynx's
+# membranes (not joints of movement), the child's triradiate cartilage, two empty helper objects, and each disc's
+# nucleus pulposus (inside its disc, never seen). Anything else no group claims goes out as an unnamed "ligaments".
+LIGAMENT_SKIP = re.compile(r"^(cricopharyngeal ligament|quadrangular membrane|(lateral|median) thyrohyoid ligament|median cricothyroid ligament|joints\.g|median atlanto-axial joint\.j|triradiate cartilage|nucleus pulposus .*)$", re.I)
+LIGAMENT_GROUPS = [
+    # Spine and thorax
+    ("discs-cervical", False, r"^intervertebral disc c\d-(c\d|t1)$"),
+    ("discs-thoracic", False, r"^intervertebral disc t\d+-(t\d+|l1)$"),
+    ("discs-lumbar", False, r"^intervertebral disc l\d-(l\d|s1)$"),
+    ("anterior-longitudinal", False, r"^anterior longitudinal ligament$"),
+    ("posterior-longitudinal", False, r"^posterior longitudinal ligament$"),
+    ("ligamenta-flava", False, r"^ligamenta flava$"),
+    ("spinous-ligaments", False, r"^(supraspinous|interspinous) ligaments?$"),
+    ("nuchal-ligament", False, r"^nuchal ligament$"),
+    ("intertransverse", False, r"^intertransverse ligaments$"),
+    ("rib-joints", False, r"^(radiate ligament of head of rib|intra-articular ligament of head of rib|costotransverse ligament)$"),
+    ("intercostal-membranes", False, r"^(external|internal) intercostal membrane$"),
+    # Jaw
+    ("jaw", True, r"^(articular capsule of temporomandibular joint|articular disc of temporomandibular joint|lateral temporomandibular ligament|sphenomandibular ligament|stylomandibular ligament|pterygospinous ligament|stylohyoid ligament)$"),
+    # Shoulder girdle and shoulder
+    ("sternoclavicular", True, r"^(articular capsule of sternoclavicular joint|articular disc of sternoclavicular joint|(anterior|posterior) sternoclavicular ligament|interclavicular ligament|costoclavicular ligament)$"),
+    ("acromioclavicular", True, r"^(articular capsule of acromioclavicular joint|articular disc of acromioclavicular joint|acromioclavicular ligament)$"),
+    ("coracoclavicular", True, r"^(conoid|trapezoid) ligament$"),
+    ("scapular-ligaments", True, r"^(coraco-acromial ligament|(superior|inferior) transverse scapular ligament)$"),
+    ("shoulder-capsule", True, r"^(articular capsule of glenohumeral joint|(superior|middle|inferior) glenohumeral ligament|coracohumeral ligament|transverse humeral ligament)$"),
+    ("glenoid-labrum", True, r"^glenoid labrum$"),
+    # Elbow and forearm
+    ("elbow-capsule", True, r"^articular capsule of elbow joint$"),
+    ("elbow-ulnar-collateral", True, r"^ulnar collateral ligament$"),
+    ("elbow-radial-collateral", True, r"^(radial collateral ligament|annular ligament of radius|quadrate ligament)$"),
+    ("forearm-membrane", True, r"^(interosseous membrane of forearm|oblique cord)$"),
+    ("distal-radio-ulnar", True, r"^(articular disc of distal radio-ulnar joint|(dorsal|palmar) radio-ulnar ligament)$"),
+    # Wrist and hand
+    ("wrist", True, r"^(articular capsule of radiocarpal joint|dorsal radiocarpal ligament|(radial|ulnar) collateral ligament of wrist joint|radioscaphocapitate ligament|radiocapitate ligament|ulnolunate ligament|ulnotriquetral ligament|ulnocapitate ligament|dorsal ulnocarpal ligament|ulnopisiform ligament)$"),
+    ("carpal", True, r"^(scapholunate interosseous|lunotriquetral interosseous|palmar lunotriquetral|capitohamate interosseous|palmar capitohamate|trapeziotrapezoidal interosseous|trapezoideocapitate interosseous|palmar trapezoideocapitate|triquetrocapitate|triquetrohamate|scaphocapitate|scaphotrapeziotrapezoidal|(dorsal|palmar) scaphotriquetral|radiate carpal|pisohamate|pisometacarpal|pisotriquetral|dorsal intercarpal) ligaments?$"),
+    ("metacarpal", True, r"^((dorsal|palmar) carpometacarpal|(dorsal|palmar|interosseous) metacarpal|deep transverse metacarpal) ligaments?$"),
+    ("finger-joints", True, r"^(articular capsules of (metacarpophalangeal|proximal interphalangeal|distal interphalangeal) joints|collateral metacarpophalangeal ligaments|collateral interphalangeal ligaments of hand|palmar interphalangeal ligaments)$"),
+    # Pelvis and hip
+    ("sacro-iliac", True, r"^((anterior|posterior|interosseous) sacro-iliac|iliolumbar) ligament$"),
+    ("sacrotuberous", True, r"^(sacrotuberous|sacrospinous) ligament$"),
+    ("pubic-symphysis", False, r"^(pubic symphysis|interpubic disc|(superior|inferior) pubic ligament)$"),
+    ("sacrococcygeal", False, r"^(sacrococcygeal symphysis|intercornual ligament)$"),
+    ("obturator-membrane", True, r"^obturator membrane$"),
+    ("iliofemoral", True, r"^(descending|transverse) part of iliofemoral ligament$"),
+    ("hip-capsule", True, r"^(articular capsule of hip joint|zona orbicularis|frenula capsulae|pubofemoral ligament|ischiofemoral ligament)$"),  # the frenula run along the femur's neck
+    ("acetabular-labrum", True, r"^(acetabular labrum|transverse acetabular ligament)$"),
+    ("ligament-head-femur", True, r"^ligament of head of femur$"),
+    # Knee and leg
+    ("acl", True, r"^anterior cruciate ligament$"),
+    ("pcl", True, r"^posterior cruciate ligament$"),
+    ("mcl", True, r"^(superficial|deep) part of tibial collateral ligament$"),
+    ("lcl", True, r"^fibular collateral ligament$"),
+    ("medial-meniscus", True, r"^(medial meniscus|(anterior|posterior) meniscotibial ligament \(medial meniscus\))$"),
+    ("lateral-meniscus", True, r"^(lateral meniscus|(anterior|posterior) meniscotibial ligament \(lateral meniscus\))$"),
+    ("knee-capsule", True, r"^(articular capsule of knee joint|(arcuate|oblique) popliteal ligament|popliteofibular ligament|infrapatellar fat pad|meniscopatellar ligament|transverse ligament of knee)$"),
+    ("proximal-tibiofibular", True, r"^(articular capsule of superior tibiofibular joint|(anterior|posterior) ligament of fibular head)$"),
+    ("leg-membrane", True, r"^interosseous membrane of leg$"),
+    ("distal-tibiofibular", True, r"^(anterior|posterior|transverse) tibiofibular ligament$"),
+    # Ankle and foot
+    ("lateral-ankle", True, r"^((anterior|posterior) talofibular|calcaneofibular) ligament$"),
+    ("deltoid-ligament", True, r"^(posterior tibiotalar|tibiocalcaneal|tibionavicular) ligament$"),
+    ("subtalar", True, r"^((anterior|lateral|medial|posterior) talocalcaneal|talocalcaneal interosseous) ligament$"),
+    ("plantar-ligaments", True, r"^(long plantar ligament|plantar (calcaneocuboid|calcaneonavicular|cuboideonavicular|cuneocuboid|cuneonavicular|intercuneiform|tarsometatarsal|metatarsal) ligaments?)$"),
+    ("midfoot-ligaments", True, r"^(talonavicular|calcaneocuboid|calcaneonavicular|dorsal (calcaneocuboid|cuboideonavicular|cuneocuboid|cuneonavicular|intercuneiform|tarsometatarsal|metatarsal)|cuneocuboid interosseous|cuneometatarsal interosseous|intercuneiform interosseous|metatarsal interosseous) ligaments?$"),
+    ("toe-joints", True, r"^(articular capsules? of (metatarsophalangeal joints|interphalangeal joint of great toe|proximal interphalangeal joints of foot|distal interphalangeal joints of foot)|collateral (metatarsophalangeal|interphalangeal) ligaments( of foot)?|plantar (metatarsophalangeal|interphalangeal) ligaments|deep transverse metatarsal ligament|intersesamoid ligament)$"),
+]
+LIGAMENT_GROUPS = [(gid, sided, re.compile(rx, re.I)) for gid, sided, rx in LIGAMENT_GROUPS]
+joint_names = [o["name"] for o in inv["objects"] if real_mesh(o) and in_collection(o, "3: Joints") and not LIGAMENT_SKIP.search(re.sub(r"\.[lr]$", "", o["name"]))]
+lig_members = {}
+lig_unclaimed = []
+for n in joint_names:
+    base = re.sub(r"\.[lr]$", "", n)
+    side = "L" if n.endswith(".l") else "R" if n.endswith(".r") else None
+    if side is None and abs(sum(by_name[n]["bbox"][i][0] for i in (0, 1))) > 0.04:
+        side = "L" if sum(by_name[n]["bbox"][i][0] for i in (0, 1)) > 0 else "R"  # an unsuffixed piece off the midline (one ulnopisiform ligament)
+    for gid, sided, rx in LIGAMENT_GROUPS:
+        if rx.search(base):
+            key = "lig-%s_%s" % (gid, side) if sided and side else "lig-%s" % gid
+            lig_members.setdefault(key, []).append(n)
+            break
+    else:
+        lig_unclaimed.append(n)
+if lig_unclaimed:
+    print("joint meshes no ligament group claims (kept as 'ligaments'):", lig_unclaimed)
+    lig_members["ligaments"] = lig_unclaimed
+lig_total = sum(by_name[n]["verts"] for n in joint_names) or 1
+for key, names in lig_members.items():
+    obj, ranges = merge(key, [O[n] for n in names])
+    budget = max(150, int(BUDGET_LIGAMENTS * sum(by_name[n]["verts"] for n in names) / lig_total))
+    pending.append((obj, ranges, budget, False))
+    built.append(obj)
+print("ligament groups: %d, %d source meshes" % (len(lig_members), len(joint_names)))
+tendon_total = sum(by_name[n]["verts"] for v in tendon_members.values() for n in v) or 1
+for key, names in tendon_members.items():
+    obj, ranges = merge(key, [O[n] for n in names])
+    budget = max(150, int(BUDGET_TENDONS * sum(by_name[n]["verts"] for n in names) / tendon_total))
+    pending.append((obj, ranges, budget, False))
+    built.append(obj)
+
 # Everything from the atlas goes; only our meshes remain. Frees memory too.
 keep = {o.name for o in built}
 for o in list(O):
@@ -409,8 +557,12 @@ def material(name, rgba):
 m_target = material("muscle-target", (0.72, 0.18, 0.10, 1))
 m_context = material("muscle-resting", (0.90, 0.87, 0.83, 1))
 m_bone = material("bone", (0.78, 0.75, 0.70, 1))
+m_ligament = material("ligament", (0.91, 0.88, 0.83, 1))
 for o in built:
-    o.data.materials.append(m_target if o.name not in ("context-muscles", "skeleton") else (m_bone if o.name == "skeleton" else m_context))
+    if o.name.startswith(("lig-", "tendon-")) or o.name == "ligaments":
+        o.data.materials.append(m_ligament)
+    else:
+        o.data.materials.append(m_target if o.name not in ("context-muscles", "skeleton") else (m_bone if o.name == "skeleton" else m_context))
 
 # ---------- 4. armature ----------
 

@@ -4,6 +4,8 @@ export const COLD = "#e9e2d9";
 export const HOT = "#d3341a";
 export const HIGHLIGHT = "#ffb36b";
 export const BONE = "#bfb7ae"; // the figure underneath the muscles
+export const LIGAMENT = "#e6dfd0"; // ligaments, capsules and discs: paler and creamier than bone
+export const TENDON = "#e2e4e1"; // tendons, aponeuroses, retinacula and sheaths: a cooler, silvery white
 export const STUDIO = "#f3f1ee"; // canvas and page background
 export const STRETCH = "#1f8f9a"; // lengthened muscle; with activation the two mix to purple
 

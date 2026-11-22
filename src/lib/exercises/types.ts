@@ -126,6 +126,10 @@ export type Exercise = {
   static?: boolean;
   /** Named bone groups the page lists and lets the reader select (the atlas); ids match src/lib/bones.ts and the figure's "bone-<id>" meshes. */
   bones?: readonly { id: string; name: string; group: string; note: string }[];
+  /** Named ligament groups the page lists and lets the reader select (the atlas); ids match src/lib/ligaments.ts and the figure's "lig-<id>" meshes. */
+  ligaments?: readonly { id: string; name: string; group: string; note: string }[];
+  /** Named tendon groups the page lists and lets the reader select (the atlas); ids match src/lib/tendons.ts and the figure's "tendon-<id>" meshes. */
+  tendons?: readonly { id: string; name: string; group: string; note: string }[];
   /** Added to the root when free: where to put a body the clip does not place (a swimmer at the surface). */
   rootOffset?: [number, number, number];
   /** Floor by default; water draws a surface at `waterLevel` and no floor shadow. */

@@ -81,6 +81,36 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Ligaments and tendons on the atlas** (2026-11-22), at the owner's
+      request ("is it possible to add ligaments and tendons too?", "let's do
+      atlas page first", "now add tendons"). The atlas page is now "Muscles,
+      bones, ligaments and tendons", with four tabs. Ligaments: the
+      atlas's "3: Joints" collection, 380 meshes in 51 groups by joint
+      (LIGAMENT_GROUPS in build_figure.py, src/lib/ligaments.ts): each
+      cruciate, collateral and meniscus its own, the discs by region, the
+      wrist's and foot's small ligaments together; left out the larynx's
+      membranes, the child's triradiate cartilage, helper objects and the
+      discs' nuclei (hidden inside); the intertransverse ligaments have no
+      faces and dropped out. Tendons: the 15 the atlas models apart from
+      their muscles (TENDON_GROUPS, src/lib/tendons.ts): the Achilles, the
+      iliotibial band, the aponeuroses, retinacula and tendon sheaths; the
+      rest (quadriceps, patellar, biceps, hamstring tendons) are part of
+      their muscles' meshes. The fasciae and scalp aponeurosis stay out
+      (they would cover the muscles and skull). Both are weighted like
+      muscles, so they ride the joints in every clip (the ACL stays within
+      5 mm of the knee at the bottom of the squat), and fade without
+      writing depth whenever something else is the subject, so only bone
+      may hide a selected muscle. Found on the way: the tensor fasciae
+      latae (owner: "do we have tensor fasciae latae?") was missing from
+      the figure entirely, its name caught by the filter that drops the
+      fasciae; it is now a named muscle (Gluteals). The "frenula capsulae"
+      are the hip's, not the knee's; an unsuffixed wrist piece is sided by
+      position. The joints and rig are unchanged (every clip plays as
+      before); the figure is 8.0 MB (was 6.75). The arm-in-body checker
+      (~/.cache/ea-skin-check.py) now leaves connective tissue out of both
+      sides of its test.
+      `from: owner, 2026-11-22`
+
 - [x] **Flutter kicks and the dragon flag** (2026-11-15), at the owner's
       request, in Core, designed. Flutter kicks: on the back, the head
       lifted, the straight legs 20 degrees off the floor scissoring 8 either
