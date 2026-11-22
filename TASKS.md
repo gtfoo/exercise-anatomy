@@ -81,6 +81,24 @@ letter and a one-line task strands the *why*.
 
 ## Done
 
+- [x] **Ligaments, tendons and the tensor fasciae latae on every exercise
+      page** (2026-11-22), at the owner's request ("now add them to the
+      exercises": both, all at once). `src/lib/exercises/connective.ts`,
+      applied in ExerciseViewer so every page gets it: each exercise lists
+      the ligaments and tendons at the joints it works, on Ligaments and
+      Tendons tabs as on the atlas, each with its atlas note and a line
+      naming this exercise's muscles that move or hold that joint. A joint
+      counts when one of its muscles scores 0.4 or more: its peak against
+      the exercise's strongest muscle, weighed by role (prime mover 1,
+      synergist 0.8, stabiliser 0.5). Calibrated on two pages: a fixed cut
+      lost the estimated squat's hip (its gluteus maximus peaks at 0.42
+      against a saturated vastus lateralis), and stabilisers at full weight
+      listed the bench press's knees. They are shown, never coloured by a
+      level. The tensor fasciae latae joins the 43 exercises listing the
+      gluteus medius (its curve at 70%) and 9 hip-flexion moves (the rectus
+      femoris's at half); qualitative. Child's pose, a rest, lists nothing.
+      `from: owner, 2026-11-22`
+
 - [x] **Ligaments and tendons on the atlas** (2026-11-22), at the owner's
       request ("is it possible to add ligaments and tendons too?", "let's do
       atlas page first", "now add tendons"). The atlas page is now "Muscles,

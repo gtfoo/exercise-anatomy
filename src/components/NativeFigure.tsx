@@ -6,7 +6,7 @@ import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import type { Exercise } from "@/lib/exercises/types";
 import { useViewer } from "@/lib/store";
-import { bindMaterials, paintMaterials, partView, type FigureMaterials } from "./figureMaterials";
+import { bindMaterials, paintMaterials, partView, viewFor, type FigureMaterials } from "./figureMaterials";
 import hashes from "@/lib/model-hashes.json";
 
 /**
@@ -876,13 +876,13 @@ export default function NativeFigure({ exercise }: { exercise: Exercise }) {
   const setSelected = useViewer((s) => s.setSelected);
   const tab = useViewer((s) => s.tab);
   // On a page with several lists only the open tab's parts respond to the pointer: its bones, ligaments, tendons or muscles.
-  const pickable = (id: string) => !exercise.bones || partView(id) === tab;
+  const pickable = (id: string) => partView(id) === viewFor(exercise, tab);
 
   useFrame(() => {
     const l = live.current;
     if (!l) return;
     const { t, hovered, selected, tab } = useViewer.getState();
-    paintMaterials(l.materials, exercise, t, hovered, selected, exercise.bones ? tab : "muscles");
+    paintMaterials(l.materials, exercise, t, hovered, selected, viewFor(exercise, tab));
     // Scrub: the clip's last frame equals its first for a loop, so t = 1 wraps to 0.
     l.action.time = (t % 1) * l.duration;
     l.mixer.update(0);

@@ -32,6 +32,12 @@ const isLigament = (id: string) => id.startsWith("lig-") || id === "ligaments";
 const isTendon = (id: string) => id.startsWith("tendon-");
 export type PartView = "muscles" | "bones" | "ligaments" | "tendons";
 
+/** The tab a page shows: the one asked for when the page has that list, else the muscles. */
+export function viewFor(exercise: Exercise, tab: PartView): PartView {
+  const has = tab === "bones" ? !!exercise.bones : tab === "ligaments" ? !!exercise.ligaments : tab === "tendons" ? !!exercise.tendons : true;
+  return has ? tab : "muscles";
+}
+
 /** Which tab of the atlas a part belongs to: its bones, ligaments or tendons, or (everything else) its muscles. */
 export function partView(id: string): PartView {
   return isBone(id) ? "bones" : isLigament(id) ? "ligaments" : isTendon(id) ? "tendons" : "muscles";

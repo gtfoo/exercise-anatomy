@@ -1,7 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useMemo } from "react";
 import type { Exercise } from "@/lib/exercises/types";
+import { enrichExercise } from "@/lib/exercises/connective";
 import Panel from "./Panel";
 import ExerciseNav from "./ExerciseNav";
 import { useViewer } from "@/lib/store";
@@ -19,7 +21,9 @@ const Scene = dynamic(() => import("./Scene"), {
  * panel (with an exercise select) scrolls beneath it, so the figure stays in
  * view while the list is browsed. `dvh` follows the mobile browser chrome.
  */
-export default function ExerciseViewer({ exercise }: { exercise: Exercise }) {
+export default function ExerciseViewer({ exercise: given }: { exercise: Exercise }) {
+  // Every page as it is shown: with the ligaments and tendons at the joints it works, and the tensor fasciae latae.
+  const exercise = useMemo(() => enrichExercise(given), [given]);
   const rightOpen = useViewer((s) => s.rightOpen);
   const setRightOpen = useViewer((s) => s.setRightOpen);
   return (

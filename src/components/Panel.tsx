@@ -187,7 +187,7 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
         </section>
       )}
 
-      {exercise.bones && (
+      {tabs.length > 1 && (
         <div className="flex gap-1 rounded-md bg-zinc-100 p-1 text-sm" role="tablist" aria-label="What the panel lists">
           {tabs.map((k) => (
             <button
