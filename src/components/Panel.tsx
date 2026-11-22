@@ -6,6 +6,7 @@ import type { Exercise, MuscleActivation } from "@/lib/exercises/types";
 import { ILLUSTRATION_NOTE, ROLE_LABEL, levelAt, phaseAt } from "@/lib/exercises/types";
 import { exercises, grouped, routeFor } from "@/lib/exercises";
 import { MUSCLES } from "@/lib/muscles";
+import { innervatedBy } from "@/lib/innervation";
 import { rampCss } from "@/lib/palette";
 import { useViewer } from "@/lib/store";
 
@@ -214,6 +215,7 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
             </span>
           </div>
           <p className="mt-1 leading-relaxed text-zinc-700">{detail.note}</p>
+          {innervatedBy(detail.id) && <p className="mt-1 text-xs text-zinc-600">{innervatedBy(detail.id)}</p>}
           {!exercise.static && (
             <p className="mt-2 text-xs text-zinc-500">
               {!detail.source
