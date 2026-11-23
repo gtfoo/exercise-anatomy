@@ -802,13 +802,14 @@ export default function NativeFigure({ exercise }: { exercise: Exercise }) {
   const boneIds = useMemo(() => new Set((exercise.bones ?? []).map((b) => b.id)), [exercise]);
   const ligamentIds = useMemo(() => new Set((exercise.ligaments ?? []).map((b) => b.id)), [exercise]);
   const tendonIds = useMemo(() => new Set((exercise.tendons ?? []).map((b) => b.id)), [exercise]);
+  const nerveIds = useMemo(() => new Set((exercise.nerves ?? []).map((b) => b.id)), [exercise]);
   const live = useRef<Live | null>(null);
   const holdsGroup = useRef<THREE.Group>(null);
   const wall = exercise.scenery?.kind === "wall" ? exercise.scenery : null;
   const cable = exercise.scenery?.kind === "cable" ? exercise.scenery : null;
 
   useEffect(() => {
-    const materials = bindMaterials(scene, ids, boneIds, ligamentIds, tendonIds);
+    const materials = bindMaterials(scene, ids, boneIds, ligamentIds, tendonIds, nerveIds);
     const props = attachProps(scene, exercise.props);
     // A converted clip carries position and scale tracks for every bone, baked
     // from the rig it was converted against; only the rotations and the hips'
@@ -871,15 +872,16 @@ export default function NativeFigure({ exercise }: { exercise: Exercise }) {
       for (const m of Object.values(materials)) m.dispose();
       live.current = null;
     };
-  }, [scene, animations, ids, boneIds, ligamentIds, tendonIds, clipUrl, exercise.props, wall, cable]);
+  }, [scene, animations, ids, boneIds, ligamentIds, tendonIds, nerveIds, clipUrl, exercise.props, wall, cable]);
 
   const setHovered = useViewer((s) => s.setHovered);
   const setSelected = useViewer((s) => s.setSelected);
   const tab = useViewer((s) => s.tab);
   // On a page with several lists only the open tab's parts respond to the pointer: its bones, ligaments, tendons or
-  // muscles. Nerves have no meshes: on their tab a muscle stands for the nerve that supplies it in full.
+  // muscles. On the nerves tab a nerve answers for itself, and a muscle stands for the nerve that supplies it in full.
   const view = viewFor(exercise, tab);
-  const pickId = (id: string): string | null => (view === "nerves" ? (partView(id) === "muscles" ? nerveOf(exercise.nerves, id) : null) : partView(id) === view ? id : null);
+  const pickId = (id: string): string | null =>
+    view === "nerves" ? (partView(id) === "nerves" ? id : partView(id) === "muscles" ? nerveOf(exercise.nerves, id) : null) : partView(id) === view ? id : null;
 
   useFrame(() => {
     const l = live.current;

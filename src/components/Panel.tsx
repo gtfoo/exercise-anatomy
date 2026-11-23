@@ -267,9 +267,9 @@ export default function Panel({ exercise }: { exercise: Exercise }) {
             <span className="text-right text-[10px] uppercase tracking-wide text-zinc-500">{nerveDetail.group} · nerve</span>
           </div>
           <p className="mt-1 leading-relaxed text-zinc-700">{nerveDetail.note}</p>
-          {nerveDetail.muscles.length > 0 && <p className="mt-1 text-xs text-zinc-600">Supplies the {listed(nerveDetail.muscles.map(muscleName))}.</p>}
-          {!!nerveDetail.partly?.length && <p className="mt-1 text-xs text-zinc-600">Supplies part of the {listed(nerveDetail.partly.map(muscleName))} (paler red).</p>}
-          <p className="mt-2 text-xs text-zinc-500">The model has no nerves to draw; the muscles this nerve supplies are lit instead.</p>
+          {nerveDetail.muscles.length > 0 && <p className="mt-1 text-xs text-zinc-600">Supplies the {listed(nerveDetail.muscles.map(muscleName))} (tinted red).</p>}
+          {!!nerveDetail.partly?.length && <p className="mt-1 text-xs text-zinc-600">Supplies part of the {listed(nerveDetail.partly.map(muscleName))} (paler).</p>}
+          {nerveDetail.drawn === false && <p className="mt-2 text-xs text-zinc-500">The model has no curve for this nerve; the muscles it supplies are lit instead.</p>}
         </section>
       )}
 

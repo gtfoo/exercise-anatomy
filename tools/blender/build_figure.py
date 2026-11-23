@@ -530,6 +530,128 @@ for key, names in tendon_members.items():
     pending.append((obj, ranges, budget, False))
     built.append(obj)
 
+# ---------- 2d. nerves ----------
+# The peripheral nerves (owner, 2026-11-23: "let's do it"), "nerve-<id>_L/_R" with ids matching src/lib/nerves.ts,
+# and the cutaneous nerves, roots and sympathetic chain as one unnamed "nerves" mesh. In the atlas they are Bezier
+# CURVES in "7: Nervous system & Sense organs", not meshes (an inventory of meshes alone found none, 2026-11-22),
+# bevelled at 0.5 mm times each point's radius. Here they become tubes: 3 steps per segment and 6 sides, not the
+# atlas's 12 and 12 (588k vertices), at twice the atlas radius so a median nerve is ~4 mm across, with point radii
+# capped so the sciatic's root (x12) is ~8 mm, not 24. Half the curves are mirrored (scale -1), which turns their
+# faces inside out: those are flipped back. The cranial nerves stay out (inside the skull) but the accessory nerve,
+# which crosses the neck to the trapezius. Weighted like muscles, blended between the bones either side, and never
+# decimated: a collapse decimator breaks a thin tube.
+NERVE_BEVEL = 0.001
+NERVE_RADIUS_CAP = 4.0
+NERVE_RES_U = 3
+NERVE_BEVEL_RES = 1
+NERVE_GROUPS = [
+    ("accessory", r"^accessory nerve \(xi\)$"),
+    ("dorsal-scapular", r"^dorsal scapular nerve$"),
+    ("long-thoracic", r"^long thoracic nerve$"),
+    ("suprascapular", r"^suprascapular nerve$"),
+    ("pectoral", r"^(lateral|medial) pectoral nerve$"),
+    ("subscapular", r"^(superior|inferior) subscapular nerve$"),
+    ("thoracodorsal", r"^thoracodorsal nerve$"),
+    ("brachial-plexus", r"^(roots of brachial plexus|(superior|middle|inferior) trunk of brachial plexus|(anterior|posterior) division of (superior|middle|inferior) trunk of brachial plexus|posterior cord of brachial plexus)$"),
+    ("axillary", r"^(axillary nerve|muscular branches of axillary nerve|superior lateral brachial cutaneous nerve)$"),
+    ("musculocutaneous", r"^(musculocutaneous nerve|lateral antebrachial cutaneous nerve)$"),
+    ("radial", r"^(radial nerve|(deep|superficial) branch of radial nerve|muscular branches of radial nerve|posterior interosseous nerve of forearm|dorsal digital branches of radial nerve|posterior antebrachial cutaneous nerve|inferior lateral brachial cutaneous nerve)$"),
+    ("median", r"^(median nerve|muscular branches of median nerve|anterior interosseous nerve of forearm|palmar branch of median nerve|(common|proper) palmar digital branches of median nerve|\(communicating branch of median nerve with ulnar nerve\))$"),
+    ("ulnar", r"^(ulnar nerve|(deep|superficial|dorsal|palmar) branch of ulnar nerve|muscular branches of ulnar nerve|(common|proper) palmar digital branches of ulnar nerve|dorsal digital branches of ulnar nerve)$"),
+    ("thoracoabdominal", r"^intercostal nerves$"),
+    ("iliohypogastric", r"^(iliohypogastric nerve|ilio-inguinal nerve)$"),
+    ("superior-gluteal", r"^superior gluteal nerve$"),
+    ("femoral", r"^(femoral nerve|anterior cutaneous branches of femoral nerve|saphenous nerve|infrapatellar branch of saphenous nerve|medial crural cutaneous branches of saphenous nerve)$"),
+    ("obturator", r"^(obturator nerve|(anterior|posterior) branch of obturator nerve)$"),
+    ("sciatic", r"^sciatic nerve$"),
+    ("tibial", r"^(tibial nerve|(medial|lateral) plantar nerve|(common|proper) plantar digital branches of (medial|lateral) plantar nerve|medial sural cutaneous nerve|sural nerve)$"),
+    ("common-fibular", r"^(common fibular nerve|sural communicating branch of common fibular nerve)$"),
+    ("deep-fibular", r"^(deep fibular nerve|muscular branches of deep fibular nerve|dorsal digital branches of deep fibular nerve)$"),
+    ("superficial-fibular", r"^(superficial fibular nerve|dorsal digital branches of superficial fibular nerve|(intermediate|medial) dorsal cutaneous nerve of foot)$"),
+]
+NERVE_GROUPS = [(gid, re.compile(rx, re.I)) for gid, rx in NERVE_GROUPS]
+NERVE_CONTEXT = re.compile(
+    r"^(medial antebrachial cutaneous nerve|(anterior|posterior) branch of medial antebrachial cutaneous nerve|medial brachial cutaneous nerve|lateral femoral cutaneous nerve|posterior femoral cutaneous nerve|(anterior|posterior) root of posterior femoral cutaneous nerve|genitofemoral nerve|(femoral|genital) branch of genitofemoral nerve|pudendal nerve|nerve to (piriformis|quadratus femoris) muscle|subclavian nerve|sympathetic trunk|sympathetic nerves|cauda equina|(anterior|posterior) root of spinal nerve)$",
+    re.I,
+)
+nerve_curves = [o["name"] for o in inv["objects"] if o["type"] == "CURVE" and in_collection(o, "7: Nervous system") and o["name"] in O]
+nerve_members = {}
+nerve_left_out = []
+for n in nerve_curves:
+    base = re.sub(r"\.[lr]$", "", n)
+    side = "L" if n.endswith(".l") else "R" if n.endswith(".r") else None
+    for gid, rx in NERVE_GROUPS:
+        if rx.search(base):
+            if side is None:  # an unsuffixed curve off the midline (the right foot's common plantar digital branches)
+                pts = [O[n].matrix_world @ p.co for sp in O[n].data.splines for p in (sp.bezier_points if sp.type == "BEZIER" else sp.points)]
+                x = sum(p.x for p in pts) / max(1, len(pts))
+                side = ("L" if x > 0 else "R") if abs(x) > 0.04 else None
+            key = "nerve-%s_%s" % (gid, side) if side else "nerve-%s" % gid
+            nerve_members.setdefault(key, []).append(n)
+            break
+    else:
+        if NERVE_CONTEXT.search(base):
+            nerve_members.setdefault("nerves", []).append(n)
+        else:
+            nerve_left_out.append(base)
+print("nerve curves left out (cranial and others):", sorted(set(nerve_left_out)))
+
+
+# Every curve is set up first and the scene evaluated once: each evaluation of this atlas prints its dependency
+# cycles again (megabytes), and one per group stalled the first build for over an hour on its output pipe.
+for names in nerve_members.values():
+    for n in names:
+        cu = O[n].data
+        cu.bevel_mode = "ROUND"
+        cu.bevel_depth = NERVE_BEVEL
+        cu.bevel_resolution = NERVE_BEVEL_RES
+        cu.resolution_u = NERVE_RES_U
+        cu.use_fill_caps = True
+        for sp in cu.splines:
+            for p in sp.bezier_points if sp.type == "BEZIER" else sp.points:
+                p.radius = max(0.3, min(p.radius, NERVE_RADIUS_CAP))
+nerve_dg = bpy.context.evaluated_depsgraph_get()
+
+
+def merge_curves(name, sources):
+    """merge() for curves: the tube each evaluates to, gathered in world space, right side out."""
+    import bmesh
+
+    dg = nerve_dg
+    bm = bmesh.new()
+    ranges = []
+    for src in sources:
+        ev = src.evaluated_get(dg)
+        me = ev.to_mesh()
+        tmp = bmesh.new()
+        tmp.from_mesh(me)
+        ev.to_mesh_clear()
+        bmesh.ops.transform(tmp, matrix=src.matrix_world, verts=tmp.verts)
+        if src.matrix_world.determinant() < 0:
+            bmesh.ops.reverse_faces(tmp, faces=tmp.faces)
+        me2 = bpy.data.meshes.new("tmp")
+        tmp.to_mesh(me2)
+        tmp.free()
+        start = len(bm.verts)
+        bm.from_mesh(me2)
+        ranges.append((start, len(me2.vertices)))
+        bpy.data.meshes.remove(me2)
+    me = bpy.data.meshes.new(name)
+    bm.to_mesh(me)
+    bm.free()
+    me.polygons.foreach_set("use_smooth", [True] * len(me.polygons))
+    obj = bpy.data.objects.new(name, me)
+    bpy.context.scene.collection.objects.link(obj)
+    return obj, ranges
+
+
+for key, names in sorted(nerve_members.items()):
+    obj, ranges = merge_curves(key, [O[n] for n in names])
+    pending.append((obj, ranges, 10**9, False))  # no decimation
+    built.append(obj)
+    print("  %-30s %3d curves, %6d verts" % (key, len(names), len(obj.data.vertices)))
+print("nerve groups: %d, %d curves, %d verts" % (len(nerve_members), sum(len(v) for v in nerve_members.values()), sum(len(O[k].data.vertices) for k in nerve_members)))
+
 # Everything from the atlas goes; only our meshes remain. Frees memory too.
 keep = {o.name for o in built}
 for o in list(O):
@@ -558,9 +680,12 @@ m_target = material("muscle-target", (0.72, 0.18, 0.10, 1))
 m_context = material("muscle-resting", (0.90, 0.87, 0.83, 1))
 m_bone = material("bone", (0.78, 0.75, 0.70, 1))
 m_ligament = material("ligament", (0.91, 0.88, 0.83, 1))
+m_nerve = material("nerve", (0.93, 0.86, 0.45, 1))
 for o in built:
     if o.name.startswith(("lig-", "tendon-")) or o.name == "ligaments":
         o.data.materials.append(m_ligament)
+    elif o.name.startswith("nerve-") or o.name == "nerves":
+        o.data.materials.append(m_nerve)
     else:
         o.data.materials.append(m_target if o.name not in ("context-muscles", "skeleton") else (m_bone if o.name == "skeleton" else m_context))
 

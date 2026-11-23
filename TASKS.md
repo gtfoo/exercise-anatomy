@@ -79,22 +79,21 @@ letter and a one-line task strands the *why*.
       a pitch reference (the neck-to-head line) if they differ.
       `from: owner, 2026-09-11 · "the skull like dropping, like the neck is broken"`
 
-- [ ] **On hold: draw the nerves.** Z-Anatomy *does* carry them, as CURVE
-      objects, not meshes (an inventory filtered to meshes missed them on
-      2026-11-22): 249 curves, 126 distinct names in "7: Nervous system &
-      Sense organs", sided `.l`/`.r` (plexus trunks and cords, axillary,
-      musculocutaneous, median, ulnar, radial, femoral, obturator, sciatic,
-      tibial, fibular, gluteal, intercostal, cranial nerves...; no inferior
-      gluteal nerve found). They are in our own Startup.blend, in the figure's
-      frame and under its CC BY-SA credit, so nothing to download. ana3d.app
-      shows the same atlas with the curves turned into tubes. To build: convert
-      each curve to a tube mesh (bevel), NERVE_GROUPS in `build_figure.py`,
-      weight like muscles, rebuild + rebind, ea-rigdiff; then the Nerves tab
-      (`c60055f`, which lights the muscles each nerve supplies) also draws
-      the nerve. BodyParts3D itself (4.0, 2013) has only orbital nerves.
-      `from: owner, 2026-11-23 · "hold this for now"`
-
 ## Done
+
+- [x] **Nerves on the atlas** (2026-11-23, owner: "let's do it"). Z-Anatomy's
+      nerve curves (not meshes; the first inventory looked at meshes only and
+      wrongly said there were none) bevelled to tubes in `build_figure.py`
+      NERVE_GROUPS: 23 named nerves per side plus a shared "nerves" mesh for
+      the cutaneous nerves and roots, 57.6k vertices, model 7.7 -> 8.8 MB;
+      cranial nerves but XI left out. Joints and rig unchanged (ea-rigdiff 0).
+      The Nerves tab draws them only there: the muscles ghost, a picked nerve
+      glows yellow and tints the muscles it supplies; every muscle card names
+      its supply (`src/lib/innervation.ts`). The inferior gluteal nerve and the
+      posterior rami have no curve and are shown through their muscles. Build
+      trap: evaluate the atlas once; one depsgraph evaluation per group
+      stalled the build for an hour printing its dependency cycles.
+      `from: owner, 2026-11-22/23 · "add nerves", "let's do it"`
 
 - [x] **Ligaments, tendons and the tensor fasciae latae on every exercise
       page** (2026-11-22), at the owner's request ("now add them to the

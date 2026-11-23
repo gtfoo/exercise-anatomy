@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import type { Exercise } from "@/lib/exercises/types";
 import { levelAt } from "@/lib/exercises/types";
-import { BONE, COLD, HOT, HIGHLIGHT, LIGAMENT, TENDON, muscleRgb } from "@/lib/palette";
+import { BONE, COLD, HOT, HIGHLIGHT, LIGAMENT, NERVE, NERVE_LIT, TENDON, muscleRgb } from "@/lib/palette";
 
 /**
  * The exporter's node name a mesh belongs to, minus numeric suffixes: a muscle
@@ -30,7 +30,7 @@ const key = (id: string, side: "L" | "R") => `${id}_${side}`;
 const isBone = (id: string) => id.startsWith("bone-") || id === "skeleton";
 const isLigament = (id: string) => id.startsWith("lig-") || id === "ligaments";
 const isTendon = (id: string) => id.startsWith("tendon-");
-const isNerve = (id: string) => id.startsWith("nerve-");
+const isNerve = (id: string) => id.startsWith("nerve-") || id === "nerves";
 export type PartView = "muscles" | "bones" | "ligaments" | "tendons" | "nerves";
 
 /** The tab a page shows: the one asked for when the page has that list, else the muscles. */
@@ -52,7 +52,14 @@ export function partView(id: string): PartView {
  * render as resting and are not clickable; bones it does not list render as
  * plain skeleton and are not clickable either.
  */
-export function bindMaterials(scene: THREE.Group, ids: Set<string>, boneIds: Set<string> = new Set(), ligamentIds: Set<string> = new Set(), tendonIds: Set<string> = new Set()): FigureMaterials {
+export function bindMaterials(
+  scene: THREE.Group,
+  ids: Set<string>,
+  boneIds: Set<string> = new Set(),
+  ligamentIds: Set<string> = new Set(),
+  tendonIds: Set<string> = new Set(),
+  nerveIds: Set<string> = new Set(),
+): FigureMaterials {
   const materials: FigureMaterials = {};
   for (const id of ids) for (const side of ["L", "R"] as const) materials[key(id, side)] = new THREE.MeshStandardMaterial({ color: COLD, roughness: 0.62, transparent: true });
   materials["context-muscles"] = new THREE.MeshStandardMaterial({ color: COLD, roughness: 0.62, transparent: true });
@@ -67,6 +74,9 @@ export function bindMaterials(scene: THREE.Group, ids: Set<string>, boneIds: Set
   // Tendons the same way: they sit on the muscles they belong to, so they fade with them.
   materials.tendons = new THREE.MeshStandardMaterial({ color: TENDON, roughness: 0.4, transparent: true });
   for (const id of tendonIds) for (const side of ["L", "R"] as const) materials[key(id, side)] = new THREE.MeshStandardMaterial({ color: TENDON, roughness: 0.4, transparent: true });
+  // Nerves: drawn only on the nerves tab (they run through and over the muscles), one shared material elsewhere.
+  materials.nerves = new THREE.MeshStandardMaterial({ color: NERVE, roughness: 0.5, transparent: true, visible: false });
+  for (const id of nerveIds) for (const side of ["L", "R"] as const) materials[key(id, side)] = new THREE.MeshStandardMaterial({ color: NERVE, roughness: 0.5, transparent: true });
   scene.traverse((o) => {
     const mesh = o as THREE.SkinnedMesh;
     if (!mesh.isSkinnedMesh) return;
@@ -85,6 +95,10 @@ export function bindMaterials(scene: THREE.Group, ids: Set<string>, boneIds: Set
       const named = tendonIds.has(id);
       mesh.userData.partId = named ? id : null;
       mesh.material = named ? materials[key(id, side)] : materials.tendons;
+    } else if (isNerve(id)) {
+      const named = nerveIds.has(id);
+      mesh.userData.partId = named ? id : null;
+      mesh.material = named ? materials[key(id, side)] : materials.nerves;
     } else if (ids.has(id)) {
       mesh.userData.partId = id;
       mesh.material = materials[key(id, side)];
@@ -104,11 +118,14 @@ const highlight = new THREE.Color(HIGHLIGHT);
 const bone = new THREE.Color(BONE);
 const ligament = new THREE.Color(LIGAMENT);
 const tendon = new THREE.Color(TENDON);
+const nerveColour = new THREE.Color(NERVE);
+const nerveLit = new THREE.Color(NERVE_LIT);
 
 /** Per-frame colours: activation ramp per side, hover/selection glow, and the focus fade. */
 export function paintMaterials(materials: FigureMaterials, exercise: Exercise, t: number, hovered: string | null, selected: string | null, view: PartView = "muscles") {
   const boneView = view === "bones" || view === "ligaments" || view === "tendons"; // those tabs ghost the muscles alike
-  // The nerves tab has no nerve meshes: a nerve is shown through the muscles it supplies, red in full, paler in part.
+  // On the nerves tab the muscles ghost so the nerves read; a picked nerve tints the muscles it supplies, red in full,
+  // paler in part, still see-through so the nerve shows inside them.
   const nerveView = view === "nerves";
   const nerve = nerveView ? exercise.nerves?.find((n) => n.id === selected) : undefined;
   const hoverNerve = nerveView ? exercise.nerves?.find((n) => n.id === hovered) : undefined;
@@ -122,10 +139,8 @@ export function paintMaterials(materials: FigureMaterials, exercise: Exercise, t
         mat.color.copy(cold).lerp(hot, s);
         if (supply(hoverNerve, m.id) > 0) mat.emissive.copy(highlight).multiplyScalar(0.35);
         else mat.emissive.copy(hot).multiplyScalar(s * 0.3);
-        // With a nerve picked, only its muscles stay solid; the others fade and stop writing depth, as in focus mode.
-        const faded = !!nerve && s === 0;
-        mat.opacity = faded ? 0.12 : 1;
-        mat.depthWrite = !faded;
+        mat.opacity = s > 0 ? 0.55 : 0.1;
+        mat.depthWrite = false;
       }
       continue;
     }
@@ -158,8 +173,8 @@ export function paintMaterials(materials: FigureMaterials, exercise: Exercise, t
       mat.depthWrite = !faded;
     }
   }
-  // On the bones tab every muscle is ghosted the whole time, so the skeleton reads.
-  const ghost = selected !== null || boneView;
+  // On the bones and nerves tabs every muscle is ghosted the whole time, so the skeleton and nerves read.
+  const ghost = selected !== null || boneView || nerveView;
   materials["context-muscles"].opacity = ghost ? 0.12 : 1;
   materials["context-muscles"].depthWrite = !ghost;
   // Bones stay opaque and bone-coloured whatever is selected; a selected bone is painted the working red, a hovered one
@@ -203,6 +218,29 @@ export function paintMaterials(materials: FigureMaterials, exercise: Exercise, t
           mat.emissive.copy(hot).multiplyScalar(0.3);
         } else if (hovered === g.id) mat.emissive.copy(highlight).multiplyScalar(0.35);
       }
+    }
+  }
+  // Nerves show on their own tab only. There a picked nerve glows bright yellow (red would vanish into the red of the
+  // muscles it supplies) and the others fade, and stop writing depth, so it reads through them; a hovered one glows.
+  const nerveMats = [materials.nerves, ...(exercise.nerves ?? []).flatMap((n) => [materials[key(n.id, "L")], materials[key(n.id, "R")]])];
+  for (const mat of nerveMats) {
+    if (!mat) continue;
+    mat.visible = nerveView;
+    mat.color.copy(nerveColour);
+    mat.emissive.setRGB(0, 0, 0);
+    mat.opacity = nerve ? 0.25 : 1;
+    mat.depthWrite = !nerve;
+  }
+  for (const n of exercise.nerves ?? []) {
+    for (const side of ["L", "R"] as const) {
+      const mat = materials[key(n.id, side)];
+      if (!mat) continue;
+      if (selected === n.id) {
+        mat.color.copy(nerveLit);
+        mat.emissive.copy(nerveLit).multiplyScalar(0.6);
+        mat.opacity = 1;
+        mat.depthWrite = true;
+      } else if (hovered === n.id) mat.emissive.copy(highlight).multiplyScalar(0.5);
     }
   }
 }

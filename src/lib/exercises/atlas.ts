@@ -9,8 +9,8 @@ import { NERVES } from "@/lib/nerves";
  * The home page: the figure standing still, every named muscle it carries and
  * every named bone, ligament and tendon group, on four tabs of the panel
  * (owner, 2026-09-20: one atlas, the reader switches between muscles and bones;
- * 2026-11-22: and ligaments, and tendons, and nerves, shown through the muscles
- * they supply). No movement, no roles, no curves; click a muscle to isolate it,
+ * 2026-11-22: and ligaments, and tendons; 2026-11-23: and nerves, with the
+ * muscles each supplies). No movement, no roles, no curves; click a muscle to isolate it,
  * anything else to light it up.
  */
 export const atlas: Exercise = {
@@ -23,7 +23,7 @@ export const atlas: Exercise = {
   native: { clip: "/models/clips/stand.glb" },
   camera: { position: [2.4, 1.4, 2.6], target: [0, 0.95, 0] },
   disclaimer:
-    "Every muscle, bone, ligament and tendon the figure names, at rest: switch between them in the panel. Click a muscle to isolate it, anything else to light it up; the exercise pages show which muscles work, and when, through a movement. Most tendons are drawn as part of their muscle; the Tendons list has the ones modelled on their own. The model has no nerves to draw, so the Nerves tab lights the muscles each nerve supplies.",
+    "Every muscle, bone, ligament, tendon and nerve the figure names, at rest: switch between them in the panel. Click a muscle to isolate it, anything else to light it up; the exercise pages show which muscles work, and when, through a movement. Most tendons are drawn as part of their muscle; the Tendons list has the ones modelled on their own. On the Nerves tab, pick a nerve to see its course and the muscles it supplies.",
   phases: [{ name: "rest", t0: 0, t1: 1 }],
   muscles: MUSCLES.map((m) => ({ id: m.id, name: m.name, group: m.group, role: "stabiliser", note: m.note, curve: [[0, 0]] })),
   bones: BONES,
