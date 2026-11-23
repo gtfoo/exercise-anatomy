@@ -79,15 +79,19 @@ letter and a one-line task strands the *why*.
       a pitch reference (the neck-to-head line) if they differ.
       `from: owner, 2026-09-11 · "the skull like dropping, like the neck is broken"`
 
-- [ ] **On hold: nerves the figure can draw.** Z-Anatomy and BodyParts3D
-      (latest release 4.0, 2013-06-19; only orbital nerves) carry no limb or
-      trunk nerve meshes, so the atlas's Nerves tab (`c60055f`) lights the
-      muscles each nerve supplies instead. The one candidate source is
-      AnatomyTOOL's Open3DModel (CC BY-SA, built on Z-Anatomy, upper- and
-      lower-limb nerves); anatomytool.org was unreachable from here. If the
-      owner sends its download links: confirm the licence and attribution,
-      ask before downloading, check the nerves sit in our figure's frame,
-      then NERVE_GROUPS in `build_figure.py` and a rebuild.
+- [ ] **On hold: draw the nerves.** Z-Anatomy *does* carry them, as CURVE
+      objects, not meshes (an inventory filtered to meshes missed them on
+      2026-11-22): 249 curves, 126 distinct names in "7: Nervous system &
+      Sense organs", sided `.l`/`.r` (plexus trunks and cords, axillary,
+      musculocutaneous, median, ulnar, radial, femoral, obturator, sciatic,
+      tibial, fibular, gluteal, intercostal, cranial nerves...; no inferior
+      gluteal nerve found). They are in our own Startup.blend, in the figure's
+      frame and under its CC BY-SA credit, so nothing to download. ana3d.app
+      shows the same atlas with the curves turned into tubes. To build: convert
+      each curve to a tube mesh (bevel), NERVE_GROUPS in `build_figure.py`,
+      weight like muscles, rebuild + rebind, ea-rigdiff; then the Nerves tab
+      (`c60055f`, which lights the muscles each nerve supplies) also draws
+      the nerve. BodyParts3D itself (4.0, 2013) has only orbital nerves.
       `from: owner, 2026-11-23 · "hold this for now"`
 
 ## Done
