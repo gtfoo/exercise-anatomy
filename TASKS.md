@@ -79,6 +79,17 @@ letter and a one-line task strands the *why*.
       a pitch reference (the neck-to-head line) if they differ.
       `from: owner, 2026-09-11 · "the skull like dropping, like the neck is broken"`
 
+- [ ] **On hold: nerves the figure can draw.** Z-Anatomy and BodyParts3D
+      (latest release 4.0, 2013-06-19; only orbital nerves) carry no limb or
+      trunk nerve meshes, so the atlas's Nerves tab (`c60055f`) lights the
+      muscles each nerve supplies instead. The one candidate source is
+      AnatomyTOOL's Open3DModel (CC BY-SA, built on Z-Anatomy, upper- and
+      lower-limb nerves); anatomytool.org was unreachable from here. If the
+      owner sends its download links: confirm the licence and attribution,
+      ask before downloading, check the nerves sit in our figure's frame,
+      then NERVE_GROUPS in `build_figure.py` and a rebuild.
+      `from: owner, 2026-11-23 · "hold this for now"`
+
 ## Done
 
 - [x] **Ligaments, tendons and the tensor fasciae latae on every exercise
