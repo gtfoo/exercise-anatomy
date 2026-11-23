@@ -85,7 +85,7 @@ letter and a one-line task strands the *why*.
       nerve curves (not meshes; the first inventory looked at meshes only and
       wrongly said there were none) bevelled to tubes in `build_figure.py`
       NERVE_GROUPS: 23 named nerves per side plus a shared "nerves" mesh for
-      the cutaneous nerves and roots, 57.6k vertices, model 7.7 -> 8.8 MB;
+      the cutaneous nerves and roots, 57.6k vertices, model 8.0 -> 8.8 MB;
       cranial nerves but XI left out. Joints and rig unchanged (ea-rigdiff 0).
       The Nerves tab draws them only there: the muscles ghost, a picked nerve
       glows yellow and tints the muscles it supplies; every muscle card names
