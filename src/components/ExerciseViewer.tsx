@@ -45,6 +45,10 @@ export default function ExerciseViewer({ exercise: given }: { exercise: Exercise
         <p className="pointer-events-none absolute right-4 bottom-3 hidden max-w-56 text-right text-xs text-zinc-400 md:block">
           {exercise.static ? "drag to orbit · right-drag to pan · scroll to zoom at the cursor · click a part" : "drag to orbit · right-drag to pan · scroll to zoom at the cursor · space to play/pause · click a muscle"}
         </p>
+        {/* Phones: the same, by touch. A pinch zooms where the fingers are (2026-11-24). */}
+        <p className="pointer-events-none absolute right-3 bottom-2 max-w-44 text-right text-[10px] leading-snug text-zinc-400 md:hidden">
+          pinch to zoom where you pinch · two fingers to pan · tap a {exercise.static ? "part" : "muscle"}
+        </p>
       </div>
       <Panel exercise={exercise} />
     </div>

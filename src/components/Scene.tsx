@@ -1,9 +1,9 @@
 "use client";
 
-import { Suspense, useMemo, useRef } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import { Suspense, useEffect, useMemo, useRef } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
+import { OrbitControls as ThreeOrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { Exercise } from "@/lib/exercises/types";
 import { STUDIO } from "@/lib/palette";
 import { useViewer } from "@/lib/store";
@@ -357,6 +357,39 @@ function Water({ level }: { level: number }) {
   );
 }
 
+/**
+ * Orbit, zoom and pan, with three.js's own OrbitControls rather than drei's. drei wraps three-stdlib's copy, whose pinch
+ * zooms toward the orbit target and never the fingers, so on a phone every zoom went to the middle of the figure and
+ * the head or a hand could not be brought up close (owner, 2026-11-24). This one zooms the wheel toward the cursor and
+ * a pinch toward the point between the fingers, and a two-finger drag pans. Wired as drei wires it: to the element the
+ * canvas's events are connected to, updated every frame (damping), at priority -1 so it never takes over rendering.
+ */
+function Controls({ target }: { target: readonly number[] }) {
+  const camera = useThree((s) => s.camera);
+  const gl = useThree((s) => s.gl);
+  const connected = useThree((s) => s.events.connected) as HTMLElement | null | undefined;
+  const controls = useRef<ThreeOrbitControls | null>(null);
+  const [tx, ty, tz] = target;
+  useEffect(() => {
+    const c = new ThreeOrbitControls(camera, connected ?? gl.domElement);
+    c.enableDamping = true;
+    c.minDistance = 0.35;
+    c.maxDistance = 7;
+    c.enablePan = true;
+    c.zoomToCursor = true;
+    c.zoomSpeed = 2.5;
+    c.target.set(tx, ty, tz);
+    c.update();
+    controls.current = c;
+    return () => {
+      c.dispose();
+      controls.current = null;
+    };
+  }, [camera, gl, connected, tx, ty, tz]);
+  useFrame(() => controls.current?.update(), -1);
+  return null;
+}
+
 export default function Scene({ exercise }: { exercise: Exercise }) {
   // Near-side view: the sagittal chain reads best from here. Exercises can override.
   // A narrow (portrait) viewport gets the camera closer, or the figure is a
@@ -389,7 +422,7 @@ export default function Scene({ exercise }: { exercise: Exercise }) {
 
       {/* A full sphere: the owner wants to look up at a plank from under the floor, so nothing stops the camera at the ground. */}
       {/* Zoom goes toward the cursor and the view can be panned (right-drag, or shift-drag), so any part of the figure can be brought up close (owner, 2026-09-20). */}
-      <OrbitControls target={target} minDistance={0.35} maxDistance={7} enablePan zoomToCursor zoomSpeed={2.5} />
+      <Controls target={target} />
     </Canvas>
   );
 }
