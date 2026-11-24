@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="belly" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e5512f"/>
+      <stop offset="0.55" stop-color="#d3341a"/>
+      <stop offset="1" stop-color="#a92611"/>
+    </linearGradient>
+    <linearGradient id="tendon" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f4efe7"/>
+      <stop offset="1" stop-color="#d9d0c4"/>
+    </linearGradient>
+    <clipPath id="belly-clip"><path d="M108 256C158 244 190 186 256 186C322 186 354 244 404 256C354 268 322 326 256 326C190 326 158 268 108 256Z"/></clipPath>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#f3f1ee"/>
+  <g transform="rotate(-35 256 256)">
+    <!-- the bone each end pulls on -->
+    <circle cx="66" cy="256" r="20" fill="#cdc4b8"/>
+    <circle cx="446" cy="256" r="20" fill="#cdc4b8"/>
+    <!-- tendons -->
+    <rect x="64" y="246" width="80" height="20" rx="10" fill="url(#tendon)" stroke="#bdb3a6" stroke-width="3"/>
+    <rect x="368" y="246" width="80" height="20" rx="10" fill="url(#tendon)" stroke="#bdb3a6" stroke-width="3"/>
+    <!-- the belly and its fibres -->
+    <path d="M108 256C158 244 190 186 256 186C322 186 354 244 404 256C354 268 322 326 256 326C190 326 158 268 108 256Z" fill="url(#belly)" stroke="#8f200e" stroke-width="5"/>
+    <g clip-path="url(#belly-clip)" fill="none" stroke="#f07a5c" stroke-width="6" stroke-linecap="round" opacity="0.55">
+      <path d="M118 256C190 214 322 214 394 256"/>
+      <path d="M118 256C190 236 322 236 394 256"/>
+      <path d="M118 256C190 276 322 276 394 256"/>
+      <path d="M118 256C190 298 322 298 394 256"/>
+    </g>
+    <!-- a highlight along the top of the belly -->
+    <path d="M190 222C224 202 288 202 322 222" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round" opacity="0.28"/>
+  </g>
+</svg>
